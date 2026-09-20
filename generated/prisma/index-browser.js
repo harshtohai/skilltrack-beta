@@ -147,6 +147,10 @@ exports.Prisma.TraineeScalarFieldEnum = {
   email: 'email',
   district: 'district',
   language: 'language',
+  consentGiven: 'consentGiven',
+  consentGivenAt: 'consentGivenAt',
+  consentMethod: 'consentMethod',
+  consentRevokedAt: 'consentRevokedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -273,6 +277,7 @@ exports.Channel = exports.$Enums.Channel = {
 };
 
 exports.BotSessionState = exports.$Enums.BotSessionState = {
+  AWAITING_CONSENT: 'AWAITING_CONSENT',
   AWAITING_STATUS: 'AWAITING_STATUS',
   AWAITING_EMPLOYER_NAME: 'AWAITING_EMPLOYER_NAME',
   AWAITING_ROLE: 'AWAITING_ROLE',

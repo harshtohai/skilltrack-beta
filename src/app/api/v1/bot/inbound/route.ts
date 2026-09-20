@@ -19,6 +19,7 @@ const inboundSchema = z.object({
 });
 
 type BotSessionState =
+  | "AWAITING_CONSENT"
   | "AWAITING_STATUS"
   | "AWAITING_EMPLOYER_NAME"
   | "AWAITING_ROLE"
@@ -37,7 +38,7 @@ interface CollectedData {
   [key: string]: string | undefined;
 }
 
-const STATUS_OPTIONS = [
+const STATUS_OPTIONS_EN = [
   { label: "1. Employed", value: "EMPLOYED" },
   { label: "2. Self-employed", value: "SELF_EMPLOYED" },
   { label: "3. Apprentice", value: "APPRENTICE" },
@@ -45,7 +46,15 @@ const STATUS_OPTIONS = [
   { label: "5. Not working", value: "NOT_WORKING" },
 ];
 
-const SALARY_BANDS = [
+const STATUS_OPTIONS_HI = [
+  { label: "1. रोजगारित", value: "EMPLOYED" },
+  { label: "2. स्वरोजगार", value: "SELF_EMPLOYED" },
+  { label: "3. अपरेंटिस", value: "APPRENTICE" },
+  { label: "4. काम ढूंढ रहे हैं", value: "LOOKING" },
+  { label: "5. काम नहीं कर रहे", value: "NOT_WORKING" },
+];
+
+const SALARY_BANDS_EN = [
   { label: "1. < ₹10,000", value: "LT_10K" },
   { label: "2. ₹10,000 - ₹20,000", value: "B_10_20K" },
   { label: "3. ₹20,000 - ₹35,000", value: "B_20_35K" },
@@ -53,7 +62,15 @@ const SALARY_BANDS = [
   { label: "5. > ₹50,000", value: "GT_50K" },
 ];
 
-const NON_PLACEMENT_REASONS = [
+const SALARY_BANDS_HI = [
+  { label: "1. < ₹10,000", value: "LT_10K" },
+  { label: "2. ₹10,000 - ₹20,000", value: "B_10_20K" },
+  { label: "3. ₹20,000 - ₹35,000", value: "B_20_35K" },
+  { label: "4. ₹35,000 - ₹50,000", value: "B_35_50K" },
+  { label: "5. > ₹50,000", value: "GT_50K" },
+];
+
+const NON_PLACEMENT_REASONS_EN = [
   { label: "1. No jobs available", value: "NO_JOBS" },
   { label: "2. Skills mismatch", value: "SKILLS_MISMATCH" },
   { label: "3. Family responsibilities", value: "FAMILY" },
@@ -61,58 +78,93 @@ const NON_PLACEMENT_REASONS = [
   { label: "5. Other", value: "OTHER" },
 ];
 
-const RETENTION_STATUS_OPTIONS = [
+const NON_PLACEMENT_REASONS_HI = [
+  { label: "1. नौकरियाँ उपलब्ध नहीं", value: "NO_JOBS" },
+  { label: "2. कौशल का मिलान नहीं", value: "SKILLS_MISMATCH" },
+  { label: "3. पारिवारिक जिम्मेदारियाँ", value: "FAMILY" },
+  { label: "4. स्वास्थ्य समस्याएँ", value: "HEALTH" },
+  { label: "5. अन्य", value: "OTHER" },
+];
+
+const RETENTION_STATUS_OPTIONS_EN = [
   { label: "1. Still with same employer", value: "SAME_EMPLOYER" },
   { label: "2. Changed employer", value: "CHANGED_EMPLOYER" },
   { label: "3. No longer working", value: "NOT_WORKING" },
 ];
 
-function getStatusQuestion(): { text: string; options: Array<{ label: string; value: string }> } {
+const RETENTION_STATUS_OPTIONS_HI = [
+  { label: "1. उसी नियोक्ता के साथ", value: "SAME_EMPLOYER" },
+  { label: "2. नियोक्ता बदला", value: "CHANGED_EMPLOYER" },
+  { label: "3. अब काम नहीं कर रहे", value: "NOT_WORKING" },
+];
+
+function getOptions<T extends { label: string; value: string }>(optionsEn: T[], optionsHi: T[], language: string): T[] {
+  return language === "HI" ? optionsHi : optionsEn;
+}
+
+function getStatusQuestion(language: string): { text: string; options: Array<{ label: string; value: string }> } {
   return {
-    text: "What is your current work status? Reply 1-5:",
-    options: STATUS_OPTIONS,
+    text: language === "HI" ? "आपकी वर्तमान कार्य स्थिति क्या है? 1-5 से उत्तर दें:" : "What is your current work status? Reply 1-5:",
+    options: getOptions(STATUS_OPTIONS_EN, STATUS_OPTIONS_HI, language),
   };
 }
 
-function getRetentionStatusQuestion(): { text: string; options: Array<{ label: string; value: string }> } {
+function getRetentionStatusQuestion(language: string): { text: string; options: Array<{ label: string; value: string }> } {
   return {
-    text: "Are you still with the same employer? Reply 1-3:",
-    options: RETENTION_STATUS_OPTIONS,
+    text: language === "HI" ? "क्या आप अभी भी उसी नियोक्ता के साथ हैं? 1-3 से उत्तर दें:" : "Are you still with the same employer? Reply 1-3:",
+    options: getOptions(RETENTION_STATUS_OPTIONS_EN, RETENTION_STATUS_OPTIONS_HI, language),
   };
 }
 
-function getEmployerNameQuestion(): { text: string; options: never[] } {
+function getEmployerNameQuestion(language: string): { text: string; options: never[] } {
   return {
-    text: "What is your employer's name?",
+    text: language === "HI" ? "आपके नियोक्ता का नाम क्या है?" : "What is your employer's name?",
     options: [],
   };
 }
 
-function getRoleQuestion(): { text: string; options: never[] } {
+function getRoleQuestion(language: string): { text: string; options: never[] } {
   return {
-    text: "What is your role/designation?",
+    text: language === "HI" ? "आपकी भूमिका/पदनाम क्या है?" : "What is your role/designation?",
     options: [],
   };
 }
 
-function getSalaryBandQuestion(): { text: string; options: Array<{ label: string; value: string }> } {
+function getSalaryBandQuestion(language: string): { text: string; options: Array<{ label: string; value: string }> } {
   return {
-    text: "What is your monthly salary band? Reply 1-5:",
-    options: SALARY_BANDS,
+    text: language === "HI" ? "आपका मासिक वेतन बैंड क्या है? 1-5 से उत्तर दें:" : "What is your monthly salary band? Reply 1-5:",
+    options: getOptions(SALARY_BANDS_EN, SALARY_BANDS_HI, language),
   };
 }
 
-function getNonPlacementReasonQuestion(): { text: string; options: Array<{ label: string; value: string }> } {
+function getNonPlacementReasonQuestion(language: string): { text: string; options: Array<{ label: string; value: string }> } {
   return {
-    text: "What is the main reason? Reply 1-5:",
-    options: NON_PLACEMENT_REASONS,
+    text: language === "HI" ? "मुख्य कारण क्या है? 1-5 से उत्तर दें:" : "What is the main reason? Reply 1-5:",
+    options: getOptions(NON_PLACEMENT_REASONS_EN, NON_PLACEMENT_REASONS_HI, language),
   };
 }
 
-function getRetentionSalaryBandQuestion(): { text: string; options: Array<{ label: string; value: string }> } {
+function getRetentionSalaryBandQuestion(language: string): { text: string; options: Array<{ label: string; value: string }> } {
   return {
-    text: "What is your current monthly salary band? Reply 1-5:",
-    options: SALARY_BANDS,
+    text: language === "HI" ? "आपका वर्तमान मासिक वेतन बैंड क्या है? 1-5 से उत्तर दें:" : "What is your current monthly salary band? Reply 1-5:",
+    options: getOptions(SALARY_BANDS_EN, SALARY_BANDS_HI, language),
+  };
+}
+
+function getConsentQuestion(language: string): { text: string; options: Array<{ label: string; value: string }> } {
+  return {
+    text: language === "HI"
+      ? "नमस्ते! हम आपके रोजगार परिणामों पर फॉलो-अप करना चाहते हैं। हम आपकी कार्य स्थिति के बारे में कुछ प्रश्न पूछेंगे। आपका डेटा गोपनीय रखा जाएगा और केवल कार्यक्रम मूल्यांकन के लिए उपयोग किया जाएगा। क्या आप भाग लेने के लिए सहमति देते हैं? हाँ के लिए 1, नहीं के लिए 2 उत्तर दें।"
+      : "Hi! We'd like to follow up on your employment outcomes. We'll ask a few questions about your work status. Your data will be kept confidential and used only for programme evaluation. Do you consent to participate? Reply 1 for Yes, 2 for No.",
+    options: language === "HI"
+      ? [
+          { label: "1. हाँ, मैं सहमत हूँ", value: "CONSENT_GIVEN" },
+          { label: "2. नहीं, मैं सहमत नहीं हूँ", value: "CONSENT_DENIED" },
+        ]
+      : [
+          { label: "1. Yes, I consent", value: "CONSENT_GIVEN" },
+          { label: "2. No, I don't consent", value: "CONSENT_DENIED" },
+        ],
   };
 }
 
@@ -126,10 +178,28 @@ async function findOrCreateBotSession(traineeId: string, followupEventId: string
     return existing;
   }
 
+  // Check if trainee has given consent
+  const trainee = await db.trainee.findUnique({
+    where: { id: traineeId },
+    select: { consentGiven: true },
+  });
+
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-  // For 90-day retention follow-ups, start with retention status question
-  const initialState = checkpointDays === 90 ? "AWAITING_RETENTION_STATUS" : "AWAITING_STATUS";
-  const initialQuestion = checkpointDays === 90 ? "retention_status" : "status";
+  
+  // If no consent given, start with consent question
+  let initialState: BotSessionState;
+  let initialQuestion: string;
+  
+  if (!trainee?.consentGiven) {
+    initialState = "AWAITING_CONSENT";
+    initialQuestion = "consent";
+  } else if (checkpointDays === 90) {
+    initialState = "AWAITING_RETENTION_STATUS";
+    initialQuestion = "retention_status";
+  } else {
+    initialState = "AWAITING_STATUS";
+    initialQuestion = "status";
+  }
   
   return db.botSession.create({
     data: {
@@ -149,7 +219,48 @@ async function processStateMachine(session: any, text: string, trainee: any, fol
   let isDone = false;
 
   switch (session.state) {
+    case "AWAITING_CONSENT": {
+      const lang = trainee.language || "EN";
+      const consentMap: Record<string, string> = {
+        "1": "CONSENT_GIVEN",
+        "2": "CONSENT_DENIED",
+      };
+      const consent = consentMap[text.trim()];
+      if (!consent) {
+        reply = getConsentQuestion(lang);
+        reply.text = (lang === "HI" ? "अमान्य विकल्प। " : "Invalid option. ") + reply.text;
+        break;
+      }
+      if (consent === "CONSENT_DENIED") {
+        newState = "DONE";
+        isDone = true;
+        reply = { text: lang === "HI" ? "धन्यवाद। हम आपके निर्णय का सम्मान करते हैं। हम इस फॉलो-अप के लिए आपसे फिर संपर्क नहीं करेंगे।" : "Thank you. We respect your decision. We won't contact you again for this follow-up.", options: [] };
+        break;
+      }
+      // Consent given - update trainee record
+      collectedData.consent = "GIVEN";
+      await db.trainee.update({
+        where: { id: trainee.id },
+        data: {
+          consentGiven: true,
+          consentGivenAt: new Date(),
+          consentMethod: followupEvent.channel || "WHATSAPP",
+        },
+      });
+      // Move to next question based on checkpoint
+      const lang2 = trainee.language || "EN";
+      if (followupEvent.checkpointDays === 90) {
+        newState = "AWAITING_RETENTION_STATUS";
+        reply = getRetentionStatusQuestion(lang2);
+      } else {
+        newState = "AWAITING_STATUS";
+        reply = getStatusQuestion(lang2);
+      }
+      break;
+    }
+
     case "AWAITING_STATUS": {
+      const lang = trainee.language || "EN";
       const statusMap: Record<string, string> = {
         "1": "EMPLOYED",
         "2": "SELF_EMPLOYED",
@@ -159,46 +270,49 @@ async function processStateMachine(session: any, text: string, trainee: any, fol
       };
       const status = statusMap[text.trim()];
       if (!status) {
-        reply = getStatusQuestion();
-        reply.text = "Invalid option. " + reply.text;
+        reply = getStatusQuestion(lang);
+        reply.text = (lang === "HI" ? "अमान्य विकल्प। " : "Invalid option. ") + reply.text;
         break;
       }
       collectedData.status = status;
       if (["EMPLOYED", "SELF_EMPLOYED", "APPRENTICE"].includes(status)) {
         newState = "AWAITING_EMPLOYER_NAME";
-        reply = getEmployerNameQuestion();
+        reply = getEmployerNameQuestion(lang);
       } else {
         newState = "AWAITING_NON_PLACEMENT_REASON";
-        reply = getNonPlacementReasonQuestion();
+        reply = getNonPlacementReasonQuestion(lang);
       }
       break;
     }
 
     case "AWAITING_EMPLOYER_NAME": {
+      const lang = trainee.language || "EN";
       if (text.trim().length < 2 || text.trim().length > 100) {
-        reply = getEmployerNameQuestion();
-        reply.text = "Employer name must be 2-100 characters. " + reply.text;
+        reply = getEmployerNameQuestion(lang);
+        reply.text = (lang === "HI" ? "नियोक्ता का नाम 2-100 अक्षरों का होना चाहिए। " : "Employer name must be 2-100 characters. ") + reply.text;
         break;
       }
       collectedData.employer_name = text.trim();
       newState = "AWAITING_ROLE";
-      reply = getRoleQuestion();
+      reply = getRoleQuestion(lang);
       break;
     }
 
     case "AWAITING_ROLE": {
+      const lang = trainee.language || "EN";
       if (text.trim().length < 2 || text.trim().length > 100) {
-        reply = getRoleQuestion();
-        reply.text = "Role must be 2-100 characters. " + reply.text;
+        reply = getRoleQuestion(lang);
+        reply.text = (lang === "HI" ? "भूमिका 2-100 अक्षरों की होनी चाहिए। " : "Role must be 2-100 characters. ") + reply.text;
         break;
       }
       collectedData.role = text.trim();
       newState = "AWAITING_SALARY_BAND";
-      reply = getSalaryBandQuestion();
+      reply = getSalaryBandQuestion(lang);
       break;
     }
 
     case "AWAITING_SALARY_BAND": {
+      const lang = trainee.language || "EN";
       const bandMap: Record<string, string> = {
         "1": "LT_10K",
         "2": "B_10_20K",
@@ -208,18 +322,19 @@ async function processStateMachine(session: any, text: string, trainee: any, fol
       };
       const salaryBand = bandMap[text.trim()];
       if (!salaryBand) {
-        reply = getSalaryBandQuestion();
-        reply.text = "Invalid option. " + reply.text;
+        reply = getSalaryBandQuestion(lang);
+        reply.text = (lang === "HI" ? "अमान्य विकल्प। " : "Invalid option. ") + reply.text;
         break;
       }
       collectedData.salary_band = salaryBand;
       newState = "DONE";
       isDone = true;
-      reply = { text: "Thank you! Your employment claim has been recorded.", options: [] };
+      reply = { text: lang === "HI" ? "धन्यवाद! आपका रोजगार दावा दर्ज किया गया है।" : "Thank you! Your employment claim has been recorded.", options: [] };
       break;
     }
 
     case "AWAITING_NON_PLACEMENT_REASON": {
+      const lang = trainee.language || "EN";
       const reasonMap: Record<string, string> = {
         "1": "NO_JOBS",
         "2": "SKILLS_MISMATCH",
@@ -229,19 +344,20 @@ async function processStateMachine(session: any, text: string, trainee: any, fol
       };
       const reason = reasonMap[text.trim()];
       if (!reason) {
-        reply = getNonPlacementReasonQuestion();
-        reply.text = "Invalid option. " + reply.text;
+        reply = getNonPlacementReasonQuestion(lang);
+        reply.text = (lang === "HI" ? "अमान्य विकल्प। " : "Invalid option. ") + reply.text;
         break;
       }
       collectedData.non_placement_reason = reason;
       newState = "DONE";
       isDone = true;
-      reply = { text: "Thank you for sharing. We'll follow up later to see if we can help.", options: [] };
+      reply = { text: lang === "HI" ? "साझा करने के लिए धन्यवाद। हम बाद में देखेंगे कि क्या हम मदद कर सकते हैं।" : "Thank you for sharing. We'll follow up later to see if we can help.", options: [] };
       break;
     }
 
     // Retention follow-up states (90-day)
     case "AWAITING_RETENTION_STATUS": {
+      const lang = trainee.language || "EN";
       const retentionMap: Record<string, string> = {
         "1": "SAME_EMPLOYER",
         "2": "CHANGED_EMPLOYER",
@@ -249,22 +365,23 @@ async function processStateMachine(session: any, text: string, trainee: any, fol
       };
       const retentionStatus = retentionMap[text.trim()];
       if (!retentionStatus) {
-        reply = getRetentionStatusQuestion();
-        reply.text = "Invalid option. " + reply.text;
+        reply = getRetentionStatusQuestion(lang);
+        reply.text = (lang === "HI" ? "अमान्य विकल्प। " : "Invalid option. ") + reply.text;
         break;
       }
       collectedData.retention_status = retentionStatus;
       if (retentionStatus === "NOT_WORKING") {
         newState = "AWAITING_NON_PLACEMENT_REASON";
-        reply = getNonPlacementReasonQuestion();
+        reply = getNonPlacementReasonQuestion(lang);
       } else {
         newState = "AWAITING_RETENTION_SALARY_BAND";
-        reply = getRetentionSalaryBandQuestion();
+        reply = getRetentionSalaryBandQuestion(lang);
       }
       break;
     }
 
     case "AWAITING_RETENTION_SALARY_BAND": {
+      const lang = trainee.language || "EN";
       const bandMap: Record<string, string> = {
         "1": "LT_10K",
         "2": "B_10_20K",
@@ -274,14 +391,14 @@ async function processStateMachine(session: any, text: string, trainee: any, fol
       };
       const salaryBand = bandMap[text.trim()];
       if (!salaryBand) {
-        reply = getRetentionSalaryBandQuestion();
-        reply.text = "Invalid option. " + reply.text;
+        reply = getRetentionSalaryBandQuestion(lang);
+        reply.text = (lang === "HI" ? "अमान्य विकल्प। " : "Invalid option. ") + reply.text;
         break;
       }
       collectedData.salary_band = salaryBand;
       newState = "DONE";
       isDone = true;
-      reply = { text: "Thank you! Your retention update has been recorded.", options: [] };
+      reply = { text: lang === "HI" ? "धन्यवाद! आपका प्रतिधारण अपडेट दर्ज किया गया है।" : "Thank you! Your retention update has been recorded.", options: [] };
       break;
     }
 

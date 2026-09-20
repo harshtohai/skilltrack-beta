@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { ArrowRight, Calendar, User, Phone, MapPin, Briefcase, Award, ShieldCheck, AlertTriangle } from "lucide-react";
+import { ArrowRight, Calendar, User, Phone, MapPin, Briefcase, Award, ShieldCheck, AlertTriangle, FileText, CheckCircle2, XCircle } from "lucide-react";
 import { db } from "~/server/db";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
@@ -280,6 +280,42 @@ export default async function TraineeDetailPage({ params }: { params: Promise<{ 
                 <p>{trainee.language === "EN" ? "English" : "Hindi"}</p>
               </div>
             </div>
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm text-muted-foreground">Consent Status</p>
+                <div className="flex items-center gap-2">
+                  {trainee.consentGiven ? (
+                    <>
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      <span className="text-green-600">Given</span>
+                      {trainee.consentGivenAt && (
+                        <span className="text-xs text-muted-foreground">
+                          on {formatDateTime(trainee.consentGivenAt)}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-4 w-4 text-gray-400" />
+                      <span className="text-gray-500">Not given</span>
+                    </>
+                  )}
+                  {trainee.consentRevokedAt && (
+                    <span className="text-xs text-orange-500">(Revoked)</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            {trainee.consentMethod && (
+              <div className="flex items-center gap-3">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Consent Method</p>
+                  <p>{trainee.consentMethod}</p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

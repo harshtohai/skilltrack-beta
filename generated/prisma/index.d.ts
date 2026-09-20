@@ -136,6 +136,7 @@ export type Channel = (typeof Channel)[keyof typeof Channel]
 
 
 export const BotSessionState: {
+  AWAITING_CONSENT: 'AWAITING_CONSENT',
   AWAITING_STATUS: 'AWAITING_STATUS',
   AWAITING_EMPLOYER_NAME: 'AWAITING_EMPLOYER_NAME',
   AWAITING_ROLE: 'AWAITING_ROLE',
@@ -4255,6 +4256,10 @@ export namespace Prisma {
     email: string | null
     district: string | null
     language: string | null
+    consentGiven: boolean | null
+    consentGivenAt: Date | null
+    consentMethod: string | null
+    consentRevokedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -4267,6 +4272,10 @@ export namespace Prisma {
     email: string | null
     district: string | null
     language: string | null
+    consentGiven: boolean | null
+    consentGivenAt: Date | null
+    consentMethod: string | null
+    consentRevokedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -4279,6 +4288,10 @@ export namespace Prisma {
     email: number
     district: number
     language: number
+    consentGiven: number
+    consentGivenAt: number
+    consentMethod: number
+    consentRevokedAt: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -4293,6 +4306,10 @@ export namespace Prisma {
     email?: true
     district?: true
     language?: true
+    consentGiven?: true
+    consentGivenAt?: true
+    consentMethod?: true
+    consentRevokedAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -4305,6 +4322,10 @@ export namespace Prisma {
     email?: true
     district?: true
     language?: true
+    consentGiven?: true
+    consentGivenAt?: true
+    consentMethod?: true
+    consentRevokedAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -4317,6 +4338,10 @@ export namespace Prisma {
     email?: true
     district?: true
     language?: true
+    consentGiven?: true
+    consentGivenAt?: true
+    consentMethod?: true
+    consentRevokedAt?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -4402,6 +4427,10 @@ export namespace Prisma {
     email: string | null
     district: string
     language: string
+    consentGiven: boolean
+    consentGivenAt: Date | null
+    consentMethod: string | null
+    consentRevokedAt: Date | null
     createdAt: Date
     updatedAt: Date
     _count: TraineeCountAggregateOutputType | null
@@ -4431,6 +4460,10 @@ export namespace Prisma {
     email?: boolean
     district?: boolean
     language?: boolean
+    consentGiven?: boolean
+    consentGivenAt?: boolean
+    consentMethod?: boolean
+    consentRevokedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     enrolments?: boolean | Trainee$enrolmentsArgs<ExtArgs>
@@ -4449,6 +4482,10 @@ export namespace Prisma {
     email?: boolean
     district?: boolean
     language?: boolean
+    consentGiven?: boolean
+    consentGivenAt?: boolean
+    consentMethod?: boolean
+    consentRevokedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["trainee"]>
@@ -4461,6 +4498,10 @@ export namespace Prisma {
     email?: boolean
     district?: boolean
     language?: boolean
+    consentGiven?: boolean
+    consentGivenAt?: boolean
+    consentMethod?: boolean
+    consentRevokedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["trainee"]>
@@ -4473,11 +4514,15 @@ export namespace Prisma {
     email?: boolean
     district?: boolean
     language?: boolean
+    consentGiven?: boolean
+    consentGivenAt?: boolean
+    consentMethod?: boolean
+    consentRevokedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type TraineeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "publicId" | "fullName" | "phoneE164" | "email" | "district" | "language" | "createdAt" | "updatedAt", ExtArgs["result"]["trainee"]>
+  export type TraineeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "publicId" | "fullName" | "phoneE164" | "email" | "district" | "language" | "consentGiven" | "consentGivenAt" | "consentMethod" | "consentRevokedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["trainee"]>
   export type TraineeInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     enrolments?: boolean | Trainee$enrolmentsArgs<ExtArgs>
     followupEvents?: boolean | Trainee$followupEventsArgs<ExtArgs>
@@ -4506,6 +4551,10 @@ export namespace Prisma {
       email: string | null
       district: string
       language: string
+      consentGiven: boolean
+      consentGivenAt: Date | null
+      consentMethod: string | null
+      consentRevokedAt: Date | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["trainee"]>
@@ -4943,6 +4992,10 @@ export namespace Prisma {
     readonly email: FieldRef<"Trainee", 'String'>
     readonly district: FieldRef<"Trainee", 'String'>
     readonly language: FieldRef<"Trainee", 'String'>
+    readonly consentGiven: FieldRef<"Trainee", 'Boolean'>
+    readonly consentGivenAt: FieldRef<"Trainee", 'DateTime'>
+    readonly consentMethod: FieldRef<"Trainee", 'String'>
+    readonly consentRevokedAt: FieldRef<"Trainee", 'DateTime'>
     readonly createdAt: FieldRef<"Trainee", 'DateTime'>
     readonly updatedAt: FieldRef<"Trainee", 'DateTime'>
   }
@@ -13484,6 +13537,10 @@ export namespace Prisma {
     email: 'email',
     district: 'district',
     language: 'language',
+    consentGiven: 'consentGiven',
+    consentGivenAt: 'consentGivenAt',
+    consentMethod: 'consentMethod',
+    consentRevokedAt: 'consentRevokedAt',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -13665,6 +13722,13 @@ export namespace Prisma {
    * Reference to a field of type 'DateTime[]'
    */
   export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -13962,6 +14026,10 @@ export namespace Prisma {
     email?: StringNullableFilter<"Trainee"> | string | null
     district?: StringFilter<"Trainee"> | string
     language?: StringFilter<"Trainee"> | string
+    consentGiven?: BoolFilter<"Trainee"> | boolean
+    consentGivenAt?: DateTimeNullableFilter<"Trainee"> | Date | string | null
+    consentMethod?: StringNullableFilter<"Trainee"> | string | null
+    consentRevokedAt?: DateTimeNullableFilter<"Trainee"> | Date | string | null
     createdAt?: DateTimeFilter<"Trainee"> | Date | string
     updatedAt?: DateTimeFilter<"Trainee"> | Date | string
     enrolments?: EnrolmentListRelationFilter
@@ -13979,6 +14047,10 @@ export namespace Prisma {
     email?: SortOrderInput | SortOrder
     district?: SortOrder
     language?: SortOrder
+    consentGiven?: SortOrder
+    consentGivenAt?: SortOrderInput | SortOrder
+    consentMethod?: SortOrderInput | SortOrder
+    consentRevokedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     enrolments?: EnrolmentOrderByRelationAggregateInput
@@ -13999,6 +14071,10 @@ export namespace Prisma {
     email?: StringNullableFilter<"Trainee"> | string | null
     district?: StringFilter<"Trainee"> | string
     language?: StringFilter<"Trainee"> | string
+    consentGiven?: BoolFilter<"Trainee"> | boolean
+    consentGivenAt?: DateTimeNullableFilter<"Trainee"> | Date | string | null
+    consentMethod?: StringNullableFilter<"Trainee"> | string | null
+    consentRevokedAt?: DateTimeNullableFilter<"Trainee"> | Date | string | null
     createdAt?: DateTimeFilter<"Trainee"> | Date | string
     updatedAt?: DateTimeFilter<"Trainee"> | Date | string
     enrolments?: EnrolmentListRelationFilter
@@ -14016,6 +14092,10 @@ export namespace Prisma {
     email?: SortOrderInput | SortOrder
     district?: SortOrder
     language?: SortOrder
+    consentGiven?: SortOrder
+    consentGivenAt?: SortOrderInput | SortOrder
+    consentMethod?: SortOrderInput | SortOrder
+    consentRevokedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: TraineeCountOrderByAggregateInput
@@ -14034,6 +14114,10 @@ export namespace Prisma {
     email?: StringNullableWithAggregatesFilter<"Trainee"> | string | null
     district?: StringWithAggregatesFilter<"Trainee"> | string
     language?: StringWithAggregatesFilter<"Trainee"> | string
+    consentGiven?: BoolWithAggregatesFilter<"Trainee"> | boolean
+    consentGivenAt?: DateTimeNullableWithAggregatesFilter<"Trainee"> | Date | string | null
+    consentMethod?: StringNullableWithAggregatesFilter<"Trainee"> | string | null
+    consentRevokedAt?: DateTimeNullableWithAggregatesFilter<"Trainee"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Trainee"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Trainee"> | Date | string
   }
@@ -14734,6 +14818,10 @@ export namespace Prisma {
     email?: string | null
     district: string
     language?: string
+    consentGiven?: boolean
+    consentGivenAt?: Date | string | null
+    consentMethod?: string | null
+    consentRevokedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     enrolments?: EnrolmentCreateNestedManyWithoutTraineeInput
@@ -14751,6 +14839,10 @@ export namespace Prisma {
     email?: string | null
     district: string
     language?: string
+    consentGiven?: boolean
+    consentGivenAt?: Date | string | null
+    consentMethod?: string | null
+    consentRevokedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     enrolments?: EnrolmentUncheckedCreateNestedManyWithoutTraineeInput
@@ -14768,6 +14860,10 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     district?: StringFieldUpdateOperationsInput | string
     language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     enrolments?: EnrolmentUpdateManyWithoutTraineeNestedInput
@@ -14785,6 +14881,10 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     district?: StringFieldUpdateOperationsInput | string
     language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     enrolments?: EnrolmentUncheckedUpdateManyWithoutTraineeNestedInput
@@ -14802,6 +14902,10 @@ export namespace Prisma {
     email?: string | null
     district: string
     language?: string
+    consentGiven?: boolean
+    consentGivenAt?: Date | string | null
+    consentMethod?: string | null
+    consentRevokedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -14814,6 +14918,10 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     district?: StringFieldUpdateOperationsInput | string
     language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -14826,6 +14934,10 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     district?: StringFieldUpdateOperationsInput | string
     language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -15578,6 +15690,22 @@ export namespace Prisma {
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type BotSessionListRelationFilter = {
     every?: BotSessionWhereInput
     some?: BotSessionWhereInput
@@ -15621,6 +15749,10 @@ export namespace Prisma {
     email?: SortOrder
     district?: SortOrder
     language?: SortOrder
+    consentGiven?: SortOrder
+    consentGivenAt?: SortOrder
+    consentMethod?: SortOrder
+    consentRevokedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -15633,6 +15765,10 @@ export namespace Prisma {
     email?: SortOrder
     district?: SortOrder
     language?: SortOrder
+    consentGiven?: SortOrder
+    consentGivenAt?: SortOrder
+    consentMethod?: SortOrder
+    consentRevokedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -15645,6 +15781,10 @@ export namespace Prisma {
     email?: SortOrder
     district?: SortOrder
     language?: SortOrder
+    consentGiven?: SortOrder
+    consentGivenAt?: SortOrder
+    consentMethod?: SortOrder
+    consentRevokedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -15665,6 +15805,28 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type TraineeScalarRelationFilter = {
@@ -15732,17 +15894,6 @@ export namespace Prisma {
     in?: $Enums.Channel[] | ListEnumChannelFieldRefInput<$PrismaModel>
     notIn?: $Enums.Channel[] | ListEnumChannelFieldRefInput<$PrismaModel>
     not?: NestedEnumChannelFilter<$PrismaModel> | $Enums.Channel
-  }
-
-  export type DateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
   export type FollowupEventCountOrderByAggregateInput = {
@@ -15826,20 +15977,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumChannelFilter<$PrismaModel>
     _max?: NestedEnumChannelFilter<$PrismaModel>
-  }
-
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type EnumBotSessionStateFilter<$PrismaModel = never> = {
@@ -16437,6 +16574,14 @@ export namespace Prisma {
     set?: string | null
   }
 
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
   export type EnrolmentUpdateManyWithoutTraineeNestedInput = {
     create?: XOR<EnrolmentCreateWithoutTraineeInput, EnrolmentUncheckedCreateWithoutTraineeInput> | EnrolmentCreateWithoutTraineeInput[] | EnrolmentUncheckedCreateWithoutTraineeInput[]
     connectOrCreate?: EnrolmentCreateOrConnectWithoutTraineeInput | EnrolmentCreateOrConnectWithoutTraineeInput[]
@@ -16659,10 +16804,6 @@ export namespace Prisma {
 
   export type EnumChannelFieldUpdateOperationsInput = {
     set?: $Enums.Channel
-  }
-
-  export type NullableDateTimeFieldUpdateOperationsInput = {
-    set?: Date | string | null
   }
 
   export type TraineeUpdateOneRequiredWithoutFollowupEventsNestedInput = {
@@ -17026,6 +17167,22 @@ export namespace Prisma {
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -17054,6 +17211,28 @@ export namespace Prisma {
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
   export type NestedEnumFollowupStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.FollowupStatus | EnumFollowupStatusFieldRefInput<$PrismaModel>
     in?: $Enums.FollowupStatus[] | ListEnumFollowupStatusFieldRefInput<$PrismaModel>
@@ -17066,17 +17245,6 @@ export namespace Prisma {
     in?: $Enums.Channel[] | ListEnumChannelFieldRefInput<$PrismaModel>
     notIn?: $Enums.Channel[] | ListEnumChannelFieldRefInput<$PrismaModel>
     not?: NestedEnumChannelFilter<$PrismaModel> | $Enums.Channel
-  }
-
-  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -17124,20 +17292,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumChannelFilter<$PrismaModel>
     _max?: NestedEnumChannelFilter<$PrismaModel>
-  }
-
-  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumBotSessionStateFilter<$PrismaModel = never> = {
@@ -17801,6 +17955,10 @@ export namespace Prisma {
     email?: string | null
     district: string
     language?: string
+    consentGiven?: boolean
+    consentGivenAt?: Date | string | null
+    consentMethod?: string | null
+    consentRevokedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     followupEvents?: FollowupEventCreateNestedManyWithoutTraineeInput
@@ -17817,6 +17975,10 @@ export namespace Prisma {
     email?: string | null
     district: string
     language?: string
+    consentGiven?: boolean
+    consentGivenAt?: Date | string | null
+    consentMethod?: string | null
+    consentRevokedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     followupEvents?: FollowupEventUncheckedCreateNestedManyWithoutTraineeInput
@@ -17876,6 +18038,10 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     district?: StringFieldUpdateOperationsInput | string
     language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     followupEvents?: FollowupEventUpdateManyWithoutTraineeNestedInput
@@ -17892,6 +18058,10 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     district?: StringFieldUpdateOperationsInput | string
     language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     followupEvents?: FollowupEventUncheckedUpdateManyWithoutTraineeNestedInput
@@ -17941,6 +18111,10 @@ export namespace Prisma {
     email?: string | null
     district: string
     language?: string
+    consentGiven?: boolean
+    consentGivenAt?: Date | string | null
+    consentMethod?: string | null
+    consentRevokedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     enrolments?: EnrolmentCreateNestedManyWithoutTraineeInput
@@ -17957,6 +18131,10 @@ export namespace Prisma {
     email?: string | null
     district: string
     language?: string
+    consentGiven?: boolean
+    consentGivenAt?: Date | string | null
+    consentMethod?: string | null
+    consentRevokedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     enrolments?: EnrolmentUncheckedCreateNestedManyWithoutTraineeInput
@@ -18088,6 +18266,10 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     district?: StringFieldUpdateOperationsInput | string
     language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     enrolments?: EnrolmentUpdateManyWithoutTraineeNestedInput
@@ -18104,6 +18286,10 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     district?: StringFieldUpdateOperationsInput | string
     language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     enrolments?: EnrolmentUncheckedUpdateManyWithoutTraineeNestedInput
@@ -18185,6 +18371,10 @@ export namespace Prisma {
     email?: string | null
     district: string
     language?: string
+    consentGiven?: boolean
+    consentGivenAt?: Date | string | null
+    consentMethod?: string | null
+    consentRevokedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     enrolments?: EnrolmentCreateNestedManyWithoutTraineeInput
@@ -18201,6 +18391,10 @@ export namespace Prisma {
     email?: string | null
     district: string
     language?: string
+    consentGiven?: boolean
+    consentGivenAt?: Date | string | null
+    consentMethod?: string | null
+    consentRevokedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     enrolments?: EnrolmentUncheckedCreateNestedManyWithoutTraineeInput
@@ -18266,6 +18460,10 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     district?: StringFieldUpdateOperationsInput | string
     language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     enrolments?: EnrolmentUpdateManyWithoutTraineeNestedInput
@@ -18282,6 +18480,10 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     district?: StringFieldUpdateOperationsInput | string
     language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     enrolments?: EnrolmentUncheckedUpdateManyWithoutTraineeNestedInput
@@ -18337,6 +18539,10 @@ export namespace Prisma {
     email?: string | null
     district: string
     language?: string
+    consentGiven?: boolean
+    consentGivenAt?: Date | string | null
+    consentMethod?: string | null
+    consentRevokedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     enrolments?: EnrolmentCreateNestedManyWithoutTraineeInput
@@ -18353,6 +18559,10 @@ export namespace Prisma {
     email?: string | null
     district: string
     language?: string
+    consentGiven?: boolean
+    consentGivenAt?: Date | string | null
+    consentMethod?: string | null
+    consentRevokedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     enrolments?: EnrolmentUncheckedCreateNestedManyWithoutTraineeInput
@@ -18482,6 +18692,10 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     district?: StringFieldUpdateOperationsInput | string
     language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     enrolments?: EnrolmentUpdateManyWithoutTraineeNestedInput
@@ -18498,6 +18712,10 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     district?: StringFieldUpdateOperationsInput | string
     language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     enrolments?: EnrolmentUncheckedUpdateManyWithoutTraineeNestedInput
@@ -18600,6 +18818,10 @@ export namespace Prisma {
     email?: string | null
     district: string
     language?: string
+    consentGiven?: boolean
+    consentGivenAt?: Date | string | null
+    consentMethod?: string | null
+    consentRevokedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     enrolments?: EnrolmentCreateNestedManyWithoutTraineeInput
@@ -18616,6 +18838,10 @@ export namespace Prisma {
     email?: string | null
     district: string
     language?: string
+    consentGiven?: boolean
+    consentGivenAt?: Date | string | null
+    consentMethod?: string | null
+    consentRevokedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     enrolments?: EnrolmentUncheckedCreateNestedManyWithoutTraineeInput
@@ -18683,6 +18909,10 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     district?: StringFieldUpdateOperationsInput | string
     language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     enrolments?: EnrolmentUpdateManyWithoutTraineeNestedInput
@@ -18699,6 +18929,10 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null
     district?: StringFieldUpdateOperationsInput | string
     language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     enrolments?: EnrolmentUncheckedUpdateManyWithoutTraineeNestedInput

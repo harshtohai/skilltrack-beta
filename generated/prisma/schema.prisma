@@ -62,6 +62,7 @@ enum Channel {
 }
 
 enum BotSessionState {
+  AWAITING_CONSENT
   AWAITING_STATUS
   AWAITING_EMPLOYER_NAME
   AWAITING_ROLE
@@ -108,15 +109,19 @@ model Cohort {
 }
 
 model Trainee {
-  id        String   @id @default(uuid())
-  publicId  String   @unique @default(uuid())
-  fullName  String
-  phoneE164 String   @unique
-  email     String?
-  district  String
-  language  String   @default("EN")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String    @id @default(uuid())
+  publicId         String    @unique @default(uuid())
+  fullName         String
+  phoneE164        String    @unique
+  email            String?
+  district         String
+  language         String    @default("EN")
+  consentGiven     Boolean   @default(false)
+  consentGivenAt   DateTime?
+  consentMethod    String?
+  consentRevokedAt DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   enrolments       Enrolment[]
   followupEvents   FollowupEvent[]

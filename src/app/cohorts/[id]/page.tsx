@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { ArrowRight, Send } from "lucide-react";
+import { ArrowRight, Send, Download } from "lucide-react";
 import { db } from "~/server/db";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -92,6 +92,15 @@ async function CohortDetailContent({ params }: { params: Promise<{ id: string }>
     NOT_TRIGGERED: "outline",
   };
 
+  const handleTriggerFollowup = async () => {
+    const res = await fetch(`/api/v1/cohorts/${id}/followups/trigger`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ checkpointDays: 30 }),
+    });
+    if (res.ok) window.location.reload();
+  };
+
   return (
     <div className="container py-8">
       <div className="flex items-center justify-between mb-8">
@@ -102,20 +111,21 @@ async function CohortDetailContent({ params }: { params: Promise<{ id: string }>
           <h1 className="text-3xl font-bold">{cohort.name}</h1>
           <p className="text-muted-foreground">{cohort.programme.name} • {formatDate(cohort.startDate)} – {formatDate(cohort.endDate)}</p>
         </div>
-      </div>
-
-      <div className="flex gap-4 mb-6">
-        <Button onClick={() => window.location.reload()}>Refresh</Button>
-        <Button variant="outline" onClick={async () => {
-          const res = await fetch(`/api/v1/cohorts/${id}/followups/trigger`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ checkpointDays: 30 }),
-          });
-          if (res.ok) window.location.reload();
-        }}>
-          <Send className="h-4 w-4 mr-2" /> Trigger 30-day Follow-up
-        </Button>
+        <div className="flex gap-4">
+          <Button
+            variant="outline"
+            onClick={() => {
+              window.location.href = `/api/v1/export/cohort?cohortId=${cohort.id}&format=csv`;
+            }}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button onClick={() => window.location.reload()}>Refresh</Button>
+          <Button variant="outline" onClick={handleTriggerFollowup}>
+            <Send className="h-4 w-4 mr-2" /> Trigger 30-day Follow-up
+          </Button>
+        </div>
       </div>
 
       <Suspense fallback={<TraineeTableSkeleton />}>
@@ -178,6 +188,6 @@ async function CohortDetailContent({ params }: { params: Promise<{ id: string }>
   );
 }
 
-export default async function CohortDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function CohortDetailPage({ params }: { params: Promise<{ id: string }> }) {
   return <CohortDetailContent params={params} />;
 }

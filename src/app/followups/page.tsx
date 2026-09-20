@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Filter, ChevronLeft, ChevronRight, X, RefreshCw, Send, Clock, CheckCircle, AlertTriangle, XCircle } from "lucide-react";
+import { Filter, ChevronLeft, ChevronRight, X, RefreshCw, Send, Clock, CheckCircle, AlertTriangle, XCircle, FastForward } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
@@ -166,6 +166,36 @@ export default function FollowupsPage() {
     );
   };
 
+  const advanceClock = async () => {
+    const days = prompt("How many days to advance? (default: 1)", "1");
+    if (days === null) return;
+    const d = parseInt(days, 10);
+    if (isNaN(d) || d < 1) {
+      alert("Please enter a valid number of days");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/v1/demo/advance-clock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ days: d }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message);
+        fetchFollowups();
+      } else {
+        alert("Failed to advance clock: " + (data.error?.message || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Failed to advance clock:", err);
+      alert("Failed to advance clock");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="container py-8">
       <div className="flex items-center justify-between mb-6">
@@ -175,10 +205,16 @@ export default function FollowupsPage() {
             Monitor and manage all follow-up events across cohorts
           </p>
         </div>
-        <Button variant="outline" onClick={fetchFollowups} disabled={loading} className="gap-2">
-          <RefreshCw className="h-4 w-4" />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={advanceClock} disabled={loading} className="gap-2">
+            <FastForward className="h-4 w-4" />
+            Advance Clock
+          </Button>
+          <Button variant="outline" onClick={fetchFollowups} disabled={loading} className="gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
