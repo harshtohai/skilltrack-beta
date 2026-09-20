@@ -8,6 +8,10 @@ const followupsQuerySchema = z.object({
   status: z.enum(["SCHEDULED", "SENT", "RESPONDED", "FAILED", "EXPIRED"]).optional(),
   checkpointDays: z.coerce.number().int().positive().optional(),
   cohortId: z.string().uuid().optional(),
+  programmeId: z.string().uuid().optional(),
+  traineeSearch: z.string().optional(),
+  fromDate: z.string().datetime().optional(),
+  toDate: z.string().datetime().optional(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(50),
 });
@@ -22,13 +26,37 @@ export async function GET(request: NextRequest) {
     if (query.status) where.status = query.status;
     if (query.checkpointDays) where.checkpointDays = query.checkpointDays;
     if (query.cohortId) where.cohortId = query.cohortId;
+    if (query.fromDate || query.toDate) {
+      where.createdAt = {};
+      if (query.fromDate) (where.createdAt as Record<string, Date>).gte = new Date(query.fromDate);
+      if (query.toDate) (where.createdAt as Record<string, Date>).lte = new Date(query.toDate);
+    }
+
+    // Handle programme filter via cohort relation
+    if (query.programmeId) {
+      where.cohort = { programmeId: query.programmeId };
+    }
+
+    // Handle trainee search via relation
+    if (query.traineeSearch) {
+      where.trainee = {
+        OR: [
+          { fullName: { contains: query.traineeSearch, mode: "insensitive" } },
+          { publicId: { contains: query.traineeSearch, mode: "insensitive" } },
+          { phoneE164: { contains: query.traineeSearch } },
+        ],
+      };
+    }
 
     const [followups, total] = await Promise.all([
       db.followupEvent.findMany({
         where,
         include: {
           trainee: { select: { id: true, publicId: true, fullName: true, phoneE164: true, district: true } },
-          cohort: { select: { id: true, name: true } },
+          cohort: {
+            select: { id: true, name: true, programmeId: true },
+            include: { programme: { select: { id: true, name: true } } },
+          },
           botSessions: { orderBy: { createdAt: "desc" }, take: 1 },
         },
         orderBy: { createdAt: "desc" },

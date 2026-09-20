@@ -24,6 +24,8 @@ type BotSessionState =
   | "AWAITING_ROLE"
   | "AWAITING_SALARY_BAND"
   | "AWAITING_NON_PLACEMENT_REASON"
+  | "AWAITING_RETENTION_STATUS"
+  | "AWAITING_RETENTION_SALARY_BAND"
   | "DONE";
 
 interface CollectedData {
@@ -59,10 +61,23 @@ const NON_PLACEMENT_REASONS = [
   { label: "5. Other", value: "OTHER" },
 ];
 
+const RETENTION_STATUS_OPTIONS = [
+  { label: "1. Still with same employer", value: "SAME_EMPLOYER" },
+  { label: "2. Changed employer", value: "CHANGED_EMPLOYER" },
+  { label: "3. No longer working", value: "NOT_WORKING" },
+];
+
 function getStatusQuestion(): { text: string; options: Array<{ label: string; value: string }> } {
   return {
     text: "What is your current work status? Reply 1-5:",
     options: STATUS_OPTIONS,
+  };
+}
+
+function getRetentionStatusQuestion(): { text: string; options: Array<{ label: string; value: string }> } {
+  return {
+    text: "Are you still with the same employer? Reply 1-3:",
+    options: RETENTION_STATUS_OPTIONS,
   };
 }
 
@@ -94,7 +109,14 @@ function getNonPlacementReasonQuestion(): { text: string; options: Array<{ label
   };
 }
 
-async function findOrCreateBotSession(traineeId: string, followupEventId: string) {
+function getRetentionSalaryBandQuestion(): { text: string; options: Array<{ label: string; value: string }> } {
+  return {
+    text: "What is your current monthly salary band? Reply 1-5:",
+    options: SALARY_BANDS,
+  };
+}
+
+async function findOrCreateBotSession(traineeId: string, followupEventId: string, checkpointDays: number) {
   const existing = await db.botSession.findFirst({
     where: { traineeId, followupEventId, state: { not: "DONE" } },
     orderBy: { createdAt: "desc" },
@@ -105,12 +127,16 @@ async function findOrCreateBotSession(traineeId: string, followupEventId: string
   }
 
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+  // For 90-day retention follow-ups, start with retention status question
+  const initialState = checkpointDays === 90 ? "AWAITING_RETENTION_STATUS" : "AWAITING_STATUS";
+  const initialQuestion = checkpointDays === 90 ? "retention_status" : "status";
+  
   return db.botSession.create({
     data: {
       traineeId,
       followupEventId,
-      state: "AWAITING_STATUS",
-      currentQuestion: "status",
+      state: initialState,
+      currentQuestion: initialQuestion,
       expiresAt,
     },
   });
@@ -214,6 +240,51 @@ async function processStateMachine(session: any, text: string, trainee: any, fol
       break;
     }
 
+    // Retention follow-up states (90-day)
+    case "AWAITING_RETENTION_STATUS": {
+      const retentionMap: Record<string, string> = {
+        "1": "SAME_EMPLOYER",
+        "2": "CHANGED_EMPLOYER",
+        "3": "NOT_WORKING",
+      };
+      const retentionStatus = retentionMap[text.trim()];
+      if (!retentionStatus) {
+        reply = getRetentionStatusQuestion();
+        reply.text = "Invalid option. " + reply.text;
+        break;
+      }
+      collectedData.retention_status = retentionStatus;
+      if (retentionStatus === "NOT_WORKING") {
+        newState = "AWAITING_NON_PLACEMENT_REASON";
+        reply = getNonPlacementReasonQuestion();
+      } else {
+        newState = "AWAITING_RETENTION_SALARY_BAND";
+        reply = getRetentionSalaryBandQuestion();
+      }
+      break;
+    }
+
+    case "AWAITING_RETENTION_SALARY_BAND": {
+      const bandMap: Record<string, string> = {
+        "1": "LT_10K",
+        "2": "B_10_20K",
+        "3": "B_20_35K",
+        "4": "B_35_50K",
+        "5": "GT_50K",
+      };
+      const salaryBand = bandMap[text.trim()];
+      if (!salaryBand) {
+        reply = getRetentionSalaryBandQuestion();
+        reply.text = "Invalid option. " + reply.text;
+        break;
+      }
+      collectedData.salary_band = salaryBand;
+      newState = "DONE";
+      isDone = true;
+      reply = { text: "Thank you! Your retention update has been recorded.", options: [] };
+      break;
+    }
+
     default:
       reply = { text: "Session completed. We'll follow up later.", options: [] };
   }
@@ -295,6 +366,53 @@ async function createEmploymentClaimAndEvents(
   return { claim, token, verificationUrl: `${process.env.APP_BASE_URL}/employer/verify/${token}` };
 }
 
+async function createRetentionOutcomeEvent(
+  trainee: any,
+  followupEvent: any,
+  collectedData: CollectedData
+) {
+  // Determine outcome status based on retention response
+  let outcomeStatus: string;
+  const retentionStatus = collectedData.retention_status;
+  
+  if (retentionStatus === "SAME_EMPLOYER") {
+    outcomeStatus = "EMPLOYED";
+  } else if (retentionStatus === "CHANGED_EMPLOYER") {
+    outcomeStatus = "EMPLOYED";
+  } else {
+    outcomeStatus = "NOT_WORKING";
+  }
+
+  await db.outcomeEvent.create({
+    data: {
+      traineeId: trainee.id,
+      employmentClaimId: null, // Retention doesn't link to a claim
+      checkpointDays: followupEvent.checkpointDays,
+      outcomeStatus: outcomeStatus as any,
+      verificationStatus: "SELF_REPORTED",
+      source: "TRAINEE",
+      evidenceLevel: 1,
+    },
+  });
+
+  await db.auditEvent.create({
+    data: {
+      entityType: "followup_event",
+      entityId: followupEvent.id,
+      action: "RETENTION_RESPONSE",
+      actorType: "TRAINEE",
+      actorId: trainee.id,
+      metadata: { collectedData, checkpointDays: followupEvent.checkpointDays },
+    },
+  });
+
+  // Update followup event status
+  await db.followupEvent.update({
+    where: { id: followupEvent.id },
+    data: { status: "RESPONDED", respondedAt: new Date() },
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Validate internal API key for service-to-service calls
@@ -335,11 +453,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ matched: false });
     }
 
-    // Find active follow-up event (30-day checkpoint)
+    // Find active follow-up event (30-day or 90-day checkpoint)
     const followupEvent = await db.followupEvent.findFirst({
       where: {
         traineeId: trainee.id,
-        checkpointDays: 30,
+        checkpointDays: { in: [30, 90] },
         status: { in: ["SENT", "SCHEDULED"] },
       },
       orderBy: { createdAt: "desc" },
@@ -359,7 +477,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find or create bot session
-    const session = await findOrCreateBotSession(trainee.id, followupEvent.id);
+    const session = await findOrCreateBotSession(trainee.id, followupEvent.id, followupEvent.checkpointDays);
 
     // Process state machine
     const { reply, isDone, collectedData } = await processStateMachine(
@@ -369,11 +487,15 @@ export async function POST(request: NextRequest) {
       followupEvent
     );
 
-    // If done, create employment claim and verification request
+    // If done, create employment claim and verification request (for 30-day) or retention outcome event (for 90-day)
     let verificationUrl: string | undefined;
     if (isDone) {
-      const result = await createEmploymentClaimAndEvents(trainee, followupEvent, collectedData);
-      verificationUrl = result.verificationUrl;
+      if (followupEvent.checkpointDays === 90) {
+        await createRetentionOutcomeEvent(trainee, followupEvent, collectedData);
+      } else {
+        const result = await createEmploymentClaimAndEvents(trainee, followupEvent, collectedData);
+        verificationUrl = result.verificationUrl;
+      }
     }
 
     // Log inbound
