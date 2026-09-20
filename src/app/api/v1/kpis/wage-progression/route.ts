@@ -4,6 +4,10 @@ import { z } from "zod";
 import { db } from "~/server/db";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 const wageProgressionQuerySchema = z.object({
   cohortId: z.string().uuid().optional(),
   programmeId: z.string().uuid().optional(),

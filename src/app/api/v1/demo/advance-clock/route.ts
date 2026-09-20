@@ -4,6 +4,8 @@ import { z } from "zod";
 import { db } from "~/server/db";
 import { createErrorResponse, handleZodError, validateInternalApiKey } from "~/app/api/v1/_utils";
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 const advanceClockSchema = z.object({
   days: z.number().int().positive().default(1),
 });

@@ -9,8 +9,11 @@ import crypto from "crypto";
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 const verifySchema = z.object({
-  action: z.enum(["confirm", "reject"]),
+  action: z.enum(["confirm", "reject", "edit"]),
   reason: z.string().optional(),
+  employerName: z.string().optional(),
+  role: z.string().optional(),
+  salaryBand: z.enum(["LT_10K", "B_10_20K", "B_20_35K", "B_35_50K", "GT_50K"]).optional(),
 });
 
 export async function GET(
@@ -159,6 +162,60 @@ export async function POST(
       });
 
       return NextResponse.json({ success: true, status: "confirmed" });
+    } else if (data.action === "edit") {
+      // Employer edits the claim details
+      const updateData: Record<string, unknown> = {};
+      if (data.employerName !== undefined) updateData.employerName = data.employerName;
+      if (data.role !== undefined) updateData.role = data.role;
+      if (data.salaryBand !== undefined) updateData.salaryBand = data.salaryBand;
+
+      await db.$transaction(async (tx) => {
+        if (Object.keys(updateData).length > 0) {
+          await tx.employmentClaim.update({
+            where: { id: claim.id },
+            data: updateData,
+          });
+        }
+
+        // Create outcome event with updated info (verification status remains as EMPLOYER_EDITED)
+        const inferredOutcomeStatus = (updateData.employerName as string ?? claim.employerName)
+          ? "EMPLOYED"
+          : claim.nonPlacementReason
+            ? "NOT_WORKING"
+            : "UNKNOWN";
+
+        await tx.outcomeEvent.create({
+          data: {
+            traineeId: claim.traineeId,
+            employmentClaimId: claim.id,
+            checkpointDays: claim.followupEvent?.checkpointDays || 30,
+            outcomeStatus: inferredOutcomeStatus as any,
+            verificationStatus: "EMPLOYER_CONFIRMED", // Treat edit as confirmation with corrections
+            source: "EMPLOYER",
+            evidenceLevel: 3,
+          },
+        });
+
+        await tx.verificationRequest.update({
+          where: { id: verificationRequest.id },
+          data: {
+            usedAt: now,
+            action: "EDITED",
+          },
+        });
+
+        await tx.auditEvent.create({
+          data: {
+            entityType: "employment_claim",
+            entityId: claim.id,
+            action: "EMPLOYER_EDITED",
+            actorType: "EMPLOYER",
+            metadata: { verificationRequestId: verificationRequest.id, updatedFields: Object.keys(updateData) },
+          },
+        });
+      });
+
+      return NextResponse.json({ success: true, status: "edited" });
     } else {
       await db.$transaction(async (tx) => {
         await tx.employmentClaim.update({

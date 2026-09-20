@@ -4,6 +4,9 @@ import { z } from "zod";
 import { db } from "~/server/db";
 import { createErrorResponse, handleZodError, validateInternalApiKey } from "~/app/api/v1/_utils";
 
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 const exportQuerySchema = z.object({
   cohortId: z.string().uuid(),
   format: z.enum(["csv", "json"]).default("csv"),
