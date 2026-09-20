@@ -1,89 +1,268 @@
-// Prisma schema for Better Auth
-// learn more: https://better-auth.com/docs/concepts/database
+// OutcomeTrack Prisma Schema
+// Longitudinal skilling outcomes platform
 
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
-// NOTE: When using mysql or sqlserver, uncomment the //@db.Text annotations in model Account below
-// Further reading:
-// https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model Post {
-  id        String   @id @default(cuid())
+// Enums
+enum OutcomeStatus {
+  EMPLOYED
+  SELF_EMPLOYED
+  APPRENTICE
+  LOOKING
+  NOT_WORKING
+  UNKNOWN
+}
+
+enum VerificationStatus {
+  UNKNOWN
+  SELF_REPORTED
+  PROVIDER_CONFIRMED
+  EMPLOYER_CONFIRMED
+  DOCUMENT_VERIFIED
+  SYSTEM_VERIFIED
+  CONFLICT
+}
+
+enum SalaryBand {
+  LT_10K
+  B_10_20K
+  B_20_35K
+  B_35_50K
+  GT_50K
+}
+
+enum NonPlacementReason {
+  NO_JOBS
+  SKILLS_MISMATCH
+  FAMILY
+  HEALTH
+  OTHER
+}
+
+enum FollowupStatus {
+  SCHEDULED
+  SENT
+  RESPONDED
+  FAILED
+  EXPIRED
+}
+
+enum Channel {
+  WHATSAPP
+  SMS
+  EMAIL
+}
+
+enum BotSessionState {
+  AWAITING_STATUS
+  AWAITING_EMPLOYER_NAME
+  AWAITING_ROLE
+  AWAITING_SALARY_BAND
+  AWAITING_NON_PLACEMENT_REASON
+  DONE
+}
+
+enum ActorType {
+  ADMIN
+  TRAINEE
+  EMPLOYER
+  SYSTEM
+}
+
+// Core Tables
+model Programme {
+  id        String    @id @default(uuid())
   name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  code      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  cohorts   Cohort[]
 
-  createdBy   User   @relation(fields: [createdById], references: [id])
-  createdById String
-
-  @@index([name])
+  @@map("programmes")
 }
 
-model User {
-  id            String    @id
-  name          String //@db.Text
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String? //@db.Text
+model Cohort {
+  id               String    @id @default(uuid())
+  programmeId      String
+  name             String
+  startDate        DateTime
+  endDate          DateTime
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  programme        Programme @relation(fields: [programmeId], references: [id])
+  enrolments       Enrolment[]
+  followupEvents   FollowupEvent[]
+
+  @@map("cohorts")
+}
+
+model Trainee {
+  id            String    @id @default(uuid())
+  publicId      String    @unique @default(uuid())
+  fullName      String
+  phoneE164     String    @unique
+  email         String?
+  district      String
+  language      String    @default("EN")
   createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now()) @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  posts         Post[]
+  updatedAt     DateTime  @updatedAt
 
-  @@unique([email])
-  @@map("user")
+  enrolments    Enrolment[]
+  followupEvents FollowupEvent[]
+  botSessions   BotSession[]
+  employmentClaims EmploymentClaim[]
+  outcomeEvents OutcomeEvent[]
+
+  @@index([phoneE164])
+  @@map("trainees")
 }
 
-model Session {
-  id        String   @id
-  expiresAt DateTime
-  token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ipAddress String? //@db.Text
-  userAgent String? //@db.Text
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Enrolment {
+  id                 String    @id @default(uuid())
+  traineeId          String
+  cohortId           String
+  certificationDate  DateTime
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
-  @@unique([token])
-  @@map("session")
+  trainee            Trainee   @relation(fields: [traineeId], references: [id])
+  cohort             Cohort    @relation(fields: [cohortId], references: [id])
+
+  @@unique([traineeId, cohortId])
+  @@map("enrolments")
 }
 
-model Account {
-  id                    String    @id
-  accountId             String //@db.Text
-  providerId            String //@db.Text
-  userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String? //@db.Text
-  refreshToken          String? //@db.Text
-  idToken               String? //@db.Text
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String? //@db.Text
-  password              String? //@db.Text
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+model FollowupEvent {
+  id               String        @id @default(uuid())
+  traineeId        String
+  cohortId         String
+  checkpointDays   Int
+  status           FollowupStatus @default(SCHEDULED)
+  channel          Channel       @default(WHATSAPP)
+  sentAt           DateTime?
+  respondedAt      DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
-  @@map("account")
+  trainee          Trainee       @relation(fields: [traineeId], references: [id])
+  cohort           Cohort        @relation(fields: [cohortId], references: [id])
+  botSessions      BotSession[]
+  employmentClaims EmploymentClaim[]
+
+  @@index([traineeId, checkpointDays, status])
+  @@map("followup_events")
 }
 
-model Verification {
-  id         String   @id
-  identifier String //@db.Text
-  value      String //@db.Text
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now()) @updatedAt
+model BotSession {
+  id                  String            @id @default(uuid())
+  traineeId           String
+  followupEventId     String
+  state               BotSessionState   @default(AWAITING_STATUS)
+  currentQuestion     String?
+  collectedData       Json              @default("{}")
+  expiresAt           DateTime
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
 
-  @@map("verification")
+  trainee             Trainee           @relation(fields: [traineeId], references: [id])
+  followupEvent       FollowupEvent     @relation(fields: [followupEventId], references: [id])
+
+  @@index([traineeId])
+  @@map("bot_sessions")
 }
+
+model EmploymentClaim {
+  id                     String              @id @default(uuid())
+  traineeId              String
+  followupEventId        String
+  employerName           String?
+  role                   String?
+  salaryBand             SalaryBand?
+  nonPlacementReason     NonPlacementReason?
+  verificationStatus     VerificationStatus  @default(SELF_REPORTED)
+  evidenceLevel          Int                 @default(1)
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+
+  trainee                Trainee             @relation(fields: [traineeId], references: [id])
+  followupEvent          FollowupEvent       @relation(fields: [followupEventId], references: [id])
+  verificationRequests   VerificationRequest[]
+  outcomeEvents          OutcomeEvent[]
+
+  @@index([traineeId])
+  @@map("employment_claims")
+}
+
+model OutcomeEvent {
+  id                  String              @id @default(uuid())
+  traineeId           String
+  employmentClaimId   String?
+  checkpointDays      Int
+  outcomeStatus       OutcomeStatus
+  verificationStatus  VerificationStatus
+  source              String              // TRAINEE, EMPLOYER, SYSTEM
+  evidenceLevel       Int
+  createdAt           DateTime            @default(now())
+
+  trainee             Trainee             @relation(fields: [traineeId], references: [id])
+  employmentClaim     EmploymentClaim?    @relation(fields: [employmentClaimId], references: [id])
+
+  @@index([traineeId, checkpointDays, createdAt])
+  @@map("outcome_events")
+}
+
+model VerificationRequest {
+  id                  String    @id @default(uuid())
+  employmentClaimId   String
+  tokenHash           String    @unique
+  expiresAt           DateTime
+  usedAt              DateTime?
+  action              String?   // CONFIRMED, REJECTED
+  rejectionReason     String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  employmentClaim     EmploymentClaim @relation(fields: [employmentClaimId], references: [id])
+
+  @@map("verification_requests")
+}
+
+model AuditEvent {
+  id          String   @id @default(uuid())
+  entityType  String
+  entityId    String
+  action      String
+  actorType   ActorType
+  actorId     String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
+  @@map("audit_events")
+}
+
+// Views (optional - backend falls back to raw SQL if not available)
+// model TraineeLatestOutcome {
+//   // v_trainee_latest_outcome
+// }
+//
+// model CohortOverview {
+//   // v_cohort_overview
+// }
+//
+// model Retention {
+//   // v_retention
+// }
+//
+// model WageBands {
+//   // v_wage_bands
+// }

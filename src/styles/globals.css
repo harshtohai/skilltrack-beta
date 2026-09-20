@@ -1,6 +1,130 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  /* Fonts */
+  --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: "Space Grotesk", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* Colors - shadcn/ui HSL mappings */
+  --color-background: 0 0% 100%;
+  --color-foreground: 210 7% 11%;
+  --color-primary: 210 7% 11%;
+  --color-primary-foreground: 0 0% 100%;
+  --color-secondary: 210 5% 45%;
+  --color-secondary-foreground: 0 0% 100%;
+  --color-destructive: 8 60% 45%;
+  --color-destructive-foreground: 0 0% 100%;
+  --color-muted: 210 5% 96%;
+  --color-muted-foreground: 210 5% 45%;
+  --color-border: 210 5% 85%;
+  --color-input: 210 5% 85%;
+  --color-ring: 210 7% 11%;
+
+  /* Radius */
+  --radius: 8px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Spacing */
+  --spacing-base: 16px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 32px;
+  --spacing-xl: 64px;
+  --spacing-gutter: 24px;
+  --spacing-margin: 32px;
+
+  /* Typography */
+  --text-h1: 48px;
+  --text-h1-weight: 600;
+  --text-h1-line-height: 1.1;
+  --text-h1-letter-spacing: -0.02em;
+
+  --text-body-md: 16px;
+  --text-body-md-weight: 400;
+  --text-body-md-line-height: 1.6;
+
+  --text-label-caps: 12px;
+  --text-label-caps-weight: 500;
+  --text-label-caps-line-height: 1;
+  --text-label-caps-letter-spacing: 0.1em;
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-body-md);
+  line-height: var(--text-body-md-line-height);
+  color: hsl(var(--color-foreground));
+  background-color: hsl(var(--color-background));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1 {
+  font-family: var(--font-sans);
+  font-size: var(--text-h1);
+  font-weight: var(--text-h1-weight);
+  line-height: var(--text-h1-line-height);
+  letter-spacing: var(--text-h1-letter-spacing);
+}
+
+.label-caps {
+  font-family: var(--font-mono);
+  font-size: var(--text-label-caps);
+  font-weight: var(--text-label-caps-weight);
+  line-height: var(--text-label-caps-line-height);
+  letter-spacing: var(--text-label-caps-letter-spacing);
+  text-transform: uppercase;
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid hsl(var(--color-ring));
+  outline-offset: 2px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--color-muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--color-border));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--color-muted-foreground));
+}
+
+/* Utility classes */
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 0 var(--spacing-gutter);
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 0 var(--spacing-margin);
+  }
 }
