@@ -123,11 +123,14 @@ model Trainee {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  enrolments      Enrolment[]
-  followupEvents  FollowupEvent[]
-  botSessions     BotSession[]
-  employmentClaims EmploymentClaim[]
-  outcomeEvents   OutcomeEvent[]
+  enrolments           Enrolment[]
+  followupEvents       FollowupEvent[]
+  botSessions          BotSession[]
+  employmentClaims     EmploymentClaim[]
+  outcomeEvents        OutcomeEvent[]
+  certificates         Certificate[]
+  employmentHistory    EmploymentHistory[]
+  loginTokens          TraineeLoginToken[]
 
   @@index([phoneE164])
   @@map("trainees")
@@ -255,6 +258,55 @@ model AuditEvent {
 
   @@index([entityType, entityId, createdAt])
   @@map("audit_events")
+}
+
+model Certificate {
+  id          String   @id @default(uuid())
+  traineeId   String
+  name        String
+  issuer      String
+  issueDate   DateTime
+  expiryDate  DateTime?
+  fileUrl     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  trainee     Trainee  @relation(fields: [traineeId], references: [id], onDelete: Cascade)
+
+  @@index([traineeId])
+  @@map("certificates")
+}
+
+model EmploymentHistory {
+  id          String    @id @default(uuid())
+  traineeId   String
+  employer    String
+  role        String
+  salaryBand  SalaryBand?
+  startDate   DateTime
+  endDate     DateTime?
+  isCurrent   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  trainee     Trainee   @relation(fields: [traineeId], references: [id], onDelete: Cascade)
+
+  @@index([traineeId])
+  @@map("employment_history")
+}
+
+model TraineeLoginToken {
+  id        String   @id @default(uuid())
+  traineeId String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  trainee   Trainee  @relation(fields: [traineeId], references: [id], onDelete: Cascade)
+
+  @@index([traineeId])
+  @@map("trainee_login_tokens")
 }
 
 // Views (optional - backend falls back to raw SQL if not available)

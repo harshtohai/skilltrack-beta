@@ -63,6 +63,21 @@ export type VerificationRequest = $Result.DefaultSelection<Prisma.$VerificationR
  * 
  */
 export type AuditEvent = $Result.DefaultSelection<Prisma.$AuditEventPayload>
+/**
+ * Model Certificate
+ * 
+ */
+export type Certificate = $Result.DefaultSelection<Prisma.$CertificatePayload>
+/**
+ * Model EmploymentHistory
+ * 
+ */
+export type EmploymentHistory = $Result.DefaultSelection<Prisma.$EmploymentHistoryPayload>
+/**
+ * Model TraineeLoginToken
+ * 
+ */
+export type TraineeLoginToken = $Result.DefaultSelection<Prisma.$TraineeLoginTokenPayload>
 
 /**
  * Enums
@@ -410,6 +425,36 @@ export class PrismaClient<
     * ```
     */
   get auditEvent(): Prisma.AuditEventDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.certificate`: Exposes CRUD operations for the **Certificate** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Certificates
+    * const certificates = await prisma.certificate.findMany()
+    * ```
+    */
+  get certificate(): Prisma.CertificateDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.employmentHistory`: Exposes CRUD operations for the **EmploymentHistory** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more EmploymentHistories
+    * const employmentHistories = await prisma.employmentHistory.findMany()
+    * ```
+    */
+  get employmentHistory(): Prisma.EmploymentHistoryDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.traineeLoginToken`: Exposes CRUD operations for the **TraineeLoginToken** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TraineeLoginTokens
+    * const traineeLoginTokens = await prisma.traineeLoginToken.findMany()
+    * ```
+    */
+  get traineeLoginToken(): Prisma.TraineeLoginTokenDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -860,7 +905,10 @@ export namespace Prisma {
     EmploymentClaim: 'EmploymentClaim',
     OutcomeEvent: 'OutcomeEvent',
     VerificationRequest: 'VerificationRequest',
-    AuditEvent: 'AuditEvent'
+    AuditEvent: 'AuditEvent',
+    Certificate: 'Certificate',
+    EmploymentHistory: 'EmploymentHistory',
+    TraineeLoginToken: 'TraineeLoginToken'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -879,7 +927,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "programme" | "cohort" | "trainee" | "enrolment" | "followupEvent" | "botSession" | "employmentClaim" | "outcomeEvent" | "verificationRequest" | "auditEvent"
+      modelProps: "programme" | "cohort" | "trainee" | "enrolment" | "followupEvent" | "botSession" | "employmentClaim" | "outcomeEvent" | "verificationRequest" | "auditEvent" | "certificate" | "employmentHistory" | "traineeLoginToken"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1623,6 +1671,228 @@ export namespace Prisma {
           }
         }
       }
+      Certificate: {
+        payload: Prisma.$CertificatePayload<ExtArgs>
+        fields: Prisma.CertificateFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CertificateFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CertificatePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CertificateFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CertificatePayload>
+          }
+          findFirst: {
+            args: Prisma.CertificateFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CertificatePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CertificateFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CertificatePayload>
+          }
+          findMany: {
+            args: Prisma.CertificateFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CertificatePayload>[]
+          }
+          create: {
+            args: Prisma.CertificateCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CertificatePayload>
+          }
+          createMany: {
+            args: Prisma.CertificateCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CertificateCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CertificatePayload>[]
+          }
+          delete: {
+            args: Prisma.CertificateDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CertificatePayload>
+          }
+          update: {
+            args: Prisma.CertificateUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CertificatePayload>
+          }
+          deleteMany: {
+            args: Prisma.CertificateDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CertificateUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CertificateUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CertificatePayload>[]
+          }
+          upsert: {
+            args: Prisma.CertificateUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CertificatePayload>
+          }
+          aggregate: {
+            args: Prisma.CertificateAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCertificate>
+          }
+          groupBy: {
+            args: Prisma.CertificateGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CertificateGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CertificateCountArgs<ExtArgs>
+            result: $Utils.Optional<CertificateCountAggregateOutputType> | number
+          }
+        }
+      }
+      EmploymentHistory: {
+        payload: Prisma.$EmploymentHistoryPayload<ExtArgs>
+        fields: Prisma.EmploymentHistoryFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.EmploymentHistoryFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmploymentHistoryPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.EmploymentHistoryFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmploymentHistoryPayload>
+          }
+          findFirst: {
+            args: Prisma.EmploymentHistoryFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmploymentHistoryPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.EmploymentHistoryFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmploymentHistoryPayload>
+          }
+          findMany: {
+            args: Prisma.EmploymentHistoryFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmploymentHistoryPayload>[]
+          }
+          create: {
+            args: Prisma.EmploymentHistoryCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmploymentHistoryPayload>
+          }
+          createMany: {
+            args: Prisma.EmploymentHistoryCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.EmploymentHistoryCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmploymentHistoryPayload>[]
+          }
+          delete: {
+            args: Prisma.EmploymentHistoryDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmploymentHistoryPayload>
+          }
+          update: {
+            args: Prisma.EmploymentHistoryUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmploymentHistoryPayload>
+          }
+          deleteMany: {
+            args: Prisma.EmploymentHistoryDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.EmploymentHistoryUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.EmploymentHistoryUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmploymentHistoryPayload>[]
+          }
+          upsert: {
+            args: Prisma.EmploymentHistoryUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmploymentHistoryPayload>
+          }
+          aggregate: {
+            args: Prisma.EmploymentHistoryAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateEmploymentHistory>
+          }
+          groupBy: {
+            args: Prisma.EmploymentHistoryGroupByArgs<ExtArgs>
+            result: $Utils.Optional<EmploymentHistoryGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.EmploymentHistoryCountArgs<ExtArgs>
+            result: $Utils.Optional<EmploymentHistoryCountAggregateOutputType> | number
+          }
+        }
+      }
+      TraineeLoginToken: {
+        payload: Prisma.$TraineeLoginTokenPayload<ExtArgs>
+        fields: Prisma.TraineeLoginTokenFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TraineeLoginTokenFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraineeLoginTokenPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TraineeLoginTokenFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraineeLoginTokenPayload>
+          }
+          findFirst: {
+            args: Prisma.TraineeLoginTokenFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraineeLoginTokenPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TraineeLoginTokenFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraineeLoginTokenPayload>
+          }
+          findMany: {
+            args: Prisma.TraineeLoginTokenFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraineeLoginTokenPayload>[]
+          }
+          create: {
+            args: Prisma.TraineeLoginTokenCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraineeLoginTokenPayload>
+          }
+          createMany: {
+            args: Prisma.TraineeLoginTokenCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TraineeLoginTokenCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraineeLoginTokenPayload>[]
+          }
+          delete: {
+            args: Prisma.TraineeLoginTokenDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraineeLoginTokenPayload>
+          }
+          update: {
+            args: Prisma.TraineeLoginTokenUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraineeLoginTokenPayload>
+          }
+          deleteMany: {
+            args: Prisma.TraineeLoginTokenDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TraineeLoginTokenUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.TraineeLoginTokenUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraineeLoginTokenPayload>[]
+          }
+          upsert: {
+            args: Prisma.TraineeLoginTokenUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TraineeLoginTokenPayload>
+          }
+          aggregate: {
+            args: Prisma.TraineeLoginTokenAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTraineeLoginToken>
+          }
+          groupBy: {
+            args: Prisma.TraineeLoginTokenGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TraineeLoginTokenGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TraineeLoginTokenCountArgs<ExtArgs>
+            result: $Utils.Optional<TraineeLoginTokenCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1729,6 +1999,9 @@ export namespace Prisma {
     outcomeEvent?: OutcomeEventOmit
     verificationRequest?: VerificationRequestOmit
     auditEvent?: AuditEventOmit
+    certificate?: CertificateOmit
+    employmentHistory?: EmploymentHistoryOmit
+    traineeLoginToken?: TraineeLoginTokenOmit
   }
 
   /* Types for Logging */
@@ -1885,6 +2158,9 @@ export namespace Prisma {
     botSessions: number
     employmentClaims: number
     outcomeEvents: number
+    certificates: number
+    employmentHistory: number
+    loginTokens: number
   }
 
   export type TraineeCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -1893,6 +2169,9 @@ export namespace Prisma {
     botSessions?: boolean | TraineeCountOutputTypeCountBotSessionsArgs
     employmentClaims?: boolean | TraineeCountOutputTypeCountEmploymentClaimsArgs
     outcomeEvents?: boolean | TraineeCountOutputTypeCountOutcomeEventsArgs
+    certificates?: boolean | TraineeCountOutputTypeCountCertificatesArgs
+    employmentHistory?: boolean | TraineeCountOutputTypeCountEmploymentHistoryArgs
+    loginTokens?: boolean | TraineeCountOutputTypeCountLoginTokensArgs
   }
 
   // Custom InputTypes
@@ -1939,6 +2218,27 @@ export namespace Prisma {
    */
   export type TraineeCountOutputTypeCountOutcomeEventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: OutcomeEventWhereInput
+  }
+
+  /**
+   * TraineeCountOutputType without action
+   */
+  export type TraineeCountOutputTypeCountCertificatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CertificateWhereInput
+  }
+
+  /**
+   * TraineeCountOutputType without action
+   */
+  export type TraineeCountOutputTypeCountEmploymentHistoryArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EmploymentHistoryWhereInput
+  }
+
+  /**
+   * TraineeCountOutputType without action
+   */
+  export type TraineeCountOutputTypeCountLoginTokensArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TraineeLoginTokenWhereInput
   }
 
 
@@ -4471,6 +4771,9 @@ export namespace Prisma {
     botSessions?: boolean | Trainee$botSessionsArgs<ExtArgs>
     employmentClaims?: boolean | Trainee$employmentClaimsArgs<ExtArgs>
     outcomeEvents?: boolean | Trainee$outcomeEventsArgs<ExtArgs>
+    certificates?: boolean | Trainee$certificatesArgs<ExtArgs>
+    employmentHistory?: boolean | Trainee$employmentHistoryArgs<ExtArgs>
+    loginTokens?: boolean | Trainee$loginTokensArgs<ExtArgs>
     _count?: boolean | TraineeCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["trainee"]>
 
@@ -4529,6 +4832,9 @@ export namespace Prisma {
     botSessions?: boolean | Trainee$botSessionsArgs<ExtArgs>
     employmentClaims?: boolean | Trainee$employmentClaimsArgs<ExtArgs>
     outcomeEvents?: boolean | Trainee$outcomeEventsArgs<ExtArgs>
+    certificates?: boolean | Trainee$certificatesArgs<ExtArgs>
+    employmentHistory?: boolean | Trainee$employmentHistoryArgs<ExtArgs>
+    loginTokens?: boolean | Trainee$loginTokensArgs<ExtArgs>
     _count?: boolean | TraineeCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type TraineeIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -4542,6 +4848,9 @@ export namespace Prisma {
       botSessions: Prisma.$BotSessionPayload<ExtArgs>[]
       employmentClaims: Prisma.$EmploymentClaimPayload<ExtArgs>[]
       outcomeEvents: Prisma.$OutcomeEventPayload<ExtArgs>[]
+      certificates: Prisma.$CertificatePayload<ExtArgs>[]
+      employmentHistory: Prisma.$EmploymentHistoryPayload<ExtArgs>[]
+      loginTokens: Prisma.$TraineeLoginTokenPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -4956,6 +5265,9 @@ export namespace Prisma {
     botSessions<T extends Trainee$botSessionsArgs<ExtArgs> = {}>(args?: Subset<T, Trainee$botSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     employmentClaims<T extends Trainee$employmentClaimsArgs<ExtArgs> = {}>(args?: Subset<T, Trainee$employmentClaimsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EmploymentClaimPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     outcomeEvents<T extends Trainee$outcomeEventsArgs<ExtArgs> = {}>(args?: Subset<T, Trainee$outcomeEventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OutcomeEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    certificates<T extends Trainee$certificatesArgs<ExtArgs> = {}>(args?: Subset<T, Trainee$certificatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CertificatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    employmentHistory<T extends Trainee$employmentHistoryArgs<ExtArgs> = {}>(args?: Subset<T, Trainee$employmentHistoryArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EmploymentHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    loginTokens<T extends Trainee$loginTokensArgs<ExtArgs> = {}>(args?: Subset<T, Trainee$loginTokensArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TraineeLoginTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5503,6 +5815,78 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: OutcomeEventScalarFieldEnum | OutcomeEventScalarFieldEnum[]
+  }
+
+  /**
+   * Trainee.certificates
+   */
+  export type Trainee$certificatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Certificate
+     */
+    select?: CertificateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Certificate
+     */
+    omit?: CertificateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CertificateInclude<ExtArgs> | null
+    where?: CertificateWhereInput
+    orderBy?: CertificateOrderByWithRelationInput | CertificateOrderByWithRelationInput[]
+    cursor?: CertificateWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CertificateScalarFieldEnum | CertificateScalarFieldEnum[]
+  }
+
+  /**
+   * Trainee.employmentHistory
+   */
+  export type Trainee$employmentHistoryArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmploymentHistory
+     */
+    select?: EmploymentHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmploymentHistory
+     */
+    omit?: EmploymentHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmploymentHistoryInclude<ExtArgs> | null
+    where?: EmploymentHistoryWhereInput
+    orderBy?: EmploymentHistoryOrderByWithRelationInput | EmploymentHistoryOrderByWithRelationInput[]
+    cursor?: EmploymentHistoryWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: EmploymentHistoryScalarFieldEnum | EmploymentHistoryScalarFieldEnum[]
+  }
+
+  /**
+   * Trainee.loginTokens
+   */
+  export type Trainee$loginTokensArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraineeLoginToken
+     */
+    select?: TraineeLoginTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TraineeLoginToken
+     */
+    omit?: TraineeLoginTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraineeLoginTokenInclude<ExtArgs> | null
+    where?: TraineeLoginTokenWhereInput
+    orderBy?: TraineeLoginTokenOrderByWithRelationInput | TraineeLoginTokenOrderByWithRelationInput[]
+    cursor?: TraineeLoginTokenWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TraineeLoginTokenScalarFieldEnum | TraineeLoginTokenScalarFieldEnum[]
   }
 
   /**
@@ -13492,6 +13876,3310 @@ export namespace Prisma {
 
 
   /**
+   * Model Certificate
+   */
+
+  export type AggregateCertificate = {
+    _count: CertificateCountAggregateOutputType | null
+    _min: CertificateMinAggregateOutputType | null
+    _max: CertificateMaxAggregateOutputType | null
+  }
+
+  export type CertificateMinAggregateOutputType = {
+    id: string | null
+    traineeId: string | null
+    name: string | null
+    issuer: string | null
+    issueDate: Date | null
+    expiryDate: Date | null
+    fileUrl: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CertificateMaxAggregateOutputType = {
+    id: string | null
+    traineeId: string | null
+    name: string | null
+    issuer: string | null
+    issueDate: Date | null
+    expiryDate: Date | null
+    fileUrl: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CertificateCountAggregateOutputType = {
+    id: number
+    traineeId: number
+    name: number
+    issuer: number
+    issueDate: number
+    expiryDate: number
+    fileUrl: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type CertificateMinAggregateInputType = {
+    id?: true
+    traineeId?: true
+    name?: true
+    issuer?: true
+    issueDate?: true
+    expiryDate?: true
+    fileUrl?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CertificateMaxAggregateInputType = {
+    id?: true
+    traineeId?: true
+    name?: true
+    issuer?: true
+    issueDate?: true
+    expiryDate?: true
+    fileUrl?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CertificateCountAggregateInputType = {
+    id?: true
+    traineeId?: true
+    name?: true
+    issuer?: true
+    issueDate?: true
+    expiryDate?: true
+    fileUrl?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type CertificateAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Certificate to aggregate.
+     */
+    where?: CertificateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Certificates to fetch.
+     */
+    orderBy?: CertificateOrderByWithRelationInput | CertificateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CertificateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Certificates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Certificates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Certificates
+    **/
+    _count?: true | CertificateCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CertificateMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CertificateMaxAggregateInputType
+  }
+
+  export type GetCertificateAggregateType<T extends CertificateAggregateArgs> = {
+        [P in keyof T & keyof AggregateCertificate]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCertificate[P]>
+      : GetScalarType<T[P], AggregateCertificate[P]>
+  }
+
+
+
+
+  export type CertificateGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CertificateWhereInput
+    orderBy?: CertificateOrderByWithAggregationInput | CertificateOrderByWithAggregationInput[]
+    by: CertificateScalarFieldEnum[] | CertificateScalarFieldEnum
+    having?: CertificateScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CertificateCountAggregateInputType | true
+    _min?: CertificateMinAggregateInputType
+    _max?: CertificateMaxAggregateInputType
+  }
+
+  export type CertificateGroupByOutputType = {
+    id: string
+    traineeId: string
+    name: string
+    issuer: string
+    issueDate: Date
+    expiryDate: Date | null
+    fileUrl: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: CertificateCountAggregateOutputType | null
+    _min: CertificateMinAggregateOutputType | null
+    _max: CertificateMaxAggregateOutputType | null
+  }
+
+  type GetCertificateGroupByPayload<T extends CertificateGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CertificateGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CertificateGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CertificateGroupByOutputType[P]>
+            : GetScalarType<T[P], CertificateGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CertificateSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    traineeId?: boolean
+    name?: boolean
+    issuer?: boolean
+    issueDate?: boolean
+    expiryDate?: boolean
+    fileUrl?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    trainee?: boolean | TraineeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["certificate"]>
+
+  export type CertificateSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    traineeId?: boolean
+    name?: boolean
+    issuer?: boolean
+    issueDate?: boolean
+    expiryDate?: boolean
+    fileUrl?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    trainee?: boolean | TraineeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["certificate"]>
+
+  export type CertificateSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    traineeId?: boolean
+    name?: boolean
+    issuer?: boolean
+    issueDate?: boolean
+    expiryDate?: boolean
+    fileUrl?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    trainee?: boolean | TraineeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["certificate"]>
+
+  export type CertificateSelectScalar = {
+    id?: boolean
+    traineeId?: boolean
+    name?: boolean
+    issuer?: boolean
+    issueDate?: boolean
+    expiryDate?: boolean
+    fileUrl?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type CertificateOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "traineeId" | "name" | "issuer" | "issueDate" | "expiryDate" | "fileUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["certificate"]>
+  export type CertificateInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    trainee?: boolean | TraineeDefaultArgs<ExtArgs>
+  }
+  export type CertificateIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    trainee?: boolean | TraineeDefaultArgs<ExtArgs>
+  }
+  export type CertificateIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    trainee?: boolean | TraineeDefaultArgs<ExtArgs>
+  }
+
+  export type $CertificatePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Certificate"
+    objects: {
+      trainee: Prisma.$TraineePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      traineeId: string
+      name: string
+      issuer: string
+      issueDate: Date
+      expiryDate: Date | null
+      fileUrl: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["certificate"]>
+    composites: {}
+  }
+
+  type CertificateGetPayload<S extends boolean | null | undefined | CertificateDefaultArgs> = $Result.GetResult<Prisma.$CertificatePayload, S>
+
+  type CertificateCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CertificateFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CertificateCountAggregateInputType | true
+    }
+
+  export interface CertificateDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Certificate'], meta: { name: 'Certificate' } }
+    /**
+     * Find zero or one Certificate that matches the filter.
+     * @param {CertificateFindUniqueArgs} args - Arguments to find a Certificate
+     * @example
+     * // Get one Certificate
+     * const certificate = await prisma.certificate.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CertificateFindUniqueArgs>(args: SelectSubset<T, CertificateFindUniqueArgs<ExtArgs>>): Prisma__CertificateClient<$Result.GetResult<Prisma.$CertificatePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Certificate that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CertificateFindUniqueOrThrowArgs} args - Arguments to find a Certificate
+     * @example
+     * // Get one Certificate
+     * const certificate = await prisma.certificate.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CertificateFindUniqueOrThrowArgs>(args: SelectSubset<T, CertificateFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CertificateClient<$Result.GetResult<Prisma.$CertificatePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Certificate that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CertificateFindFirstArgs} args - Arguments to find a Certificate
+     * @example
+     * // Get one Certificate
+     * const certificate = await prisma.certificate.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CertificateFindFirstArgs>(args?: SelectSubset<T, CertificateFindFirstArgs<ExtArgs>>): Prisma__CertificateClient<$Result.GetResult<Prisma.$CertificatePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Certificate that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CertificateFindFirstOrThrowArgs} args - Arguments to find a Certificate
+     * @example
+     * // Get one Certificate
+     * const certificate = await prisma.certificate.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CertificateFindFirstOrThrowArgs>(args?: SelectSubset<T, CertificateFindFirstOrThrowArgs<ExtArgs>>): Prisma__CertificateClient<$Result.GetResult<Prisma.$CertificatePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Certificates that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CertificateFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Certificates
+     * const certificates = await prisma.certificate.findMany()
+     * 
+     * // Get first 10 Certificates
+     * const certificates = await prisma.certificate.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const certificateWithIdOnly = await prisma.certificate.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CertificateFindManyArgs>(args?: SelectSubset<T, CertificateFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CertificatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Certificate.
+     * @param {CertificateCreateArgs} args - Arguments to create a Certificate.
+     * @example
+     * // Create one Certificate
+     * const Certificate = await prisma.certificate.create({
+     *   data: {
+     *     // ... data to create a Certificate
+     *   }
+     * })
+     * 
+     */
+    create<T extends CertificateCreateArgs>(args: SelectSubset<T, CertificateCreateArgs<ExtArgs>>): Prisma__CertificateClient<$Result.GetResult<Prisma.$CertificatePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Certificates.
+     * @param {CertificateCreateManyArgs} args - Arguments to create many Certificates.
+     * @example
+     * // Create many Certificates
+     * const certificate = await prisma.certificate.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CertificateCreateManyArgs>(args?: SelectSubset<T, CertificateCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Certificates and returns the data saved in the database.
+     * @param {CertificateCreateManyAndReturnArgs} args - Arguments to create many Certificates.
+     * @example
+     * // Create many Certificates
+     * const certificate = await prisma.certificate.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Certificates and only return the `id`
+     * const certificateWithIdOnly = await prisma.certificate.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CertificateCreateManyAndReturnArgs>(args?: SelectSubset<T, CertificateCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CertificatePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Certificate.
+     * @param {CertificateDeleteArgs} args - Arguments to delete one Certificate.
+     * @example
+     * // Delete one Certificate
+     * const Certificate = await prisma.certificate.delete({
+     *   where: {
+     *     // ... filter to delete one Certificate
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CertificateDeleteArgs>(args: SelectSubset<T, CertificateDeleteArgs<ExtArgs>>): Prisma__CertificateClient<$Result.GetResult<Prisma.$CertificatePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Certificate.
+     * @param {CertificateUpdateArgs} args - Arguments to update one Certificate.
+     * @example
+     * // Update one Certificate
+     * const certificate = await prisma.certificate.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CertificateUpdateArgs>(args: SelectSubset<T, CertificateUpdateArgs<ExtArgs>>): Prisma__CertificateClient<$Result.GetResult<Prisma.$CertificatePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Certificates.
+     * @param {CertificateDeleteManyArgs} args - Arguments to filter Certificates to delete.
+     * @example
+     * // Delete a few Certificates
+     * const { count } = await prisma.certificate.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CertificateDeleteManyArgs>(args?: SelectSubset<T, CertificateDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Certificates.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CertificateUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Certificates
+     * const certificate = await prisma.certificate.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CertificateUpdateManyArgs>(args: SelectSubset<T, CertificateUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Certificates and returns the data updated in the database.
+     * @param {CertificateUpdateManyAndReturnArgs} args - Arguments to update many Certificates.
+     * @example
+     * // Update many Certificates
+     * const certificate = await prisma.certificate.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Certificates and only return the `id`
+     * const certificateWithIdOnly = await prisma.certificate.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CertificateUpdateManyAndReturnArgs>(args: SelectSubset<T, CertificateUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CertificatePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Certificate.
+     * @param {CertificateUpsertArgs} args - Arguments to update or create a Certificate.
+     * @example
+     * // Update or create a Certificate
+     * const certificate = await prisma.certificate.upsert({
+     *   create: {
+     *     // ... data to create a Certificate
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Certificate we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CertificateUpsertArgs>(args: SelectSubset<T, CertificateUpsertArgs<ExtArgs>>): Prisma__CertificateClient<$Result.GetResult<Prisma.$CertificatePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Certificates.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CertificateCountArgs} args - Arguments to filter Certificates to count.
+     * @example
+     * // Count the number of Certificates
+     * const count = await prisma.certificate.count({
+     *   where: {
+     *     // ... the filter for the Certificates we want to count
+     *   }
+     * })
+    **/
+    count<T extends CertificateCountArgs>(
+      args?: Subset<T, CertificateCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CertificateCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Certificate.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CertificateAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CertificateAggregateArgs>(args: Subset<T, CertificateAggregateArgs>): Prisma.PrismaPromise<GetCertificateAggregateType<T>>
+
+    /**
+     * Group by Certificate.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CertificateGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CertificateGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CertificateGroupByArgs['orderBy'] }
+        : { orderBy?: CertificateGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CertificateGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCertificateGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Certificate model
+   */
+  readonly fields: CertificateFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Certificate.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CertificateClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    trainee<T extends TraineeDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TraineeDefaultArgs<ExtArgs>>): Prisma__TraineeClient<$Result.GetResult<Prisma.$TraineePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Certificate model
+   */
+  interface CertificateFieldRefs {
+    readonly id: FieldRef<"Certificate", 'String'>
+    readonly traineeId: FieldRef<"Certificate", 'String'>
+    readonly name: FieldRef<"Certificate", 'String'>
+    readonly issuer: FieldRef<"Certificate", 'String'>
+    readonly issueDate: FieldRef<"Certificate", 'DateTime'>
+    readonly expiryDate: FieldRef<"Certificate", 'DateTime'>
+    readonly fileUrl: FieldRef<"Certificate", 'String'>
+    readonly createdAt: FieldRef<"Certificate", 'DateTime'>
+    readonly updatedAt: FieldRef<"Certificate", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Certificate findUnique
+   */
+  export type CertificateFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Certificate
+     */
+    select?: CertificateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Certificate
+     */
+    omit?: CertificateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CertificateInclude<ExtArgs> | null
+    /**
+     * Filter, which Certificate to fetch.
+     */
+    where: CertificateWhereUniqueInput
+  }
+
+  /**
+   * Certificate findUniqueOrThrow
+   */
+  export type CertificateFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Certificate
+     */
+    select?: CertificateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Certificate
+     */
+    omit?: CertificateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CertificateInclude<ExtArgs> | null
+    /**
+     * Filter, which Certificate to fetch.
+     */
+    where: CertificateWhereUniqueInput
+  }
+
+  /**
+   * Certificate findFirst
+   */
+  export type CertificateFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Certificate
+     */
+    select?: CertificateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Certificate
+     */
+    omit?: CertificateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CertificateInclude<ExtArgs> | null
+    /**
+     * Filter, which Certificate to fetch.
+     */
+    where?: CertificateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Certificates to fetch.
+     */
+    orderBy?: CertificateOrderByWithRelationInput | CertificateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Certificates.
+     */
+    cursor?: CertificateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Certificates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Certificates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Certificates.
+     */
+    distinct?: CertificateScalarFieldEnum | CertificateScalarFieldEnum[]
+  }
+
+  /**
+   * Certificate findFirstOrThrow
+   */
+  export type CertificateFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Certificate
+     */
+    select?: CertificateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Certificate
+     */
+    omit?: CertificateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CertificateInclude<ExtArgs> | null
+    /**
+     * Filter, which Certificate to fetch.
+     */
+    where?: CertificateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Certificates to fetch.
+     */
+    orderBy?: CertificateOrderByWithRelationInput | CertificateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Certificates.
+     */
+    cursor?: CertificateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Certificates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Certificates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Certificates.
+     */
+    distinct?: CertificateScalarFieldEnum | CertificateScalarFieldEnum[]
+  }
+
+  /**
+   * Certificate findMany
+   */
+  export type CertificateFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Certificate
+     */
+    select?: CertificateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Certificate
+     */
+    omit?: CertificateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CertificateInclude<ExtArgs> | null
+    /**
+     * Filter, which Certificates to fetch.
+     */
+    where?: CertificateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Certificates to fetch.
+     */
+    orderBy?: CertificateOrderByWithRelationInput | CertificateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Certificates.
+     */
+    cursor?: CertificateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Certificates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Certificates.
+     */
+    skip?: number
+    distinct?: CertificateScalarFieldEnum | CertificateScalarFieldEnum[]
+  }
+
+  /**
+   * Certificate create
+   */
+  export type CertificateCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Certificate
+     */
+    select?: CertificateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Certificate
+     */
+    omit?: CertificateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CertificateInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Certificate.
+     */
+    data: XOR<CertificateCreateInput, CertificateUncheckedCreateInput>
+  }
+
+  /**
+   * Certificate createMany
+   */
+  export type CertificateCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Certificates.
+     */
+    data: CertificateCreateManyInput | CertificateCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Certificate createManyAndReturn
+   */
+  export type CertificateCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Certificate
+     */
+    select?: CertificateSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Certificate
+     */
+    omit?: CertificateOmit<ExtArgs> | null
+    /**
+     * The data used to create many Certificates.
+     */
+    data: CertificateCreateManyInput | CertificateCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CertificateIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Certificate update
+   */
+  export type CertificateUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Certificate
+     */
+    select?: CertificateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Certificate
+     */
+    omit?: CertificateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CertificateInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Certificate.
+     */
+    data: XOR<CertificateUpdateInput, CertificateUncheckedUpdateInput>
+    /**
+     * Choose, which Certificate to update.
+     */
+    where: CertificateWhereUniqueInput
+  }
+
+  /**
+   * Certificate updateMany
+   */
+  export type CertificateUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Certificates.
+     */
+    data: XOR<CertificateUpdateManyMutationInput, CertificateUncheckedUpdateManyInput>
+    /**
+     * Filter which Certificates to update
+     */
+    where?: CertificateWhereInput
+    /**
+     * Limit how many Certificates to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Certificate updateManyAndReturn
+   */
+  export type CertificateUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Certificate
+     */
+    select?: CertificateSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Certificate
+     */
+    omit?: CertificateOmit<ExtArgs> | null
+    /**
+     * The data used to update Certificates.
+     */
+    data: XOR<CertificateUpdateManyMutationInput, CertificateUncheckedUpdateManyInput>
+    /**
+     * Filter which Certificates to update
+     */
+    where?: CertificateWhereInput
+    /**
+     * Limit how many Certificates to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CertificateIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Certificate upsert
+   */
+  export type CertificateUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Certificate
+     */
+    select?: CertificateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Certificate
+     */
+    omit?: CertificateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CertificateInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Certificate to update in case it exists.
+     */
+    where: CertificateWhereUniqueInput
+    /**
+     * In case the Certificate found by the `where` argument doesn't exist, create a new Certificate with this data.
+     */
+    create: XOR<CertificateCreateInput, CertificateUncheckedCreateInput>
+    /**
+     * In case the Certificate was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CertificateUpdateInput, CertificateUncheckedUpdateInput>
+  }
+
+  /**
+   * Certificate delete
+   */
+  export type CertificateDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Certificate
+     */
+    select?: CertificateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Certificate
+     */
+    omit?: CertificateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CertificateInclude<ExtArgs> | null
+    /**
+     * Filter which Certificate to delete.
+     */
+    where: CertificateWhereUniqueInput
+  }
+
+  /**
+   * Certificate deleteMany
+   */
+  export type CertificateDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Certificates to delete
+     */
+    where?: CertificateWhereInput
+    /**
+     * Limit how many Certificates to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Certificate without action
+   */
+  export type CertificateDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Certificate
+     */
+    select?: CertificateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Certificate
+     */
+    omit?: CertificateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CertificateInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model EmploymentHistory
+   */
+
+  export type AggregateEmploymentHistory = {
+    _count: EmploymentHistoryCountAggregateOutputType | null
+    _min: EmploymentHistoryMinAggregateOutputType | null
+    _max: EmploymentHistoryMaxAggregateOutputType | null
+  }
+
+  export type EmploymentHistoryMinAggregateOutputType = {
+    id: string | null
+    traineeId: string | null
+    employer: string | null
+    role: string | null
+    salaryBand: $Enums.SalaryBand | null
+    startDate: Date | null
+    endDate: Date | null
+    isCurrent: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type EmploymentHistoryMaxAggregateOutputType = {
+    id: string | null
+    traineeId: string | null
+    employer: string | null
+    role: string | null
+    salaryBand: $Enums.SalaryBand | null
+    startDate: Date | null
+    endDate: Date | null
+    isCurrent: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type EmploymentHistoryCountAggregateOutputType = {
+    id: number
+    traineeId: number
+    employer: number
+    role: number
+    salaryBand: number
+    startDate: number
+    endDate: number
+    isCurrent: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type EmploymentHistoryMinAggregateInputType = {
+    id?: true
+    traineeId?: true
+    employer?: true
+    role?: true
+    salaryBand?: true
+    startDate?: true
+    endDate?: true
+    isCurrent?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type EmploymentHistoryMaxAggregateInputType = {
+    id?: true
+    traineeId?: true
+    employer?: true
+    role?: true
+    salaryBand?: true
+    startDate?: true
+    endDate?: true
+    isCurrent?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type EmploymentHistoryCountAggregateInputType = {
+    id?: true
+    traineeId?: true
+    employer?: true
+    role?: true
+    salaryBand?: true
+    startDate?: true
+    endDate?: true
+    isCurrent?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type EmploymentHistoryAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EmploymentHistory to aggregate.
+     */
+    where?: EmploymentHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EmploymentHistories to fetch.
+     */
+    orderBy?: EmploymentHistoryOrderByWithRelationInput | EmploymentHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: EmploymentHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EmploymentHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EmploymentHistories.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned EmploymentHistories
+    **/
+    _count?: true | EmploymentHistoryCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: EmploymentHistoryMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: EmploymentHistoryMaxAggregateInputType
+  }
+
+  export type GetEmploymentHistoryAggregateType<T extends EmploymentHistoryAggregateArgs> = {
+        [P in keyof T & keyof AggregateEmploymentHistory]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateEmploymentHistory[P]>
+      : GetScalarType<T[P], AggregateEmploymentHistory[P]>
+  }
+
+
+
+
+  export type EmploymentHistoryGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EmploymentHistoryWhereInput
+    orderBy?: EmploymentHistoryOrderByWithAggregationInput | EmploymentHistoryOrderByWithAggregationInput[]
+    by: EmploymentHistoryScalarFieldEnum[] | EmploymentHistoryScalarFieldEnum
+    having?: EmploymentHistoryScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: EmploymentHistoryCountAggregateInputType | true
+    _min?: EmploymentHistoryMinAggregateInputType
+    _max?: EmploymentHistoryMaxAggregateInputType
+  }
+
+  export type EmploymentHistoryGroupByOutputType = {
+    id: string
+    traineeId: string
+    employer: string
+    role: string
+    salaryBand: $Enums.SalaryBand | null
+    startDate: Date
+    endDate: Date | null
+    isCurrent: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: EmploymentHistoryCountAggregateOutputType | null
+    _min: EmploymentHistoryMinAggregateOutputType | null
+    _max: EmploymentHistoryMaxAggregateOutputType | null
+  }
+
+  type GetEmploymentHistoryGroupByPayload<T extends EmploymentHistoryGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<EmploymentHistoryGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof EmploymentHistoryGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], EmploymentHistoryGroupByOutputType[P]>
+            : GetScalarType<T[P], EmploymentHistoryGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type EmploymentHistorySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    traineeId?: boolean
+    employer?: boolean
+    role?: boolean
+    salaryBand?: boolean
+    startDate?: boolean
+    endDate?: boolean
+    isCurrent?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    trainee?: boolean | TraineeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["employmentHistory"]>
+
+  export type EmploymentHistorySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    traineeId?: boolean
+    employer?: boolean
+    role?: boolean
+    salaryBand?: boolean
+    startDate?: boolean
+    endDate?: boolean
+    isCurrent?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    trainee?: boolean | TraineeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["employmentHistory"]>
+
+  export type EmploymentHistorySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    traineeId?: boolean
+    employer?: boolean
+    role?: boolean
+    salaryBand?: boolean
+    startDate?: boolean
+    endDate?: boolean
+    isCurrent?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    trainee?: boolean | TraineeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["employmentHistory"]>
+
+  export type EmploymentHistorySelectScalar = {
+    id?: boolean
+    traineeId?: boolean
+    employer?: boolean
+    role?: boolean
+    salaryBand?: boolean
+    startDate?: boolean
+    endDate?: boolean
+    isCurrent?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type EmploymentHistoryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "traineeId" | "employer" | "role" | "salaryBand" | "startDate" | "endDate" | "isCurrent" | "createdAt" | "updatedAt", ExtArgs["result"]["employmentHistory"]>
+  export type EmploymentHistoryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    trainee?: boolean | TraineeDefaultArgs<ExtArgs>
+  }
+  export type EmploymentHistoryIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    trainee?: boolean | TraineeDefaultArgs<ExtArgs>
+  }
+  export type EmploymentHistoryIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    trainee?: boolean | TraineeDefaultArgs<ExtArgs>
+  }
+
+  export type $EmploymentHistoryPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "EmploymentHistory"
+    objects: {
+      trainee: Prisma.$TraineePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      traineeId: string
+      employer: string
+      role: string
+      salaryBand: $Enums.SalaryBand | null
+      startDate: Date
+      endDate: Date | null
+      isCurrent: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["employmentHistory"]>
+    composites: {}
+  }
+
+  type EmploymentHistoryGetPayload<S extends boolean | null | undefined | EmploymentHistoryDefaultArgs> = $Result.GetResult<Prisma.$EmploymentHistoryPayload, S>
+
+  type EmploymentHistoryCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<EmploymentHistoryFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: EmploymentHistoryCountAggregateInputType | true
+    }
+
+  export interface EmploymentHistoryDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['EmploymentHistory'], meta: { name: 'EmploymentHistory' } }
+    /**
+     * Find zero or one EmploymentHistory that matches the filter.
+     * @param {EmploymentHistoryFindUniqueArgs} args - Arguments to find a EmploymentHistory
+     * @example
+     * // Get one EmploymentHistory
+     * const employmentHistory = await prisma.employmentHistory.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends EmploymentHistoryFindUniqueArgs>(args: SelectSubset<T, EmploymentHistoryFindUniqueArgs<ExtArgs>>): Prisma__EmploymentHistoryClient<$Result.GetResult<Prisma.$EmploymentHistoryPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one EmploymentHistory that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {EmploymentHistoryFindUniqueOrThrowArgs} args - Arguments to find a EmploymentHistory
+     * @example
+     * // Get one EmploymentHistory
+     * const employmentHistory = await prisma.employmentHistory.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends EmploymentHistoryFindUniqueOrThrowArgs>(args: SelectSubset<T, EmploymentHistoryFindUniqueOrThrowArgs<ExtArgs>>): Prisma__EmploymentHistoryClient<$Result.GetResult<Prisma.$EmploymentHistoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EmploymentHistory that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmploymentHistoryFindFirstArgs} args - Arguments to find a EmploymentHistory
+     * @example
+     * // Get one EmploymentHistory
+     * const employmentHistory = await prisma.employmentHistory.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends EmploymentHistoryFindFirstArgs>(args?: SelectSubset<T, EmploymentHistoryFindFirstArgs<ExtArgs>>): Prisma__EmploymentHistoryClient<$Result.GetResult<Prisma.$EmploymentHistoryPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EmploymentHistory that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmploymentHistoryFindFirstOrThrowArgs} args - Arguments to find a EmploymentHistory
+     * @example
+     * // Get one EmploymentHistory
+     * const employmentHistory = await prisma.employmentHistory.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends EmploymentHistoryFindFirstOrThrowArgs>(args?: SelectSubset<T, EmploymentHistoryFindFirstOrThrowArgs<ExtArgs>>): Prisma__EmploymentHistoryClient<$Result.GetResult<Prisma.$EmploymentHistoryPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more EmploymentHistories that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmploymentHistoryFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all EmploymentHistories
+     * const employmentHistories = await prisma.employmentHistory.findMany()
+     * 
+     * // Get first 10 EmploymentHistories
+     * const employmentHistories = await prisma.employmentHistory.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const employmentHistoryWithIdOnly = await prisma.employmentHistory.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends EmploymentHistoryFindManyArgs>(args?: SelectSubset<T, EmploymentHistoryFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EmploymentHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a EmploymentHistory.
+     * @param {EmploymentHistoryCreateArgs} args - Arguments to create a EmploymentHistory.
+     * @example
+     * // Create one EmploymentHistory
+     * const EmploymentHistory = await prisma.employmentHistory.create({
+     *   data: {
+     *     // ... data to create a EmploymentHistory
+     *   }
+     * })
+     * 
+     */
+    create<T extends EmploymentHistoryCreateArgs>(args: SelectSubset<T, EmploymentHistoryCreateArgs<ExtArgs>>): Prisma__EmploymentHistoryClient<$Result.GetResult<Prisma.$EmploymentHistoryPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many EmploymentHistories.
+     * @param {EmploymentHistoryCreateManyArgs} args - Arguments to create many EmploymentHistories.
+     * @example
+     * // Create many EmploymentHistories
+     * const employmentHistory = await prisma.employmentHistory.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends EmploymentHistoryCreateManyArgs>(args?: SelectSubset<T, EmploymentHistoryCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many EmploymentHistories and returns the data saved in the database.
+     * @param {EmploymentHistoryCreateManyAndReturnArgs} args - Arguments to create many EmploymentHistories.
+     * @example
+     * // Create many EmploymentHistories
+     * const employmentHistory = await prisma.employmentHistory.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many EmploymentHistories and only return the `id`
+     * const employmentHistoryWithIdOnly = await prisma.employmentHistory.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends EmploymentHistoryCreateManyAndReturnArgs>(args?: SelectSubset<T, EmploymentHistoryCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EmploymentHistoryPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a EmploymentHistory.
+     * @param {EmploymentHistoryDeleteArgs} args - Arguments to delete one EmploymentHistory.
+     * @example
+     * // Delete one EmploymentHistory
+     * const EmploymentHistory = await prisma.employmentHistory.delete({
+     *   where: {
+     *     // ... filter to delete one EmploymentHistory
+     *   }
+     * })
+     * 
+     */
+    delete<T extends EmploymentHistoryDeleteArgs>(args: SelectSubset<T, EmploymentHistoryDeleteArgs<ExtArgs>>): Prisma__EmploymentHistoryClient<$Result.GetResult<Prisma.$EmploymentHistoryPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one EmploymentHistory.
+     * @param {EmploymentHistoryUpdateArgs} args - Arguments to update one EmploymentHistory.
+     * @example
+     * // Update one EmploymentHistory
+     * const employmentHistory = await prisma.employmentHistory.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends EmploymentHistoryUpdateArgs>(args: SelectSubset<T, EmploymentHistoryUpdateArgs<ExtArgs>>): Prisma__EmploymentHistoryClient<$Result.GetResult<Prisma.$EmploymentHistoryPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more EmploymentHistories.
+     * @param {EmploymentHistoryDeleteManyArgs} args - Arguments to filter EmploymentHistories to delete.
+     * @example
+     * // Delete a few EmploymentHistories
+     * const { count } = await prisma.employmentHistory.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends EmploymentHistoryDeleteManyArgs>(args?: SelectSubset<T, EmploymentHistoryDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EmploymentHistories.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmploymentHistoryUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many EmploymentHistories
+     * const employmentHistory = await prisma.employmentHistory.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends EmploymentHistoryUpdateManyArgs>(args: SelectSubset<T, EmploymentHistoryUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EmploymentHistories and returns the data updated in the database.
+     * @param {EmploymentHistoryUpdateManyAndReturnArgs} args - Arguments to update many EmploymentHistories.
+     * @example
+     * // Update many EmploymentHistories
+     * const employmentHistory = await prisma.employmentHistory.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more EmploymentHistories and only return the `id`
+     * const employmentHistoryWithIdOnly = await prisma.employmentHistory.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends EmploymentHistoryUpdateManyAndReturnArgs>(args: SelectSubset<T, EmploymentHistoryUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EmploymentHistoryPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one EmploymentHistory.
+     * @param {EmploymentHistoryUpsertArgs} args - Arguments to update or create a EmploymentHistory.
+     * @example
+     * // Update or create a EmploymentHistory
+     * const employmentHistory = await prisma.employmentHistory.upsert({
+     *   create: {
+     *     // ... data to create a EmploymentHistory
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the EmploymentHistory we want to update
+     *   }
+     * })
+     */
+    upsert<T extends EmploymentHistoryUpsertArgs>(args: SelectSubset<T, EmploymentHistoryUpsertArgs<ExtArgs>>): Prisma__EmploymentHistoryClient<$Result.GetResult<Prisma.$EmploymentHistoryPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of EmploymentHistories.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmploymentHistoryCountArgs} args - Arguments to filter EmploymentHistories to count.
+     * @example
+     * // Count the number of EmploymentHistories
+     * const count = await prisma.employmentHistory.count({
+     *   where: {
+     *     // ... the filter for the EmploymentHistories we want to count
+     *   }
+     * })
+    **/
+    count<T extends EmploymentHistoryCountArgs>(
+      args?: Subset<T, EmploymentHistoryCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], EmploymentHistoryCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a EmploymentHistory.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmploymentHistoryAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends EmploymentHistoryAggregateArgs>(args: Subset<T, EmploymentHistoryAggregateArgs>): Prisma.PrismaPromise<GetEmploymentHistoryAggregateType<T>>
+
+    /**
+     * Group by EmploymentHistory.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmploymentHistoryGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends EmploymentHistoryGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: EmploymentHistoryGroupByArgs['orderBy'] }
+        : { orderBy?: EmploymentHistoryGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, EmploymentHistoryGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetEmploymentHistoryGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the EmploymentHistory model
+   */
+  readonly fields: EmploymentHistoryFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for EmploymentHistory.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__EmploymentHistoryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    trainee<T extends TraineeDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TraineeDefaultArgs<ExtArgs>>): Prisma__TraineeClient<$Result.GetResult<Prisma.$TraineePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the EmploymentHistory model
+   */
+  interface EmploymentHistoryFieldRefs {
+    readonly id: FieldRef<"EmploymentHistory", 'String'>
+    readonly traineeId: FieldRef<"EmploymentHistory", 'String'>
+    readonly employer: FieldRef<"EmploymentHistory", 'String'>
+    readonly role: FieldRef<"EmploymentHistory", 'String'>
+    readonly salaryBand: FieldRef<"EmploymentHistory", 'SalaryBand'>
+    readonly startDate: FieldRef<"EmploymentHistory", 'DateTime'>
+    readonly endDate: FieldRef<"EmploymentHistory", 'DateTime'>
+    readonly isCurrent: FieldRef<"EmploymentHistory", 'Boolean'>
+    readonly createdAt: FieldRef<"EmploymentHistory", 'DateTime'>
+    readonly updatedAt: FieldRef<"EmploymentHistory", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * EmploymentHistory findUnique
+   */
+  export type EmploymentHistoryFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmploymentHistory
+     */
+    select?: EmploymentHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmploymentHistory
+     */
+    omit?: EmploymentHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmploymentHistoryInclude<ExtArgs> | null
+    /**
+     * Filter, which EmploymentHistory to fetch.
+     */
+    where: EmploymentHistoryWhereUniqueInput
+  }
+
+  /**
+   * EmploymentHistory findUniqueOrThrow
+   */
+  export type EmploymentHistoryFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmploymentHistory
+     */
+    select?: EmploymentHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmploymentHistory
+     */
+    omit?: EmploymentHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmploymentHistoryInclude<ExtArgs> | null
+    /**
+     * Filter, which EmploymentHistory to fetch.
+     */
+    where: EmploymentHistoryWhereUniqueInput
+  }
+
+  /**
+   * EmploymentHistory findFirst
+   */
+  export type EmploymentHistoryFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmploymentHistory
+     */
+    select?: EmploymentHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmploymentHistory
+     */
+    omit?: EmploymentHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmploymentHistoryInclude<ExtArgs> | null
+    /**
+     * Filter, which EmploymentHistory to fetch.
+     */
+    where?: EmploymentHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EmploymentHistories to fetch.
+     */
+    orderBy?: EmploymentHistoryOrderByWithRelationInput | EmploymentHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EmploymentHistories.
+     */
+    cursor?: EmploymentHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EmploymentHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EmploymentHistories.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EmploymentHistories.
+     */
+    distinct?: EmploymentHistoryScalarFieldEnum | EmploymentHistoryScalarFieldEnum[]
+  }
+
+  /**
+   * EmploymentHistory findFirstOrThrow
+   */
+  export type EmploymentHistoryFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmploymentHistory
+     */
+    select?: EmploymentHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmploymentHistory
+     */
+    omit?: EmploymentHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmploymentHistoryInclude<ExtArgs> | null
+    /**
+     * Filter, which EmploymentHistory to fetch.
+     */
+    where?: EmploymentHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EmploymentHistories to fetch.
+     */
+    orderBy?: EmploymentHistoryOrderByWithRelationInput | EmploymentHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EmploymentHistories.
+     */
+    cursor?: EmploymentHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EmploymentHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EmploymentHistories.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EmploymentHistories.
+     */
+    distinct?: EmploymentHistoryScalarFieldEnum | EmploymentHistoryScalarFieldEnum[]
+  }
+
+  /**
+   * EmploymentHistory findMany
+   */
+  export type EmploymentHistoryFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmploymentHistory
+     */
+    select?: EmploymentHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmploymentHistory
+     */
+    omit?: EmploymentHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmploymentHistoryInclude<ExtArgs> | null
+    /**
+     * Filter, which EmploymentHistories to fetch.
+     */
+    where?: EmploymentHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EmploymentHistories to fetch.
+     */
+    orderBy?: EmploymentHistoryOrderByWithRelationInput | EmploymentHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing EmploymentHistories.
+     */
+    cursor?: EmploymentHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EmploymentHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EmploymentHistories.
+     */
+    skip?: number
+    distinct?: EmploymentHistoryScalarFieldEnum | EmploymentHistoryScalarFieldEnum[]
+  }
+
+  /**
+   * EmploymentHistory create
+   */
+  export type EmploymentHistoryCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmploymentHistory
+     */
+    select?: EmploymentHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmploymentHistory
+     */
+    omit?: EmploymentHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmploymentHistoryInclude<ExtArgs> | null
+    /**
+     * The data needed to create a EmploymentHistory.
+     */
+    data: XOR<EmploymentHistoryCreateInput, EmploymentHistoryUncheckedCreateInput>
+  }
+
+  /**
+   * EmploymentHistory createMany
+   */
+  export type EmploymentHistoryCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many EmploymentHistories.
+     */
+    data: EmploymentHistoryCreateManyInput | EmploymentHistoryCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * EmploymentHistory createManyAndReturn
+   */
+  export type EmploymentHistoryCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmploymentHistory
+     */
+    select?: EmploymentHistorySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmploymentHistory
+     */
+    omit?: EmploymentHistoryOmit<ExtArgs> | null
+    /**
+     * The data used to create many EmploymentHistories.
+     */
+    data: EmploymentHistoryCreateManyInput | EmploymentHistoryCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmploymentHistoryIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * EmploymentHistory update
+   */
+  export type EmploymentHistoryUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmploymentHistory
+     */
+    select?: EmploymentHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmploymentHistory
+     */
+    omit?: EmploymentHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmploymentHistoryInclude<ExtArgs> | null
+    /**
+     * The data needed to update a EmploymentHistory.
+     */
+    data: XOR<EmploymentHistoryUpdateInput, EmploymentHistoryUncheckedUpdateInput>
+    /**
+     * Choose, which EmploymentHistory to update.
+     */
+    where: EmploymentHistoryWhereUniqueInput
+  }
+
+  /**
+   * EmploymentHistory updateMany
+   */
+  export type EmploymentHistoryUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update EmploymentHistories.
+     */
+    data: XOR<EmploymentHistoryUpdateManyMutationInput, EmploymentHistoryUncheckedUpdateManyInput>
+    /**
+     * Filter which EmploymentHistories to update
+     */
+    where?: EmploymentHistoryWhereInput
+    /**
+     * Limit how many EmploymentHistories to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * EmploymentHistory updateManyAndReturn
+   */
+  export type EmploymentHistoryUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmploymentHistory
+     */
+    select?: EmploymentHistorySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmploymentHistory
+     */
+    omit?: EmploymentHistoryOmit<ExtArgs> | null
+    /**
+     * The data used to update EmploymentHistories.
+     */
+    data: XOR<EmploymentHistoryUpdateManyMutationInput, EmploymentHistoryUncheckedUpdateManyInput>
+    /**
+     * Filter which EmploymentHistories to update
+     */
+    where?: EmploymentHistoryWhereInput
+    /**
+     * Limit how many EmploymentHistories to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmploymentHistoryIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * EmploymentHistory upsert
+   */
+  export type EmploymentHistoryUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmploymentHistory
+     */
+    select?: EmploymentHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmploymentHistory
+     */
+    omit?: EmploymentHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmploymentHistoryInclude<ExtArgs> | null
+    /**
+     * The filter to search for the EmploymentHistory to update in case it exists.
+     */
+    where: EmploymentHistoryWhereUniqueInput
+    /**
+     * In case the EmploymentHistory found by the `where` argument doesn't exist, create a new EmploymentHistory with this data.
+     */
+    create: XOR<EmploymentHistoryCreateInput, EmploymentHistoryUncheckedCreateInput>
+    /**
+     * In case the EmploymentHistory was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<EmploymentHistoryUpdateInput, EmploymentHistoryUncheckedUpdateInput>
+  }
+
+  /**
+   * EmploymentHistory delete
+   */
+  export type EmploymentHistoryDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmploymentHistory
+     */
+    select?: EmploymentHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmploymentHistory
+     */
+    omit?: EmploymentHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmploymentHistoryInclude<ExtArgs> | null
+    /**
+     * Filter which EmploymentHistory to delete.
+     */
+    where: EmploymentHistoryWhereUniqueInput
+  }
+
+  /**
+   * EmploymentHistory deleteMany
+   */
+  export type EmploymentHistoryDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EmploymentHistories to delete
+     */
+    where?: EmploymentHistoryWhereInput
+    /**
+     * Limit how many EmploymentHistories to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * EmploymentHistory without action
+   */
+  export type EmploymentHistoryDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmploymentHistory
+     */
+    select?: EmploymentHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmploymentHistory
+     */
+    omit?: EmploymentHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmploymentHistoryInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model TraineeLoginToken
+   */
+
+  export type AggregateTraineeLoginToken = {
+    _count: TraineeLoginTokenCountAggregateOutputType | null
+    _min: TraineeLoginTokenMinAggregateOutputType | null
+    _max: TraineeLoginTokenMaxAggregateOutputType | null
+  }
+
+  export type TraineeLoginTokenMinAggregateOutputType = {
+    id: string | null
+    traineeId: string | null
+    tokenHash: string | null
+    expiresAt: Date | null
+    usedAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type TraineeLoginTokenMaxAggregateOutputType = {
+    id: string | null
+    traineeId: string | null
+    tokenHash: string | null
+    expiresAt: Date | null
+    usedAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type TraineeLoginTokenCountAggregateOutputType = {
+    id: number
+    traineeId: number
+    tokenHash: number
+    expiresAt: number
+    usedAt: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type TraineeLoginTokenMinAggregateInputType = {
+    id?: true
+    traineeId?: true
+    tokenHash?: true
+    expiresAt?: true
+    usedAt?: true
+    createdAt?: true
+  }
+
+  export type TraineeLoginTokenMaxAggregateInputType = {
+    id?: true
+    traineeId?: true
+    tokenHash?: true
+    expiresAt?: true
+    usedAt?: true
+    createdAt?: true
+  }
+
+  export type TraineeLoginTokenCountAggregateInputType = {
+    id?: true
+    traineeId?: true
+    tokenHash?: true
+    expiresAt?: true
+    usedAt?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type TraineeLoginTokenAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TraineeLoginToken to aggregate.
+     */
+    where?: TraineeLoginTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TraineeLoginTokens to fetch.
+     */
+    orderBy?: TraineeLoginTokenOrderByWithRelationInput | TraineeLoginTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TraineeLoginTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TraineeLoginTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TraineeLoginTokens.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TraineeLoginTokens
+    **/
+    _count?: true | TraineeLoginTokenCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TraineeLoginTokenMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TraineeLoginTokenMaxAggregateInputType
+  }
+
+  export type GetTraineeLoginTokenAggregateType<T extends TraineeLoginTokenAggregateArgs> = {
+        [P in keyof T & keyof AggregateTraineeLoginToken]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTraineeLoginToken[P]>
+      : GetScalarType<T[P], AggregateTraineeLoginToken[P]>
+  }
+
+
+
+
+  export type TraineeLoginTokenGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TraineeLoginTokenWhereInput
+    orderBy?: TraineeLoginTokenOrderByWithAggregationInput | TraineeLoginTokenOrderByWithAggregationInput[]
+    by: TraineeLoginTokenScalarFieldEnum[] | TraineeLoginTokenScalarFieldEnum
+    having?: TraineeLoginTokenScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TraineeLoginTokenCountAggregateInputType | true
+    _min?: TraineeLoginTokenMinAggregateInputType
+    _max?: TraineeLoginTokenMaxAggregateInputType
+  }
+
+  export type TraineeLoginTokenGroupByOutputType = {
+    id: string
+    traineeId: string
+    tokenHash: string
+    expiresAt: Date
+    usedAt: Date | null
+    createdAt: Date
+    _count: TraineeLoginTokenCountAggregateOutputType | null
+    _min: TraineeLoginTokenMinAggregateOutputType | null
+    _max: TraineeLoginTokenMaxAggregateOutputType | null
+  }
+
+  type GetTraineeLoginTokenGroupByPayload<T extends TraineeLoginTokenGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TraineeLoginTokenGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TraineeLoginTokenGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TraineeLoginTokenGroupByOutputType[P]>
+            : GetScalarType<T[P], TraineeLoginTokenGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TraineeLoginTokenSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    traineeId?: boolean
+    tokenHash?: boolean
+    expiresAt?: boolean
+    usedAt?: boolean
+    createdAt?: boolean
+    trainee?: boolean | TraineeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["traineeLoginToken"]>
+
+  export type TraineeLoginTokenSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    traineeId?: boolean
+    tokenHash?: boolean
+    expiresAt?: boolean
+    usedAt?: boolean
+    createdAt?: boolean
+    trainee?: boolean | TraineeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["traineeLoginToken"]>
+
+  export type TraineeLoginTokenSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    traineeId?: boolean
+    tokenHash?: boolean
+    expiresAt?: boolean
+    usedAt?: boolean
+    createdAt?: boolean
+    trainee?: boolean | TraineeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["traineeLoginToken"]>
+
+  export type TraineeLoginTokenSelectScalar = {
+    id?: boolean
+    traineeId?: boolean
+    tokenHash?: boolean
+    expiresAt?: boolean
+    usedAt?: boolean
+    createdAt?: boolean
+  }
+
+  export type TraineeLoginTokenOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "traineeId" | "tokenHash" | "expiresAt" | "usedAt" | "createdAt", ExtArgs["result"]["traineeLoginToken"]>
+  export type TraineeLoginTokenInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    trainee?: boolean | TraineeDefaultArgs<ExtArgs>
+  }
+  export type TraineeLoginTokenIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    trainee?: boolean | TraineeDefaultArgs<ExtArgs>
+  }
+  export type TraineeLoginTokenIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    trainee?: boolean | TraineeDefaultArgs<ExtArgs>
+  }
+
+  export type $TraineeLoginTokenPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TraineeLoginToken"
+    objects: {
+      trainee: Prisma.$TraineePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      traineeId: string
+      tokenHash: string
+      expiresAt: Date
+      usedAt: Date | null
+      createdAt: Date
+    }, ExtArgs["result"]["traineeLoginToken"]>
+    composites: {}
+  }
+
+  type TraineeLoginTokenGetPayload<S extends boolean | null | undefined | TraineeLoginTokenDefaultArgs> = $Result.GetResult<Prisma.$TraineeLoginTokenPayload, S>
+
+  type TraineeLoginTokenCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TraineeLoginTokenFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TraineeLoginTokenCountAggregateInputType | true
+    }
+
+  export interface TraineeLoginTokenDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TraineeLoginToken'], meta: { name: 'TraineeLoginToken' } }
+    /**
+     * Find zero or one TraineeLoginToken that matches the filter.
+     * @param {TraineeLoginTokenFindUniqueArgs} args - Arguments to find a TraineeLoginToken
+     * @example
+     * // Get one TraineeLoginToken
+     * const traineeLoginToken = await prisma.traineeLoginToken.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TraineeLoginTokenFindUniqueArgs>(args: SelectSubset<T, TraineeLoginTokenFindUniqueArgs<ExtArgs>>): Prisma__TraineeLoginTokenClient<$Result.GetResult<Prisma.$TraineeLoginTokenPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one TraineeLoginToken that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TraineeLoginTokenFindUniqueOrThrowArgs} args - Arguments to find a TraineeLoginToken
+     * @example
+     * // Get one TraineeLoginToken
+     * const traineeLoginToken = await prisma.traineeLoginToken.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TraineeLoginTokenFindUniqueOrThrowArgs>(args: SelectSubset<T, TraineeLoginTokenFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TraineeLoginTokenClient<$Result.GetResult<Prisma.$TraineeLoginTokenPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TraineeLoginToken that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TraineeLoginTokenFindFirstArgs} args - Arguments to find a TraineeLoginToken
+     * @example
+     * // Get one TraineeLoginToken
+     * const traineeLoginToken = await prisma.traineeLoginToken.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TraineeLoginTokenFindFirstArgs>(args?: SelectSubset<T, TraineeLoginTokenFindFirstArgs<ExtArgs>>): Prisma__TraineeLoginTokenClient<$Result.GetResult<Prisma.$TraineeLoginTokenPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TraineeLoginToken that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TraineeLoginTokenFindFirstOrThrowArgs} args - Arguments to find a TraineeLoginToken
+     * @example
+     * // Get one TraineeLoginToken
+     * const traineeLoginToken = await prisma.traineeLoginToken.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TraineeLoginTokenFindFirstOrThrowArgs>(args?: SelectSubset<T, TraineeLoginTokenFindFirstOrThrowArgs<ExtArgs>>): Prisma__TraineeLoginTokenClient<$Result.GetResult<Prisma.$TraineeLoginTokenPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more TraineeLoginTokens that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TraineeLoginTokenFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TraineeLoginTokens
+     * const traineeLoginTokens = await prisma.traineeLoginToken.findMany()
+     * 
+     * // Get first 10 TraineeLoginTokens
+     * const traineeLoginTokens = await prisma.traineeLoginToken.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const traineeLoginTokenWithIdOnly = await prisma.traineeLoginToken.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TraineeLoginTokenFindManyArgs>(args?: SelectSubset<T, TraineeLoginTokenFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TraineeLoginTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a TraineeLoginToken.
+     * @param {TraineeLoginTokenCreateArgs} args - Arguments to create a TraineeLoginToken.
+     * @example
+     * // Create one TraineeLoginToken
+     * const TraineeLoginToken = await prisma.traineeLoginToken.create({
+     *   data: {
+     *     // ... data to create a TraineeLoginToken
+     *   }
+     * })
+     * 
+     */
+    create<T extends TraineeLoginTokenCreateArgs>(args: SelectSubset<T, TraineeLoginTokenCreateArgs<ExtArgs>>): Prisma__TraineeLoginTokenClient<$Result.GetResult<Prisma.$TraineeLoginTokenPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many TraineeLoginTokens.
+     * @param {TraineeLoginTokenCreateManyArgs} args - Arguments to create many TraineeLoginTokens.
+     * @example
+     * // Create many TraineeLoginTokens
+     * const traineeLoginToken = await prisma.traineeLoginToken.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TraineeLoginTokenCreateManyArgs>(args?: SelectSubset<T, TraineeLoginTokenCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TraineeLoginTokens and returns the data saved in the database.
+     * @param {TraineeLoginTokenCreateManyAndReturnArgs} args - Arguments to create many TraineeLoginTokens.
+     * @example
+     * // Create many TraineeLoginTokens
+     * const traineeLoginToken = await prisma.traineeLoginToken.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TraineeLoginTokens and only return the `id`
+     * const traineeLoginTokenWithIdOnly = await prisma.traineeLoginToken.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TraineeLoginTokenCreateManyAndReturnArgs>(args?: SelectSubset<T, TraineeLoginTokenCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TraineeLoginTokenPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a TraineeLoginToken.
+     * @param {TraineeLoginTokenDeleteArgs} args - Arguments to delete one TraineeLoginToken.
+     * @example
+     * // Delete one TraineeLoginToken
+     * const TraineeLoginToken = await prisma.traineeLoginToken.delete({
+     *   where: {
+     *     // ... filter to delete one TraineeLoginToken
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TraineeLoginTokenDeleteArgs>(args: SelectSubset<T, TraineeLoginTokenDeleteArgs<ExtArgs>>): Prisma__TraineeLoginTokenClient<$Result.GetResult<Prisma.$TraineeLoginTokenPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one TraineeLoginToken.
+     * @param {TraineeLoginTokenUpdateArgs} args - Arguments to update one TraineeLoginToken.
+     * @example
+     * // Update one TraineeLoginToken
+     * const traineeLoginToken = await prisma.traineeLoginToken.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TraineeLoginTokenUpdateArgs>(args: SelectSubset<T, TraineeLoginTokenUpdateArgs<ExtArgs>>): Prisma__TraineeLoginTokenClient<$Result.GetResult<Prisma.$TraineeLoginTokenPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more TraineeLoginTokens.
+     * @param {TraineeLoginTokenDeleteManyArgs} args - Arguments to filter TraineeLoginTokens to delete.
+     * @example
+     * // Delete a few TraineeLoginTokens
+     * const { count } = await prisma.traineeLoginToken.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TraineeLoginTokenDeleteManyArgs>(args?: SelectSubset<T, TraineeLoginTokenDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TraineeLoginTokens.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TraineeLoginTokenUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TraineeLoginTokens
+     * const traineeLoginToken = await prisma.traineeLoginToken.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TraineeLoginTokenUpdateManyArgs>(args: SelectSubset<T, TraineeLoginTokenUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TraineeLoginTokens and returns the data updated in the database.
+     * @param {TraineeLoginTokenUpdateManyAndReturnArgs} args - Arguments to update many TraineeLoginTokens.
+     * @example
+     * // Update many TraineeLoginTokens
+     * const traineeLoginToken = await prisma.traineeLoginToken.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more TraineeLoginTokens and only return the `id`
+     * const traineeLoginTokenWithIdOnly = await prisma.traineeLoginToken.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends TraineeLoginTokenUpdateManyAndReturnArgs>(args: SelectSubset<T, TraineeLoginTokenUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TraineeLoginTokenPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one TraineeLoginToken.
+     * @param {TraineeLoginTokenUpsertArgs} args - Arguments to update or create a TraineeLoginToken.
+     * @example
+     * // Update or create a TraineeLoginToken
+     * const traineeLoginToken = await prisma.traineeLoginToken.upsert({
+     *   create: {
+     *     // ... data to create a TraineeLoginToken
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TraineeLoginToken we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TraineeLoginTokenUpsertArgs>(args: SelectSubset<T, TraineeLoginTokenUpsertArgs<ExtArgs>>): Prisma__TraineeLoginTokenClient<$Result.GetResult<Prisma.$TraineeLoginTokenPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of TraineeLoginTokens.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TraineeLoginTokenCountArgs} args - Arguments to filter TraineeLoginTokens to count.
+     * @example
+     * // Count the number of TraineeLoginTokens
+     * const count = await prisma.traineeLoginToken.count({
+     *   where: {
+     *     // ... the filter for the TraineeLoginTokens we want to count
+     *   }
+     * })
+    **/
+    count<T extends TraineeLoginTokenCountArgs>(
+      args?: Subset<T, TraineeLoginTokenCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TraineeLoginTokenCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TraineeLoginToken.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TraineeLoginTokenAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TraineeLoginTokenAggregateArgs>(args: Subset<T, TraineeLoginTokenAggregateArgs>): Prisma.PrismaPromise<GetTraineeLoginTokenAggregateType<T>>
+
+    /**
+     * Group by TraineeLoginToken.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TraineeLoginTokenGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TraineeLoginTokenGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TraineeLoginTokenGroupByArgs['orderBy'] }
+        : { orderBy?: TraineeLoginTokenGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TraineeLoginTokenGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTraineeLoginTokenGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TraineeLoginToken model
+   */
+  readonly fields: TraineeLoginTokenFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TraineeLoginToken.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TraineeLoginTokenClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    trainee<T extends TraineeDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TraineeDefaultArgs<ExtArgs>>): Prisma__TraineeClient<$Result.GetResult<Prisma.$TraineePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TraineeLoginToken model
+   */
+  interface TraineeLoginTokenFieldRefs {
+    readonly id: FieldRef<"TraineeLoginToken", 'String'>
+    readonly traineeId: FieldRef<"TraineeLoginToken", 'String'>
+    readonly tokenHash: FieldRef<"TraineeLoginToken", 'String'>
+    readonly expiresAt: FieldRef<"TraineeLoginToken", 'DateTime'>
+    readonly usedAt: FieldRef<"TraineeLoginToken", 'DateTime'>
+    readonly createdAt: FieldRef<"TraineeLoginToken", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TraineeLoginToken findUnique
+   */
+  export type TraineeLoginTokenFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraineeLoginToken
+     */
+    select?: TraineeLoginTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TraineeLoginToken
+     */
+    omit?: TraineeLoginTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraineeLoginTokenInclude<ExtArgs> | null
+    /**
+     * Filter, which TraineeLoginToken to fetch.
+     */
+    where: TraineeLoginTokenWhereUniqueInput
+  }
+
+  /**
+   * TraineeLoginToken findUniqueOrThrow
+   */
+  export type TraineeLoginTokenFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraineeLoginToken
+     */
+    select?: TraineeLoginTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TraineeLoginToken
+     */
+    omit?: TraineeLoginTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraineeLoginTokenInclude<ExtArgs> | null
+    /**
+     * Filter, which TraineeLoginToken to fetch.
+     */
+    where: TraineeLoginTokenWhereUniqueInput
+  }
+
+  /**
+   * TraineeLoginToken findFirst
+   */
+  export type TraineeLoginTokenFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraineeLoginToken
+     */
+    select?: TraineeLoginTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TraineeLoginToken
+     */
+    omit?: TraineeLoginTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraineeLoginTokenInclude<ExtArgs> | null
+    /**
+     * Filter, which TraineeLoginToken to fetch.
+     */
+    where?: TraineeLoginTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TraineeLoginTokens to fetch.
+     */
+    orderBy?: TraineeLoginTokenOrderByWithRelationInput | TraineeLoginTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TraineeLoginTokens.
+     */
+    cursor?: TraineeLoginTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TraineeLoginTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TraineeLoginTokens.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TraineeLoginTokens.
+     */
+    distinct?: TraineeLoginTokenScalarFieldEnum | TraineeLoginTokenScalarFieldEnum[]
+  }
+
+  /**
+   * TraineeLoginToken findFirstOrThrow
+   */
+  export type TraineeLoginTokenFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraineeLoginToken
+     */
+    select?: TraineeLoginTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TraineeLoginToken
+     */
+    omit?: TraineeLoginTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraineeLoginTokenInclude<ExtArgs> | null
+    /**
+     * Filter, which TraineeLoginToken to fetch.
+     */
+    where?: TraineeLoginTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TraineeLoginTokens to fetch.
+     */
+    orderBy?: TraineeLoginTokenOrderByWithRelationInput | TraineeLoginTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TraineeLoginTokens.
+     */
+    cursor?: TraineeLoginTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TraineeLoginTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TraineeLoginTokens.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TraineeLoginTokens.
+     */
+    distinct?: TraineeLoginTokenScalarFieldEnum | TraineeLoginTokenScalarFieldEnum[]
+  }
+
+  /**
+   * TraineeLoginToken findMany
+   */
+  export type TraineeLoginTokenFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraineeLoginToken
+     */
+    select?: TraineeLoginTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TraineeLoginToken
+     */
+    omit?: TraineeLoginTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraineeLoginTokenInclude<ExtArgs> | null
+    /**
+     * Filter, which TraineeLoginTokens to fetch.
+     */
+    where?: TraineeLoginTokenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TraineeLoginTokens to fetch.
+     */
+    orderBy?: TraineeLoginTokenOrderByWithRelationInput | TraineeLoginTokenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TraineeLoginTokens.
+     */
+    cursor?: TraineeLoginTokenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TraineeLoginTokens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TraineeLoginTokens.
+     */
+    skip?: number
+    distinct?: TraineeLoginTokenScalarFieldEnum | TraineeLoginTokenScalarFieldEnum[]
+  }
+
+  /**
+   * TraineeLoginToken create
+   */
+  export type TraineeLoginTokenCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraineeLoginToken
+     */
+    select?: TraineeLoginTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TraineeLoginToken
+     */
+    omit?: TraineeLoginTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraineeLoginTokenInclude<ExtArgs> | null
+    /**
+     * The data needed to create a TraineeLoginToken.
+     */
+    data: XOR<TraineeLoginTokenCreateInput, TraineeLoginTokenUncheckedCreateInput>
+  }
+
+  /**
+   * TraineeLoginToken createMany
+   */
+  export type TraineeLoginTokenCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TraineeLoginTokens.
+     */
+    data: TraineeLoginTokenCreateManyInput | TraineeLoginTokenCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TraineeLoginToken createManyAndReturn
+   */
+  export type TraineeLoginTokenCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraineeLoginToken
+     */
+    select?: TraineeLoginTokenSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TraineeLoginToken
+     */
+    omit?: TraineeLoginTokenOmit<ExtArgs> | null
+    /**
+     * The data used to create many TraineeLoginTokens.
+     */
+    data: TraineeLoginTokenCreateManyInput | TraineeLoginTokenCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraineeLoginTokenIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TraineeLoginToken update
+   */
+  export type TraineeLoginTokenUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraineeLoginToken
+     */
+    select?: TraineeLoginTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TraineeLoginToken
+     */
+    omit?: TraineeLoginTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraineeLoginTokenInclude<ExtArgs> | null
+    /**
+     * The data needed to update a TraineeLoginToken.
+     */
+    data: XOR<TraineeLoginTokenUpdateInput, TraineeLoginTokenUncheckedUpdateInput>
+    /**
+     * Choose, which TraineeLoginToken to update.
+     */
+    where: TraineeLoginTokenWhereUniqueInput
+  }
+
+  /**
+   * TraineeLoginToken updateMany
+   */
+  export type TraineeLoginTokenUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TraineeLoginTokens.
+     */
+    data: XOR<TraineeLoginTokenUpdateManyMutationInput, TraineeLoginTokenUncheckedUpdateManyInput>
+    /**
+     * Filter which TraineeLoginTokens to update
+     */
+    where?: TraineeLoginTokenWhereInput
+    /**
+     * Limit how many TraineeLoginTokens to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TraineeLoginToken updateManyAndReturn
+   */
+  export type TraineeLoginTokenUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraineeLoginToken
+     */
+    select?: TraineeLoginTokenSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TraineeLoginToken
+     */
+    omit?: TraineeLoginTokenOmit<ExtArgs> | null
+    /**
+     * The data used to update TraineeLoginTokens.
+     */
+    data: XOR<TraineeLoginTokenUpdateManyMutationInput, TraineeLoginTokenUncheckedUpdateManyInput>
+    /**
+     * Filter which TraineeLoginTokens to update
+     */
+    where?: TraineeLoginTokenWhereInput
+    /**
+     * Limit how many TraineeLoginTokens to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraineeLoginTokenIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TraineeLoginToken upsert
+   */
+  export type TraineeLoginTokenUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraineeLoginToken
+     */
+    select?: TraineeLoginTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TraineeLoginToken
+     */
+    omit?: TraineeLoginTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraineeLoginTokenInclude<ExtArgs> | null
+    /**
+     * The filter to search for the TraineeLoginToken to update in case it exists.
+     */
+    where: TraineeLoginTokenWhereUniqueInput
+    /**
+     * In case the TraineeLoginToken found by the `where` argument doesn't exist, create a new TraineeLoginToken with this data.
+     */
+    create: XOR<TraineeLoginTokenCreateInput, TraineeLoginTokenUncheckedCreateInput>
+    /**
+     * In case the TraineeLoginToken was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TraineeLoginTokenUpdateInput, TraineeLoginTokenUncheckedUpdateInput>
+  }
+
+  /**
+   * TraineeLoginToken delete
+   */
+  export type TraineeLoginTokenDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraineeLoginToken
+     */
+    select?: TraineeLoginTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TraineeLoginToken
+     */
+    omit?: TraineeLoginTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraineeLoginTokenInclude<ExtArgs> | null
+    /**
+     * Filter which TraineeLoginToken to delete.
+     */
+    where: TraineeLoginTokenWhereUniqueInput
+  }
+
+  /**
+   * TraineeLoginToken deleteMany
+   */
+  export type TraineeLoginTokenDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TraineeLoginTokens to delete
+     */
+    where?: TraineeLoginTokenWhereInput
+    /**
+     * Limit how many TraineeLoginTokens to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * TraineeLoginToken without action
+   */
+  export type TraineeLoginTokenDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TraineeLoginToken
+     */
+    select?: TraineeLoginTokenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TraineeLoginToken
+     */
+    omit?: TraineeLoginTokenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TraineeLoginTokenInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -13650,6 +17338,49 @@ export namespace Prisma {
   };
 
   export type AuditEventScalarFieldEnum = (typeof AuditEventScalarFieldEnum)[keyof typeof AuditEventScalarFieldEnum]
+
+
+  export const CertificateScalarFieldEnum: {
+    id: 'id',
+    traineeId: 'traineeId',
+    name: 'name',
+    issuer: 'issuer',
+    issueDate: 'issueDate',
+    expiryDate: 'expiryDate',
+    fileUrl: 'fileUrl',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type CertificateScalarFieldEnum = (typeof CertificateScalarFieldEnum)[keyof typeof CertificateScalarFieldEnum]
+
+
+  export const EmploymentHistoryScalarFieldEnum: {
+    id: 'id',
+    traineeId: 'traineeId',
+    employer: 'employer',
+    role: 'role',
+    salaryBand: 'salaryBand',
+    startDate: 'startDate',
+    endDate: 'endDate',
+    isCurrent: 'isCurrent',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type EmploymentHistoryScalarFieldEnum = (typeof EmploymentHistoryScalarFieldEnum)[keyof typeof EmploymentHistoryScalarFieldEnum]
+
+
+  export const TraineeLoginTokenScalarFieldEnum: {
+    id: 'id',
+    traineeId: 'traineeId',
+    tokenHash: 'tokenHash',
+    expiresAt: 'expiresAt',
+    usedAt: 'usedAt',
+    createdAt: 'createdAt'
+  };
+
+  export type TraineeLoginTokenScalarFieldEnum = (typeof TraineeLoginTokenScalarFieldEnum)[keyof typeof TraineeLoginTokenScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -14037,6 +17768,9 @@ export namespace Prisma {
     botSessions?: BotSessionListRelationFilter
     employmentClaims?: EmploymentClaimListRelationFilter
     outcomeEvents?: OutcomeEventListRelationFilter
+    certificates?: CertificateListRelationFilter
+    employmentHistory?: EmploymentHistoryListRelationFilter
+    loginTokens?: TraineeLoginTokenListRelationFilter
   }
 
   export type TraineeOrderByWithRelationInput = {
@@ -14058,6 +17792,9 @@ export namespace Prisma {
     botSessions?: BotSessionOrderByRelationAggregateInput
     employmentClaims?: EmploymentClaimOrderByRelationAggregateInput
     outcomeEvents?: OutcomeEventOrderByRelationAggregateInput
+    certificates?: CertificateOrderByRelationAggregateInput
+    employmentHistory?: EmploymentHistoryOrderByRelationAggregateInput
+    loginTokens?: TraineeLoginTokenOrderByRelationAggregateInput
   }
 
   export type TraineeWhereUniqueInput = Prisma.AtLeast<{
@@ -14082,6 +17819,9 @@ export namespace Prisma {
     botSessions?: BotSessionListRelationFilter
     employmentClaims?: EmploymentClaimListRelationFilter
     outcomeEvents?: OutcomeEventListRelationFilter
+    certificates?: CertificateListRelationFilter
+    employmentHistory?: EmploymentHistoryListRelationFilter
+    loginTokens?: TraineeLoginTokenListRelationFilter
   }, "id" | "publicId" | "phoneE164">
 
   export type TraineeOrderByWithAggregationInput = {
@@ -14673,6 +18413,221 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"AuditEvent"> | Date | string
   }
 
+  export type CertificateWhereInput = {
+    AND?: CertificateWhereInput | CertificateWhereInput[]
+    OR?: CertificateWhereInput[]
+    NOT?: CertificateWhereInput | CertificateWhereInput[]
+    id?: StringFilter<"Certificate"> | string
+    traineeId?: StringFilter<"Certificate"> | string
+    name?: StringFilter<"Certificate"> | string
+    issuer?: StringFilter<"Certificate"> | string
+    issueDate?: DateTimeFilter<"Certificate"> | Date | string
+    expiryDate?: DateTimeNullableFilter<"Certificate"> | Date | string | null
+    fileUrl?: StringNullableFilter<"Certificate"> | string | null
+    createdAt?: DateTimeFilter<"Certificate"> | Date | string
+    updatedAt?: DateTimeFilter<"Certificate"> | Date | string
+    trainee?: XOR<TraineeScalarRelationFilter, TraineeWhereInput>
+  }
+
+  export type CertificateOrderByWithRelationInput = {
+    id?: SortOrder
+    traineeId?: SortOrder
+    name?: SortOrder
+    issuer?: SortOrder
+    issueDate?: SortOrder
+    expiryDate?: SortOrderInput | SortOrder
+    fileUrl?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    trainee?: TraineeOrderByWithRelationInput
+  }
+
+  export type CertificateWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: CertificateWhereInput | CertificateWhereInput[]
+    OR?: CertificateWhereInput[]
+    NOT?: CertificateWhereInput | CertificateWhereInput[]
+    traineeId?: StringFilter<"Certificate"> | string
+    name?: StringFilter<"Certificate"> | string
+    issuer?: StringFilter<"Certificate"> | string
+    issueDate?: DateTimeFilter<"Certificate"> | Date | string
+    expiryDate?: DateTimeNullableFilter<"Certificate"> | Date | string | null
+    fileUrl?: StringNullableFilter<"Certificate"> | string | null
+    createdAt?: DateTimeFilter<"Certificate"> | Date | string
+    updatedAt?: DateTimeFilter<"Certificate"> | Date | string
+    trainee?: XOR<TraineeScalarRelationFilter, TraineeWhereInput>
+  }, "id">
+
+  export type CertificateOrderByWithAggregationInput = {
+    id?: SortOrder
+    traineeId?: SortOrder
+    name?: SortOrder
+    issuer?: SortOrder
+    issueDate?: SortOrder
+    expiryDate?: SortOrderInput | SortOrder
+    fileUrl?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: CertificateCountOrderByAggregateInput
+    _max?: CertificateMaxOrderByAggregateInput
+    _min?: CertificateMinOrderByAggregateInput
+  }
+
+  export type CertificateScalarWhereWithAggregatesInput = {
+    AND?: CertificateScalarWhereWithAggregatesInput | CertificateScalarWhereWithAggregatesInput[]
+    OR?: CertificateScalarWhereWithAggregatesInput[]
+    NOT?: CertificateScalarWhereWithAggregatesInput | CertificateScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Certificate"> | string
+    traineeId?: StringWithAggregatesFilter<"Certificate"> | string
+    name?: StringWithAggregatesFilter<"Certificate"> | string
+    issuer?: StringWithAggregatesFilter<"Certificate"> | string
+    issueDate?: DateTimeWithAggregatesFilter<"Certificate"> | Date | string
+    expiryDate?: DateTimeNullableWithAggregatesFilter<"Certificate"> | Date | string | null
+    fileUrl?: StringNullableWithAggregatesFilter<"Certificate"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"Certificate"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Certificate"> | Date | string
+  }
+
+  export type EmploymentHistoryWhereInput = {
+    AND?: EmploymentHistoryWhereInput | EmploymentHistoryWhereInput[]
+    OR?: EmploymentHistoryWhereInput[]
+    NOT?: EmploymentHistoryWhereInput | EmploymentHistoryWhereInput[]
+    id?: StringFilter<"EmploymentHistory"> | string
+    traineeId?: StringFilter<"EmploymentHistory"> | string
+    employer?: StringFilter<"EmploymentHistory"> | string
+    role?: StringFilter<"EmploymentHistory"> | string
+    salaryBand?: EnumSalaryBandNullableFilter<"EmploymentHistory"> | $Enums.SalaryBand | null
+    startDate?: DateTimeFilter<"EmploymentHistory"> | Date | string
+    endDate?: DateTimeNullableFilter<"EmploymentHistory"> | Date | string | null
+    isCurrent?: BoolFilter<"EmploymentHistory"> | boolean
+    createdAt?: DateTimeFilter<"EmploymentHistory"> | Date | string
+    updatedAt?: DateTimeFilter<"EmploymentHistory"> | Date | string
+    trainee?: XOR<TraineeScalarRelationFilter, TraineeWhereInput>
+  }
+
+  export type EmploymentHistoryOrderByWithRelationInput = {
+    id?: SortOrder
+    traineeId?: SortOrder
+    employer?: SortOrder
+    role?: SortOrder
+    salaryBand?: SortOrderInput | SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrderInput | SortOrder
+    isCurrent?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    trainee?: TraineeOrderByWithRelationInput
+  }
+
+  export type EmploymentHistoryWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: EmploymentHistoryWhereInput | EmploymentHistoryWhereInput[]
+    OR?: EmploymentHistoryWhereInput[]
+    NOT?: EmploymentHistoryWhereInput | EmploymentHistoryWhereInput[]
+    traineeId?: StringFilter<"EmploymentHistory"> | string
+    employer?: StringFilter<"EmploymentHistory"> | string
+    role?: StringFilter<"EmploymentHistory"> | string
+    salaryBand?: EnumSalaryBandNullableFilter<"EmploymentHistory"> | $Enums.SalaryBand | null
+    startDate?: DateTimeFilter<"EmploymentHistory"> | Date | string
+    endDate?: DateTimeNullableFilter<"EmploymentHistory"> | Date | string | null
+    isCurrent?: BoolFilter<"EmploymentHistory"> | boolean
+    createdAt?: DateTimeFilter<"EmploymentHistory"> | Date | string
+    updatedAt?: DateTimeFilter<"EmploymentHistory"> | Date | string
+    trainee?: XOR<TraineeScalarRelationFilter, TraineeWhereInput>
+  }, "id">
+
+  export type EmploymentHistoryOrderByWithAggregationInput = {
+    id?: SortOrder
+    traineeId?: SortOrder
+    employer?: SortOrder
+    role?: SortOrder
+    salaryBand?: SortOrderInput | SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrderInput | SortOrder
+    isCurrent?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: EmploymentHistoryCountOrderByAggregateInput
+    _max?: EmploymentHistoryMaxOrderByAggregateInput
+    _min?: EmploymentHistoryMinOrderByAggregateInput
+  }
+
+  export type EmploymentHistoryScalarWhereWithAggregatesInput = {
+    AND?: EmploymentHistoryScalarWhereWithAggregatesInput | EmploymentHistoryScalarWhereWithAggregatesInput[]
+    OR?: EmploymentHistoryScalarWhereWithAggregatesInput[]
+    NOT?: EmploymentHistoryScalarWhereWithAggregatesInput | EmploymentHistoryScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"EmploymentHistory"> | string
+    traineeId?: StringWithAggregatesFilter<"EmploymentHistory"> | string
+    employer?: StringWithAggregatesFilter<"EmploymentHistory"> | string
+    role?: StringWithAggregatesFilter<"EmploymentHistory"> | string
+    salaryBand?: EnumSalaryBandNullableWithAggregatesFilter<"EmploymentHistory"> | $Enums.SalaryBand | null
+    startDate?: DateTimeWithAggregatesFilter<"EmploymentHistory"> | Date | string
+    endDate?: DateTimeNullableWithAggregatesFilter<"EmploymentHistory"> | Date | string | null
+    isCurrent?: BoolWithAggregatesFilter<"EmploymentHistory"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"EmploymentHistory"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"EmploymentHistory"> | Date | string
+  }
+
+  export type TraineeLoginTokenWhereInput = {
+    AND?: TraineeLoginTokenWhereInput | TraineeLoginTokenWhereInput[]
+    OR?: TraineeLoginTokenWhereInput[]
+    NOT?: TraineeLoginTokenWhereInput | TraineeLoginTokenWhereInput[]
+    id?: StringFilter<"TraineeLoginToken"> | string
+    traineeId?: StringFilter<"TraineeLoginToken"> | string
+    tokenHash?: StringFilter<"TraineeLoginToken"> | string
+    expiresAt?: DateTimeFilter<"TraineeLoginToken"> | Date | string
+    usedAt?: DateTimeNullableFilter<"TraineeLoginToken"> | Date | string | null
+    createdAt?: DateTimeFilter<"TraineeLoginToken"> | Date | string
+    trainee?: XOR<TraineeScalarRelationFilter, TraineeWhereInput>
+  }
+
+  export type TraineeLoginTokenOrderByWithRelationInput = {
+    id?: SortOrder
+    traineeId?: SortOrder
+    tokenHash?: SortOrder
+    expiresAt?: SortOrder
+    usedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    trainee?: TraineeOrderByWithRelationInput
+  }
+
+  export type TraineeLoginTokenWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    tokenHash?: string
+    AND?: TraineeLoginTokenWhereInput | TraineeLoginTokenWhereInput[]
+    OR?: TraineeLoginTokenWhereInput[]
+    NOT?: TraineeLoginTokenWhereInput | TraineeLoginTokenWhereInput[]
+    traineeId?: StringFilter<"TraineeLoginToken"> | string
+    expiresAt?: DateTimeFilter<"TraineeLoginToken"> | Date | string
+    usedAt?: DateTimeNullableFilter<"TraineeLoginToken"> | Date | string | null
+    createdAt?: DateTimeFilter<"TraineeLoginToken"> | Date | string
+    trainee?: XOR<TraineeScalarRelationFilter, TraineeWhereInput>
+  }, "id" | "tokenHash">
+
+  export type TraineeLoginTokenOrderByWithAggregationInput = {
+    id?: SortOrder
+    traineeId?: SortOrder
+    tokenHash?: SortOrder
+    expiresAt?: SortOrder
+    usedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: TraineeLoginTokenCountOrderByAggregateInput
+    _max?: TraineeLoginTokenMaxOrderByAggregateInput
+    _min?: TraineeLoginTokenMinOrderByAggregateInput
+  }
+
+  export type TraineeLoginTokenScalarWhereWithAggregatesInput = {
+    AND?: TraineeLoginTokenScalarWhereWithAggregatesInput | TraineeLoginTokenScalarWhereWithAggregatesInput[]
+    OR?: TraineeLoginTokenScalarWhereWithAggregatesInput[]
+    NOT?: TraineeLoginTokenScalarWhereWithAggregatesInput | TraineeLoginTokenScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"TraineeLoginToken"> | string
+    traineeId?: StringWithAggregatesFilter<"TraineeLoginToken"> | string
+    tokenHash?: StringWithAggregatesFilter<"TraineeLoginToken"> | string
+    expiresAt?: DateTimeWithAggregatesFilter<"TraineeLoginToken"> | Date | string
+    usedAt?: DateTimeNullableWithAggregatesFilter<"TraineeLoginToken"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"TraineeLoginToken"> | Date | string
+  }
+
   export type ProgrammeCreateInput = {
     id?: string
     name: string
@@ -14829,6 +18784,9 @@ export namespace Prisma {
     botSessions?: BotSessionCreateNestedManyWithoutTraineeInput
     employmentClaims?: EmploymentClaimCreateNestedManyWithoutTraineeInput
     outcomeEvents?: OutcomeEventCreateNestedManyWithoutTraineeInput
+    certificates?: CertificateCreateNestedManyWithoutTraineeInput
+    employmentHistory?: EmploymentHistoryCreateNestedManyWithoutTraineeInput
+    loginTokens?: TraineeLoginTokenCreateNestedManyWithoutTraineeInput
   }
 
   export type TraineeUncheckedCreateInput = {
@@ -14850,6 +18808,9 @@ export namespace Prisma {
     botSessions?: BotSessionUncheckedCreateNestedManyWithoutTraineeInput
     employmentClaims?: EmploymentClaimUncheckedCreateNestedManyWithoutTraineeInput
     outcomeEvents?: OutcomeEventUncheckedCreateNestedManyWithoutTraineeInput
+    certificates?: CertificateUncheckedCreateNestedManyWithoutTraineeInput
+    employmentHistory?: EmploymentHistoryUncheckedCreateNestedManyWithoutTraineeInput
+    loginTokens?: TraineeLoginTokenUncheckedCreateNestedManyWithoutTraineeInput
   }
 
   export type TraineeUpdateInput = {
@@ -14871,6 +18832,9 @@ export namespace Prisma {
     botSessions?: BotSessionUpdateManyWithoutTraineeNestedInput
     employmentClaims?: EmploymentClaimUpdateManyWithoutTraineeNestedInput
     outcomeEvents?: OutcomeEventUpdateManyWithoutTraineeNestedInput
+    certificates?: CertificateUpdateManyWithoutTraineeNestedInput
+    employmentHistory?: EmploymentHistoryUpdateManyWithoutTraineeNestedInput
+    loginTokens?: TraineeLoginTokenUpdateManyWithoutTraineeNestedInput
   }
 
   export type TraineeUncheckedUpdateInput = {
@@ -14892,6 +18856,9 @@ export namespace Prisma {
     botSessions?: BotSessionUncheckedUpdateManyWithoutTraineeNestedInput
     employmentClaims?: EmploymentClaimUncheckedUpdateManyWithoutTraineeNestedInput
     outcomeEvents?: OutcomeEventUncheckedUpdateManyWithoutTraineeNestedInput
+    certificates?: CertificateUncheckedUpdateManyWithoutTraineeNestedInput
+    employmentHistory?: EmploymentHistoryUncheckedUpdateManyWithoutTraineeNestedInput
+    loginTokens?: TraineeLoginTokenUncheckedUpdateManyWithoutTraineeNestedInput
   }
 
   export type TraineeCreateManyInput = {
@@ -15528,6 +19495,241 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type CertificateCreateInput = {
+    id?: string
+    name: string
+    issuer: string
+    issueDate: Date | string
+    expiryDate?: Date | string | null
+    fileUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    trainee: TraineeCreateNestedOneWithoutCertificatesInput
+  }
+
+  export type CertificateUncheckedCreateInput = {
+    id?: string
+    traineeId: string
+    name: string
+    issuer: string
+    issueDate: Date | string
+    expiryDate?: Date | string | null
+    fileUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CertificateUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    issuer?: StringFieldUpdateOperationsInput | string
+    issueDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiryDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    trainee?: TraineeUpdateOneRequiredWithoutCertificatesNestedInput
+  }
+
+  export type CertificateUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    traineeId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    issuer?: StringFieldUpdateOperationsInput | string
+    issueDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiryDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CertificateCreateManyInput = {
+    id?: string
+    traineeId: string
+    name: string
+    issuer: string
+    issueDate: Date | string
+    expiryDate?: Date | string | null
+    fileUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CertificateUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    issuer?: StringFieldUpdateOperationsInput | string
+    issueDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiryDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CertificateUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    traineeId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    issuer?: StringFieldUpdateOperationsInput | string
+    issueDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiryDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EmploymentHistoryCreateInput = {
+    id?: string
+    employer: string
+    role: string
+    salaryBand?: $Enums.SalaryBand | null
+    startDate: Date | string
+    endDate?: Date | string | null
+    isCurrent?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    trainee: TraineeCreateNestedOneWithoutEmploymentHistoryInput
+  }
+
+  export type EmploymentHistoryUncheckedCreateInput = {
+    id?: string
+    traineeId: string
+    employer: string
+    role: string
+    salaryBand?: $Enums.SalaryBand | null
+    startDate: Date | string
+    endDate?: Date | string | null
+    isCurrent?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type EmploymentHistoryUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    employer?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    salaryBand?: NullableEnumSalaryBandFieldUpdateOperationsInput | $Enums.SalaryBand | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isCurrent?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    trainee?: TraineeUpdateOneRequiredWithoutEmploymentHistoryNestedInput
+  }
+
+  export type EmploymentHistoryUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    traineeId?: StringFieldUpdateOperationsInput | string
+    employer?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    salaryBand?: NullableEnumSalaryBandFieldUpdateOperationsInput | $Enums.SalaryBand | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isCurrent?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EmploymentHistoryCreateManyInput = {
+    id?: string
+    traineeId: string
+    employer: string
+    role: string
+    salaryBand?: $Enums.SalaryBand | null
+    startDate: Date | string
+    endDate?: Date | string | null
+    isCurrent?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type EmploymentHistoryUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    employer?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    salaryBand?: NullableEnumSalaryBandFieldUpdateOperationsInput | $Enums.SalaryBand | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isCurrent?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EmploymentHistoryUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    traineeId?: StringFieldUpdateOperationsInput | string
+    employer?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    salaryBand?: NullableEnumSalaryBandFieldUpdateOperationsInput | $Enums.SalaryBand | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isCurrent?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TraineeLoginTokenCreateInput = {
+    id?: string
+    tokenHash: string
+    expiresAt: Date | string
+    usedAt?: Date | string | null
+    createdAt?: Date | string
+    trainee: TraineeCreateNestedOneWithoutLoginTokensInput
+  }
+
+  export type TraineeLoginTokenUncheckedCreateInput = {
+    id?: string
+    traineeId: string
+    tokenHash: string
+    expiresAt: Date | string
+    usedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type TraineeLoginTokenUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    trainee?: TraineeUpdateOneRequiredWithoutLoginTokensNestedInput
+  }
+
+  export type TraineeLoginTokenUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    traineeId?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TraineeLoginTokenCreateManyInput = {
+    id?: string
+    traineeId: string
+    tokenHash: string
+    expiresAt: Date | string
+    usedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type TraineeLoginTokenUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TraineeLoginTokenUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    traineeId?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -15724,6 +19926,24 @@ export namespace Prisma {
     none?: OutcomeEventWhereInput
   }
 
+  export type CertificateListRelationFilter = {
+    every?: CertificateWhereInput
+    some?: CertificateWhereInput
+    none?: CertificateWhereInput
+  }
+
+  export type EmploymentHistoryListRelationFilter = {
+    every?: EmploymentHistoryWhereInput
+    some?: EmploymentHistoryWhereInput
+    none?: EmploymentHistoryWhereInput
+  }
+
+  export type TraineeLoginTokenListRelationFilter = {
+    every?: TraineeLoginTokenWhereInput
+    some?: TraineeLoginTokenWhereInput
+    none?: TraineeLoginTokenWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -15738,6 +19958,18 @@ export namespace Prisma {
   }
 
   export type OutcomeEventOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CertificateOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type EmploymentHistoryOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type TraineeLoginTokenOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -16352,6 +20584,108 @@ export namespace Prisma {
     _max?: NestedEnumActorTypeFilter<$PrismaModel>
   }
 
+  export type CertificateCountOrderByAggregateInput = {
+    id?: SortOrder
+    traineeId?: SortOrder
+    name?: SortOrder
+    issuer?: SortOrder
+    issueDate?: SortOrder
+    expiryDate?: SortOrder
+    fileUrl?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CertificateMaxOrderByAggregateInput = {
+    id?: SortOrder
+    traineeId?: SortOrder
+    name?: SortOrder
+    issuer?: SortOrder
+    issueDate?: SortOrder
+    expiryDate?: SortOrder
+    fileUrl?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CertificateMinOrderByAggregateInput = {
+    id?: SortOrder
+    traineeId?: SortOrder
+    name?: SortOrder
+    issuer?: SortOrder
+    issueDate?: SortOrder
+    expiryDate?: SortOrder
+    fileUrl?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EmploymentHistoryCountOrderByAggregateInput = {
+    id?: SortOrder
+    traineeId?: SortOrder
+    employer?: SortOrder
+    role?: SortOrder
+    salaryBand?: SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrder
+    isCurrent?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EmploymentHistoryMaxOrderByAggregateInput = {
+    id?: SortOrder
+    traineeId?: SortOrder
+    employer?: SortOrder
+    role?: SortOrder
+    salaryBand?: SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrder
+    isCurrent?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EmploymentHistoryMinOrderByAggregateInput = {
+    id?: SortOrder
+    traineeId?: SortOrder
+    employer?: SortOrder
+    role?: SortOrder
+    salaryBand?: SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrder
+    isCurrent?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TraineeLoginTokenCountOrderByAggregateInput = {
+    id?: SortOrder
+    traineeId?: SortOrder
+    tokenHash?: SortOrder
+    expiresAt?: SortOrder
+    usedAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type TraineeLoginTokenMaxOrderByAggregateInput = {
+    id?: SortOrder
+    traineeId?: SortOrder
+    tokenHash?: SortOrder
+    expiresAt?: SortOrder
+    usedAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type TraineeLoginTokenMinOrderByAggregateInput = {
+    id?: SortOrder
+    traineeId?: SortOrder
+    tokenHash?: SortOrder
+    expiresAt?: SortOrder
+    usedAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
   export type CohortCreateNestedManyWithoutProgrammeInput = {
     create?: XOR<CohortCreateWithoutProgrammeInput, CohortUncheckedCreateWithoutProgrammeInput> | CohortCreateWithoutProgrammeInput[] | CohortUncheckedCreateWithoutProgrammeInput[]
     connectOrCreate?: CohortCreateOrConnectWithoutProgrammeInput | CohortCreateOrConnectWithoutProgrammeInput[]
@@ -16535,6 +20869,27 @@ export namespace Prisma {
     connect?: OutcomeEventWhereUniqueInput | OutcomeEventWhereUniqueInput[]
   }
 
+  export type CertificateCreateNestedManyWithoutTraineeInput = {
+    create?: XOR<CertificateCreateWithoutTraineeInput, CertificateUncheckedCreateWithoutTraineeInput> | CertificateCreateWithoutTraineeInput[] | CertificateUncheckedCreateWithoutTraineeInput[]
+    connectOrCreate?: CertificateCreateOrConnectWithoutTraineeInput | CertificateCreateOrConnectWithoutTraineeInput[]
+    createMany?: CertificateCreateManyTraineeInputEnvelope
+    connect?: CertificateWhereUniqueInput | CertificateWhereUniqueInput[]
+  }
+
+  export type EmploymentHistoryCreateNestedManyWithoutTraineeInput = {
+    create?: XOR<EmploymentHistoryCreateWithoutTraineeInput, EmploymentHistoryUncheckedCreateWithoutTraineeInput> | EmploymentHistoryCreateWithoutTraineeInput[] | EmploymentHistoryUncheckedCreateWithoutTraineeInput[]
+    connectOrCreate?: EmploymentHistoryCreateOrConnectWithoutTraineeInput | EmploymentHistoryCreateOrConnectWithoutTraineeInput[]
+    createMany?: EmploymentHistoryCreateManyTraineeInputEnvelope
+    connect?: EmploymentHistoryWhereUniqueInput | EmploymentHistoryWhereUniqueInput[]
+  }
+
+  export type TraineeLoginTokenCreateNestedManyWithoutTraineeInput = {
+    create?: XOR<TraineeLoginTokenCreateWithoutTraineeInput, TraineeLoginTokenUncheckedCreateWithoutTraineeInput> | TraineeLoginTokenCreateWithoutTraineeInput[] | TraineeLoginTokenUncheckedCreateWithoutTraineeInput[]
+    connectOrCreate?: TraineeLoginTokenCreateOrConnectWithoutTraineeInput | TraineeLoginTokenCreateOrConnectWithoutTraineeInput[]
+    createMany?: TraineeLoginTokenCreateManyTraineeInputEnvelope
+    connect?: TraineeLoginTokenWhereUniqueInput | TraineeLoginTokenWhereUniqueInput[]
+  }
+
   export type EnrolmentUncheckedCreateNestedManyWithoutTraineeInput = {
     create?: XOR<EnrolmentCreateWithoutTraineeInput, EnrolmentUncheckedCreateWithoutTraineeInput> | EnrolmentCreateWithoutTraineeInput[] | EnrolmentUncheckedCreateWithoutTraineeInput[]
     connectOrCreate?: EnrolmentCreateOrConnectWithoutTraineeInput | EnrolmentCreateOrConnectWithoutTraineeInput[]
@@ -16568,6 +20923,27 @@ export namespace Prisma {
     connectOrCreate?: OutcomeEventCreateOrConnectWithoutTraineeInput | OutcomeEventCreateOrConnectWithoutTraineeInput[]
     createMany?: OutcomeEventCreateManyTraineeInputEnvelope
     connect?: OutcomeEventWhereUniqueInput | OutcomeEventWhereUniqueInput[]
+  }
+
+  export type CertificateUncheckedCreateNestedManyWithoutTraineeInput = {
+    create?: XOR<CertificateCreateWithoutTraineeInput, CertificateUncheckedCreateWithoutTraineeInput> | CertificateCreateWithoutTraineeInput[] | CertificateUncheckedCreateWithoutTraineeInput[]
+    connectOrCreate?: CertificateCreateOrConnectWithoutTraineeInput | CertificateCreateOrConnectWithoutTraineeInput[]
+    createMany?: CertificateCreateManyTraineeInputEnvelope
+    connect?: CertificateWhereUniqueInput | CertificateWhereUniqueInput[]
+  }
+
+  export type EmploymentHistoryUncheckedCreateNestedManyWithoutTraineeInput = {
+    create?: XOR<EmploymentHistoryCreateWithoutTraineeInput, EmploymentHistoryUncheckedCreateWithoutTraineeInput> | EmploymentHistoryCreateWithoutTraineeInput[] | EmploymentHistoryUncheckedCreateWithoutTraineeInput[]
+    connectOrCreate?: EmploymentHistoryCreateOrConnectWithoutTraineeInput | EmploymentHistoryCreateOrConnectWithoutTraineeInput[]
+    createMany?: EmploymentHistoryCreateManyTraineeInputEnvelope
+    connect?: EmploymentHistoryWhereUniqueInput | EmploymentHistoryWhereUniqueInput[]
+  }
+
+  export type TraineeLoginTokenUncheckedCreateNestedManyWithoutTraineeInput = {
+    create?: XOR<TraineeLoginTokenCreateWithoutTraineeInput, TraineeLoginTokenUncheckedCreateWithoutTraineeInput> | TraineeLoginTokenCreateWithoutTraineeInput[] | TraineeLoginTokenUncheckedCreateWithoutTraineeInput[]
+    connectOrCreate?: TraineeLoginTokenCreateOrConnectWithoutTraineeInput | TraineeLoginTokenCreateOrConnectWithoutTraineeInput[]
+    createMany?: TraineeLoginTokenCreateManyTraineeInputEnvelope
+    connect?: TraineeLoginTokenWhereUniqueInput | TraineeLoginTokenWhereUniqueInput[]
   }
 
   export type NullableStringFieldUpdateOperationsInput = {
@@ -16652,6 +21028,48 @@ export namespace Prisma {
     deleteMany?: OutcomeEventScalarWhereInput | OutcomeEventScalarWhereInput[]
   }
 
+  export type CertificateUpdateManyWithoutTraineeNestedInput = {
+    create?: XOR<CertificateCreateWithoutTraineeInput, CertificateUncheckedCreateWithoutTraineeInput> | CertificateCreateWithoutTraineeInput[] | CertificateUncheckedCreateWithoutTraineeInput[]
+    connectOrCreate?: CertificateCreateOrConnectWithoutTraineeInput | CertificateCreateOrConnectWithoutTraineeInput[]
+    upsert?: CertificateUpsertWithWhereUniqueWithoutTraineeInput | CertificateUpsertWithWhereUniqueWithoutTraineeInput[]
+    createMany?: CertificateCreateManyTraineeInputEnvelope
+    set?: CertificateWhereUniqueInput | CertificateWhereUniqueInput[]
+    disconnect?: CertificateWhereUniqueInput | CertificateWhereUniqueInput[]
+    delete?: CertificateWhereUniqueInput | CertificateWhereUniqueInput[]
+    connect?: CertificateWhereUniqueInput | CertificateWhereUniqueInput[]
+    update?: CertificateUpdateWithWhereUniqueWithoutTraineeInput | CertificateUpdateWithWhereUniqueWithoutTraineeInput[]
+    updateMany?: CertificateUpdateManyWithWhereWithoutTraineeInput | CertificateUpdateManyWithWhereWithoutTraineeInput[]
+    deleteMany?: CertificateScalarWhereInput | CertificateScalarWhereInput[]
+  }
+
+  export type EmploymentHistoryUpdateManyWithoutTraineeNestedInput = {
+    create?: XOR<EmploymentHistoryCreateWithoutTraineeInput, EmploymentHistoryUncheckedCreateWithoutTraineeInput> | EmploymentHistoryCreateWithoutTraineeInput[] | EmploymentHistoryUncheckedCreateWithoutTraineeInput[]
+    connectOrCreate?: EmploymentHistoryCreateOrConnectWithoutTraineeInput | EmploymentHistoryCreateOrConnectWithoutTraineeInput[]
+    upsert?: EmploymentHistoryUpsertWithWhereUniqueWithoutTraineeInput | EmploymentHistoryUpsertWithWhereUniqueWithoutTraineeInput[]
+    createMany?: EmploymentHistoryCreateManyTraineeInputEnvelope
+    set?: EmploymentHistoryWhereUniqueInput | EmploymentHistoryWhereUniqueInput[]
+    disconnect?: EmploymentHistoryWhereUniqueInput | EmploymentHistoryWhereUniqueInput[]
+    delete?: EmploymentHistoryWhereUniqueInput | EmploymentHistoryWhereUniqueInput[]
+    connect?: EmploymentHistoryWhereUniqueInput | EmploymentHistoryWhereUniqueInput[]
+    update?: EmploymentHistoryUpdateWithWhereUniqueWithoutTraineeInput | EmploymentHistoryUpdateWithWhereUniqueWithoutTraineeInput[]
+    updateMany?: EmploymentHistoryUpdateManyWithWhereWithoutTraineeInput | EmploymentHistoryUpdateManyWithWhereWithoutTraineeInput[]
+    deleteMany?: EmploymentHistoryScalarWhereInput | EmploymentHistoryScalarWhereInput[]
+  }
+
+  export type TraineeLoginTokenUpdateManyWithoutTraineeNestedInput = {
+    create?: XOR<TraineeLoginTokenCreateWithoutTraineeInput, TraineeLoginTokenUncheckedCreateWithoutTraineeInput> | TraineeLoginTokenCreateWithoutTraineeInput[] | TraineeLoginTokenUncheckedCreateWithoutTraineeInput[]
+    connectOrCreate?: TraineeLoginTokenCreateOrConnectWithoutTraineeInput | TraineeLoginTokenCreateOrConnectWithoutTraineeInput[]
+    upsert?: TraineeLoginTokenUpsertWithWhereUniqueWithoutTraineeInput | TraineeLoginTokenUpsertWithWhereUniqueWithoutTraineeInput[]
+    createMany?: TraineeLoginTokenCreateManyTraineeInputEnvelope
+    set?: TraineeLoginTokenWhereUniqueInput | TraineeLoginTokenWhereUniqueInput[]
+    disconnect?: TraineeLoginTokenWhereUniqueInput | TraineeLoginTokenWhereUniqueInput[]
+    delete?: TraineeLoginTokenWhereUniqueInput | TraineeLoginTokenWhereUniqueInput[]
+    connect?: TraineeLoginTokenWhereUniqueInput | TraineeLoginTokenWhereUniqueInput[]
+    update?: TraineeLoginTokenUpdateWithWhereUniqueWithoutTraineeInput | TraineeLoginTokenUpdateWithWhereUniqueWithoutTraineeInput[]
+    updateMany?: TraineeLoginTokenUpdateManyWithWhereWithoutTraineeInput | TraineeLoginTokenUpdateManyWithWhereWithoutTraineeInput[]
+    deleteMany?: TraineeLoginTokenScalarWhereInput | TraineeLoginTokenScalarWhereInput[]
+  }
+
   export type EnrolmentUncheckedUpdateManyWithoutTraineeNestedInput = {
     create?: XOR<EnrolmentCreateWithoutTraineeInput, EnrolmentUncheckedCreateWithoutTraineeInput> | EnrolmentCreateWithoutTraineeInput[] | EnrolmentUncheckedCreateWithoutTraineeInput[]
     connectOrCreate?: EnrolmentCreateOrConnectWithoutTraineeInput | EnrolmentCreateOrConnectWithoutTraineeInput[]
@@ -16720,6 +21138,48 @@ export namespace Prisma {
     update?: OutcomeEventUpdateWithWhereUniqueWithoutTraineeInput | OutcomeEventUpdateWithWhereUniqueWithoutTraineeInput[]
     updateMany?: OutcomeEventUpdateManyWithWhereWithoutTraineeInput | OutcomeEventUpdateManyWithWhereWithoutTraineeInput[]
     deleteMany?: OutcomeEventScalarWhereInput | OutcomeEventScalarWhereInput[]
+  }
+
+  export type CertificateUncheckedUpdateManyWithoutTraineeNestedInput = {
+    create?: XOR<CertificateCreateWithoutTraineeInput, CertificateUncheckedCreateWithoutTraineeInput> | CertificateCreateWithoutTraineeInput[] | CertificateUncheckedCreateWithoutTraineeInput[]
+    connectOrCreate?: CertificateCreateOrConnectWithoutTraineeInput | CertificateCreateOrConnectWithoutTraineeInput[]
+    upsert?: CertificateUpsertWithWhereUniqueWithoutTraineeInput | CertificateUpsertWithWhereUniqueWithoutTraineeInput[]
+    createMany?: CertificateCreateManyTraineeInputEnvelope
+    set?: CertificateWhereUniqueInput | CertificateWhereUniqueInput[]
+    disconnect?: CertificateWhereUniqueInput | CertificateWhereUniqueInput[]
+    delete?: CertificateWhereUniqueInput | CertificateWhereUniqueInput[]
+    connect?: CertificateWhereUniqueInput | CertificateWhereUniqueInput[]
+    update?: CertificateUpdateWithWhereUniqueWithoutTraineeInput | CertificateUpdateWithWhereUniqueWithoutTraineeInput[]
+    updateMany?: CertificateUpdateManyWithWhereWithoutTraineeInput | CertificateUpdateManyWithWhereWithoutTraineeInput[]
+    deleteMany?: CertificateScalarWhereInput | CertificateScalarWhereInput[]
+  }
+
+  export type EmploymentHistoryUncheckedUpdateManyWithoutTraineeNestedInput = {
+    create?: XOR<EmploymentHistoryCreateWithoutTraineeInput, EmploymentHistoryUncheckedCreateWithoutTraineeInput> | EmploymentHistoryCreateWithoutTraineeInput[] | EmploymentHistoryUncheckedCreateWithoutTraineeInput[]
+    connectOrCreate?: EmploymentHistoryCreateOrConnectWithoutTraineeInput | EmploymentHistoryCreateOrConnectWithoutTraineeInput[]
+    upsert?: EmploymentHistoryUpsertWithWhereUniqueWithoutTraineeInput | EmploymentHistoryUpsertWithWhereUniqueWithoutTraineeInput[]
+    createMany?: EmploymentHistoryCreateManyTraineeInputEnvelope
+    set?: EmploymentHistoryWhereUniqueInput | EmploymentHistoryWhereUniqueInput[]
+    disconnect?: EmploymentHistoryWhereUniqueInput | EmploymentHistoryWhereUniqueInput[]
+    delete?: EmploymentHistoryWhereUniqueInput | EmploymentHistoryWhereUniqueInput[]
+    connect?: EmploymentHistoryWhereUniqueInput | EmploymentHistoryWhereUniqueInput[]
+    update?: EmploymentHistoryUpdateWithWhereUniqueWithoutTraineeInput | EmploymentHistoryUpdateWithWhereUniqueWithoutTraineeInput[]
+    updateMany?: EmploymentHistoryUpdateManyWithWhereWithoutTraineeInput | EmploymentHistoryUpdateManyWithWhereWithoutTraineeInput[]
+    deleteMany?: EmploymentHistoryScalarWhereInput | EmploymentHistoryScalarWhereInput[]
+  }
+
+  export type TraineeLoginTokenUncheckedUpdateManyWithoutTraineeNestedInput = {
+    create?: XOR<TraineeLoginTokenCreateWithoutTraineeInput, TraineeLoginTokenUncheckedCreateWithoutTraineeInput> | TraineeLoginTokenCreateWithoutTraineeInput[] | TraineeLoginTokenUncheckedCreateWithoutTraineeInput[]
+    connectOrCreate?: TraineeLoginTokenCreateOrConnectWithoutTraineeInput | TraineeLoginTokenCreateOrConnectWithoutTraineeInput[]
+    upsert?: TraineeLoginTokenUpsertWithWhereUniqueWithoutTraineeInput | TraineeLoginTokenUpsertWithWhereUniqueWithoutTraineeInput[]
+    createMany?: TraineeLoginTokenCreateManyTraineeInputEnvelope
+    set?: TraineeLoginTokenWhereUniqueInput | TraineeLoginTokenWhereUniqueInput[]
+    disconnect?: TraineeLoginTokenWhereUniqueInput | TraineeLoginTokenWhereUniqueInput[]
+    delete?: TraineeLoginTokenWhereUniqueInput | TraineeLoginTokenWhereUniqueInput[]
+    connect?: TraineeLoginTokenWhereUniqueInput | TraineeLoginTokenWhereUniqueInput[]
+    update?: TraineeLoginTokenUpdateWithWhereUniqueWithoutTraineeInput | TraineeLoginTokenUpdateWithWhereUniqueWithoutTraineeInput[]
+    updateMany?: TraineeLoginTokenUpdateManyWithWhereWithoutTraineeInput | TraineeLoginTokenUpdateManyWithWhereWithoutTraineeInput[]
+    deleteMany?: TraineeLoginTokenScalarWhereInput | TraineeLoginTokenScalarWhereInput[]
   }
 
   export type TraineeCreateNestedOneWithoutEnrolmentsInput = {
@@ -17084,6 +21544,48 @@ export namespace Prisma {
 
   export type EnumActorTypeFieldUpdateOperationsInput = {
     set?: $Enums.ActorType
+  }
+
+  export type TraineeCreateNestedOneWithoutCertificatesInput = {
+    create?: XOR<TraineeCreateWithoutCertificatesInput, TraineeUncheckedCreateWithoutCertificatesInput>
+    connectOrCreate?: TraineeCreateOrConnectWithoutCertificatesInput
+    connect?: TraineeWhereUniqueInput
+  }
+
+  export type TraineeUpdateOneRequiredWithoutCertificatesNestedInput = {
+    create?: XOR<TraineeCreateWithoutCertificatesInput, TraineeUncheckedCreateWithoutCertificatesInput>
+    connectOrCreate?: TraineeCreateOrConnectWithoutCertificatesInput
+    upsert?: TraineeUpsertWithoutCertificatesInput
+    connect?: TraineeWhereUniqueInput
+    update?: XOR<XOR<TraineeUpdateToOneWithWhereWithoutCertificatesInput, TraineeUpdateWithoutCertificatesInput>, TraineeUncheckedUpdateWithoutCertificatesInput>
+  }
+
+  export type TraineeCreateNestedOneWithoutEmploymentHistoryInput = {
+    create?: XOR<TraineeCreateWithoutEmploymentHistoryInput, TraineeUncheckedCreateWithoutEmploymentHistoryInput>
+    connectOrCreate?: TraineeCreateOrConnectWithoutEmploymentHistoryInput
+    connect?: TraineeWhereUniqueInput
+  }
+
+  export type TraineeUpdateOneRequiredWithoutEmploymentHistoryNestedInput = {
+    create?: XOR<TraineeCreateWithoutEmploymentHistoryInput, TraineeUncheckedCreateWithoutEmploymentHistoryInput>
+    connectOrCreate?: TraineeCreateOrConnectWithoutEmploymentHistoryInput
+    upsert?: TraineeUpsertWithoutEmploymentHistoryInput
+    connect?: TraineeWhereUniqueInput
+    update?: XOR<XOR<TraineeUpdateToOneWithWhereWithoutEmploymentHistoryInput, TraineeUpdateWithoutEmploymentHistoryInput>, TraineeUncheckedUpdateWithoutEmploymentHistoryInput>
+  }
+
+  export type TraineeCreateNestedOneWithoutLoginTokensInput = {
+    create?: XOR<TraineeCreateWithoutLoginTokensInput, TraineeUncheckedCreateWithoutLoginTokensInput>
+    connectOrCreate?: TraineeCreateOrConnectWithoutLoginTokensInput
+    connect?: TraineeWhereUniqueInput
+  }
+
+  export type TraineeUpdateOneRequiredWithoutLoginTokensNestedInput = {
+    create?: XOR<TraineeCreateWithoutLoginTokensInput, TraineeUncheckedCreateWithoutLoginTokensInput>
+    connectOrCreate?: TraineeCreateOrConnectWithoutLoginTokensInput
+    upsert?: TraineeUpsertWithoutLoginTokensInput
+    connect?: TraineeWhereUniqueInput
+    update?: XOR<XOR<TraineeUpdateToOneWithWhereWithoutLoginTokensInput, TraineeUpdateWithoutLoginTokensInput>, TraineeUncheckedUpdateWithoutLoginTokensInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -17820,6 +22322,98 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type CertificateCreateWithoutTraineeInput = {
+    id?: string
+    name: string
+    issuer: string
+    issueDate: Date | string
+    expiryDate?: Date | string | null
+    fileUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CertificateUncheckedCreateWithoutTraineeInput = {
+    id?: string
+    name: string
+    issuer: string
+    issueDate: Date | string
+    expiryDate?: Date | string | null
+    fileUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CertificateCreateOrConnectWithoutTraineeInput = {
+    where: CertificateWhereUniqueInput
+    create: XOR<CertificateCreateWithoutTraineeInput, CertificateUncheckedCreateWithoutTraineeInput>
+  }
+
+  export type CertificateCreateManyTraineeInputEnvelope = {
+    data: CertificateCreateManyTraineeInput | CertificateCreateManyTraineeInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type EmploymentHistoryCreateWithoutTraineeInput = {
+    id?: string
+    employer: string
+    role: string
+    salaryBand?: $Enums.SalaryBand | null
+    startDate: Date | string
+    endDate?: Date | string | null
+    isCurrent?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type EmploymentHistoryUncheckedCreateWithoutTraineeInput = {
+    id?: string
+    employer: string
+    role: string
+    salaryBand?: $Enums.SalaryBand | null
+    startDate: Date | string
+    endDate?: Date | string | null
+    isCurrent?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type EmploymentHistoryCreateOrConnectWithoutTraineeInput = {
+    where: EmploymentHistoryWhereUniqueInput
+    create: XOR<EmploymentHistoryCreateWithoutTraineeInput, EmploymentHistoryUncheckedCreateWithoutTraineeInput>
+  }
+
+  export type EmploymentHistoryCreateManyTraineeInputEnvelope = {
+    data: EmploymentHistoryCreateManyTraineeInput | EmploymentHistoryCreateManyTraineeInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TraineeLoginTokenCreateWithoutTraineeInput = {
+    id?: string
+    tokenHash: string
+    expiresAt: Date | string
+    usedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type TraineeLoginTokenUncheckedCreateWithoutTraineeInput = {
+    id?: string
+    tokenHash: string
+    expiresAt: Date | string
+    usedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type TraineeLoginTokenCreateOrConnectWithoutTraineeInput = {
+    where: TraineeLoginTokenWhereUniqueInput
+    create: XOR<TraineeLoginTokenCreateWithoutTraineeInput, TraineeLoginTokenUncheckedCreateWithoutTraineeInput>
+  }
+
+  export type TraineeLoginTokenCreateManyTraineeInputEnvelope = {
+    data: TraineeLoginTokenCreateManyTraineeInput | TraineeLoginTokenCreateManyTraineeInput[]
+    skipDuplicates?: boolean
+  }
+
   export type EnrolmentUpsertWithWhereUniqueWithoutTraineeInput = {
     where: EnrolmentWhereUniqueInput
     update: XOR<EnrolmentUpdateWithoutTraineeInput, EnrolmentUncheckedUpdateWithoutTraineeInput>
@@ -17947,6 +22541,97 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"OutcomeEvent"> | Date | string
   }
 
+  export type CertificateUpsertWithWhereUniqueWithoutTraineeInput = {
+    where: CertificateWhereUniqueInput
+    update: XOR<CertificateUpdateWithoutTraineeInput, CertificateUncheckedUpdateWithoutTraineeInput>
+    create: XOR<CertificateCreateWithoutTraineeInput, CertificateUncheckedCreateWithoutTraineeInput>
+  }
+
+  export type CertificateUpdateWithWhereUniqueWithoutTraineeInput = {
+    where: CertificateWhereUniqueInput
+    data: XOR<CertificateUpdateWithoutTraineeInput, CertificateUncheckedUpdateWithoutTraineeInput>
+  }
+
+  export type CertificateUpdateManyWithWhereWithoutTraineeInput = {
+    where: CertificateScalarWhereInput
+    data: XOR<CertificateUpdateManyMutationInput, CertificateUncheckedUpdateManyWithoutTraineeInput>
+  }
+
+  export type CertificateScalarWhereInput = {
+    AND?: CertificateScalarWhereInput | CertificateScalarWhereInput[]
+    OR?: CertificateScalarWhereInput[]
+    NOT?: CertificateScalarWhereInput | CertificateScalarWhereInput[]
+    id?: StringFilter<"Certificate"> | string
+    traineeId?: StringFilter<"Certificate"> | string
+    name?: StringFilter<"Certificate"> | string
+    issuer?: StringFilter<"Certificate"> | string
+    issueDate?: DateTimeFilter<"Certificate"> | Date | string
+    expiryDate?: DateTimeNullableFilter<"Certificate"> | Date | string | null
+    fileUrl?: StringNullableFilter<"Certificate"> | string | null
+    createdAt?: DateTimeFilter<"Certificate"> | Date | string
+    updatedAt?: DateTimeFilter<"Certificate"> | Date | string
+  }
+
+  export type EmploymentHistoryUpsertWithWhereUniqueWithoutTraineeInput = {
+    where: EmploymentHistoryWhereUniqueInput
+    update: XOR<EmploymentHistoryUpdateWithoutTraineeInput, EmploymentHistoryUncheckedUpdateWithoutTraineeInput>
+    create: XOR<EmploymentHistoryCreateWithoutTraineeInput, EmploymentHistoryUncheckedCreateWithoutTraineeInput>
+  }
+
+  export type EmploymentHistoryUpdateWithWhereUniqueWithoutTraineeInput = {
+    where: EmploymentHistoryWhereUniqueInput
+    data: XOR<EmploymentHistoryUpdateWithoutTraineeInput, EmploymentHistoryUncheckedUpdateWithoutTraineeInput>
+  }
+
+  export type EmploymentHistoryUpdateManyWithWhereWithoutTraineeInput = {
+    where: EmploymentHistoryScalarWhereInput
+    data: XOR<EmploymentHistoryUpdateManyMutationInput, EmploymentHistoryUncheckedUpdateManyWithoutTraineeInput>
+  }
+
+  export type EmploymentHistoryScalarWhereInput = {
+    AND?: EmploymentHistoryScalarWhereInput | EmploymentHistoryScalarWhereInput[]
+    OR?: EmploymentHistoryScalarWhereInput[]
+    NOT?: EmploymentHistoryScalarWhereInput | EmploymentHistoryScalarWhereInput[]
+    id?: StringFilter<"EmploymentHistory"> | string
+    traineeId?: StringFilter<"EmploymentHistory"> | string
+    employer?: StringFilter<"EmploymentHistory"> | string
+    role?: StringFilter<"EmploymentHistory"> | string
+    salaryBand?: EnumSalaryBandNullableFilter<"EmploymentHistory"> | $Enums.SalaryBand | null
+    startDate?: DateTimeFilter<"EmploymentHistory"> | Date | string
+    endDate?: DateTimeNullableFilter<"EmploymentHistory"> | Date | string | null
+    isCurrent?: BoolFilter<"EmploymentHistory"> | boolean
+    createdAt?: DateTimeFilter<"EmploymentHistory"> | Date | string
+    updatedAt?: DateTimeFilter<"EmploymentHistory"> | Date | string
+  }
+
+  export type TraineeLoginTokenUpsertWithWhereUniqueWithoutTraineeInput = {
+    where: TraineeLoginTokenWhereUniqueInput
+    update: XOR<TraineeLoginTokenUpdateWithoutTraineeInput, TraineeLoginTokenUncheckedUpdateWithoutTraineeInput>
+    create: XOR<TraineeLoginTokenCreateWithoutTraineeInput, TraineeLoginTokenUncheckedCreateWithoutTraineeInput>
+  }
+
+  export type TraineeLoginTokenUpdateWithWhereUniqueWithoutTraineeInput = {
+    where: TraineeLoginTokenWhereUniqueInput
+    data: XOR<TraineeLoginTokenUpdateWithoutTraineeInput, TraineeLoginTokenUncheckedUpdateWithoutTraineeInput>
+  }
+
+  export type TraineeLoginTokenUpdateManyWithWhereWithoutTraineeInput = {
+    where: TraineeLoginTokenScalarWhereInput
+    data: XOR<TraineeLoginTokenUpdateManyMutationInput, TraineeLoginTokenUncheckedUpdateManyWithoutTraineeInput>
+  }
+
+  export type TraineeLoginTokenScalarWhereInput = {
+    AND?: TraineeLoginTokenScalarWhereInput | TraineeLoginTokenScalarWhereInput[]
+    OR?: TraineeLoginTokenScalarWhereInput[]
+    NOT?: TraineeLoginTokenScalarWhereInput | TraineeLoginTokenScalarWhereInput[]
+    id?: StringFilter<"TraineeLoginToken"> | string
+    traineeId?: StringFilter<"TraineeLoginToken"> | string
+    tokenHash?: StringFilter<"TraineeLoginToken"> | string
+    expiresAt?: DateTimeFilter<"TraineeLoginToken"> | Date | string
+    usedAt?: DateTimeNullableFilter<"TraineeLoginToken"> | Date | string | null
+    createdAt?: DateTimeFilter<"TraineeLoginToken"> | Date | string
+  }
+
   export type TraineeCreateWithoutEnrolmentsInput = {
     id?: string
     publicId?: string
@@ -17965,6 +22650,9 @@ export namespace Prisma {
     botSessions?: BotSessionCreateNestedManyWithoutTraineeInput
     employmentClaims?: EmploymentClaimCreateNestedManyWithoutTraineeInput
     outcomeEvents?: OutcomeEventCreateNestedManyWithoutTraineeInput
+    certificates?: CertificateCreateNestedManyWithoutTraineeInput
+    employmentHistory?: EmploymentHistoryCreateNestedManyWithoutTraineeInput
+    loginTokens?: TraineeLoginTokenCreateNestedManyWithoutTraineeInput
   }
 
   export type TraineeUncheckedCreateWithoutEnrolmentsInput = {
@@ -17985,6 +22673,9 @@ export namespace Prisma {
     botSessions?: BotSessionUncheckedCreateNestedManyWithoutTraineeInput
     employmentClaims?: EmploymentClaimUncheckedCreateNestedManyWithoutTraineeInput
     outcomeEvents?: OutcomeEventUncheckedCreateNestedManyWithoutTraineeInput
+    certificates?: CertificateUncheckedCreateNestedManyWithoutTraineeInput
+    employmentHistory?: EmploymentHistoryUncheckedCreateNestedManyWithoutTraineeInput
+    loginTokens?: TraineeLoginTokenUncheckedCreateNestedManyWithoutTraineeInput
   }
 
   export type TraineeCreateOrConnectWithoutEnrolmentsInput = {
@@ -18048,6 +22739,9 @@ export namespace Prisma {
     botSessions?: BotSessionUpdateManyWithoutTraineeNestedInput
     employmentClaims?: EmploymentClaimUpdateManyWithoutTraineeNestedInput
     outcomeEvents?: OutcomeEventUpdateManyWithoutTraineeNestedInput
+    certificates?: CertificateUpdateManyWithoutTraineeNestedInput
+    employmentHistory?: EmploymentHistoryUpdateManyWithoutTraineeNestedInput
+    loginTokens?: TraineeLoginTokenUpdateManyWithoutTraineeNestedInput
   }
 
   export type TraineeUncheckedUpdateWithoutEnrolmentsInput = {
@@ -18068,6 +22762,9 @@ export namespace Prisma {
     botSessions?: BotSessionUncheckedUpdateManyWithoutTraineeNestedInput
     employmentClaims?: EmploymentClaimUncheckedUpdateManyWithoutTraineeNestedInput
     outcomeEvents?: OutcomeEventUncheckedUpdateManyWithoutTraineeNestedInput
+    certificates?: CertificateUncheckedUpdateManyWithoutTraineeNestedInput
+    employmentHistory?: EmploymentHistoryUncheckedUpdateManyWithoutTraineeNestedInput
+    loginTokens?: TraineeLoginTokenUncheckedUpdateManyWithoutTraineeNestedInput
   }
 
   export type CohortUpsertWithoutEnrolmentsInput = {
@@ -18121,6 +22818,9 @@ export namespace Prisma {
     botSessions?: BotSessionCreateNestedManyWithoutTraineeInput
     employmentClaims?: EmploymentClaimCreateNestedManyWithoutTraineeInput
     outcomeEvents?: OutcomeEventCreateNestedManyWithoutTraineeInput
+    certificates?: CertificateCreateNestedManyWithoutTraineeInput
+    employmentHistory?: EmploymentHistoryCreateNestedManyWithoutTraineeInput
+    loginTokens?: TraineeLoginTokenCreateNestedManyWithoutTraineeInput
   }
 
   export type TraineeUncheckedCreateWithoutFollowupEventsInput = {
@@ -18141,6 +22841,9 @@ export namespace Prisma {
     botSessions?: BotSessionUncheckedCreateNestedManyWithoutTraineeInput
     employmentClaims?: EmploymentClaimUncheckedCreateNestedManyWithoutTraineeInput
     outcomeEvents?: OutcomeEventUncheckedCreateNestedManyWithoutTraineeInput
+    certificates?: CertificateUncheckedCreateNestedManyWithoutTraineeInput
+    employmentHistory?: EmploymentHistoryUncheckedCreateNestedManyWithoutTraineeInput
+    loginTokens?: TraineeLoginTokenUncheckedCreateNestedManyWithoutTraineeInput
   }
 
   export type TraineeCreateOrConnectWithoutFollowupEventsInput = {
@@ -18276,6 +22979,9 @@ export namespace Prisma {
     botSessions?: BotSessionUpdateManyWithoutTraineeNestedInput
     employmentClaims?: EmploymentClaimUpdateManyWithoutTraineeNestedInput
     outcomeEvents?: OutcomeEventUpdateManyWithoutTraineeNestedInput
+    certificates?: CertificateUpdateManyWithoutTraineeNestedInput
+    employmentHistory?: EmploymentHistoryUpdateManyWithoutTraineeNestedInput
+    loginTokens?: TraineeLoginTokenUpdateManyWithoutTraineeNestedInput
   }
 
   export type TraineeUncheckedUpdateWithoutFollowupEventsInput = {
@@ -18296,6 +23002,9 @@ export namespace Prisma {
     botSessions?: BotSessionUncheckedUpdateManyWithoutTraineeNestedInput
     employmentClaims?: EmploymentClaimUncheckedUpdateManyWithoutTraineeNestedInput
     outcomeEvents?: OutcomeEventUncheckedUpdateManyWithoutTraineeNestedInput
+    certificates?: CertificateUncheckedUpdateManyWithoutTraineeNestedInput
+    employmentHistory?: EmploymentHistoryUncheckedUpdateManyWithoutTraineeNestedInput
+    loginTokens?: TraineeLoginTokenUncheckedUpdateManyWithoutTraineeNestedInput
   }
 
   export type CohortUpsertWithoutFollowupEventsInput = {
@@ -18381,6 +23090,9 @@ export namespace Prisma {
     followupEvents?: FollowupEventCreateNestedManyWithoutTraineeInput
     employmentClaims?: EmploymentClaimCreateNestedManyWithoutTraineeInput
     outcomeEvents?: OutcomeEventCreateNestedManyWithoutTraineeInput
+    certificates?: CertificateCreateNestedManyWithoutTraineeInput
+    employmentHistory?: EmploymentHistoryCreateNestedManyWithoutTraineeInput
+    loginTokens?: TraineeLoginTokenCreateNestedManyWithoutTraineeInput
   }
 
   export type TraineeUncheckedCreateWithoutBotSessionsInput = {
@@ -18401,6 +23113,9 @@ export namespace Prisma {
     followupEvents?: FollowupEventUncheckedCreateNestedManyWithoutTraineeInput
     employmentClaims?: EmploymentClaimUncheckedCreateNestedManyWithoutTraineeInput
     outcomeEvents?: OutcomeEventUncheckedCreateNestedManyWithoutTraineeInput
+    certificates?: CertificateUncheckedCreateNestedManyWithoutTraineeInput
+    employmentHistory?: EmploymentHistoryUncheckedCreateNestedManyWithoutTraineeInput
+    loginTokens?: TraineeLoginTokenUncheckedCreateNestedManyWithoutTraineeInput
   }
 
   export type TraineeCreateOrConnectWithoutBotSessionsInput = {
@@ -18470,6 +23185,9 @@ export namespace Prisma {
     followupEvents?: FollowupEventUpdateManyWithoutTraineeNestedInput
     employmentClaims?: EmploymentClaimUpdateManyWithoutTraineeNestedInput
     outcomeEvents?: OutcomeEventUpdateManyWithoutTraineeNestedInput
+    certificates?: CertificateUpdateManyWithoutTraineeNestedInput
+    employmentHistory?: EmploymentHistoryUpdateManyWithoutTraineeNestedInput
+    loginTokens?: TraineeLoginTokenUpdateManyWithoutTraineeNestedInput
   }
 
   export type TraineeUncheckedUpdateWithoutBotSessionsInput = {
@@ -18490,6 +23208,9 @@ export namespace Prisma {
     followupEvents?: FollowupEventUncheckedUpdateManyWithoutTraineeNestedInput
     employmentClaims?: EmploymentClaimUncheckedUpdateManyWithoutTraineeNestedInput
     outcomeEvents?: OutcomeEventUncheckedUpdateManyWithoutTraineeNestedInput
+    certificates?: CertificateUncheckedUpdateManyWithoutTraineeNestedInput
+    employmentHistory?: EmploymentHistoryUncheckedUpdateManyWithoutTraineeNestedInput
+    loginTokens?: TraineeLoginTokenUncheckedUpdateManyWithoutTraineeNestedInput
   }
 
   export type FollowupEventUpsertWithoutBotSessionsInput = {
@@ -18549,6 +23270,9 @@ export namespace Prisma {
     followupEvents?: FollowupEventCreateNestedManyWithoutTraineeInput
     botSessions?: BotSessionCreateNestedManyWithoutTraineeInput
     outcomeEvents?: OutcomeEventCreateNestedManyWithoutTraineeInput
+    certificates?: CertificateCreateNestedManyWithoutTraineeInput
+    employmentHistory?: EmploymentHistoryCreateNestedManyWithoutTraineeInput
+    loginTokens?: TraineeLoginTokenCreateNestedManyWithoutTraineeInput
   }
 
   export type TraineeUncheckedCreateWithoutEmploymentClaimsInput = {
@@ -18569,6 +23293,9 @@ export namespace Prisma {
     followupEvents?: FollowupEventUncheckedCreateNestedManyWithoutTraineeInput
     botSessions?: BotSessionUncheckedCreateNestedManyWithoutTraineeInput
     outcomeEvents?: OutcomeEventUncheckedCreateNestedManyWithoutTraineeInput
+    certificates?: CertificateUncheckedCreateNestedManyWithoutTraineeInput
+    employmentHistory?: EmploymentHistoryUncheckedCreateNestedManyWithoutTraineeInput
+    loginTokens?: TraineeLoginTokenUncheckedCreateNestedManyWithoutTraineeInput
   }
 
   export type TraineeCreateOrConnectWithoutEmploymentClaimsInput = {
@@ -18702,6 +23429,9 @@ export namespace Prisma {
     followupEvents?: FollowupEventUpdateManyWithoutTraineeNestedInput
     botSessions?: BotSessionUpdateManyWithoutTraineeNestedInput
     outcomeEvents?: OutcomeEventUpdateManyWithoutTraineeNestedInput
+    certificates?: CertificateUpdateManyWithoutTraineeNestedInput
+    employmentHistory?: EmploymentHistoryUpdateManyWithoutTraineeNestedInput
+    loginTokens?: TraineeLoginTokenUpdateManyWithoutTraineeNestedInput
   }
 
   export type TraineeUncheckedUpdateWithoutEmploymentClaimsInput = {
@@ -18722,6 +23452,9 @@ export namespace Prisma {
     followupEvents?: FollowupEventUncheckedUpdateManyWithoutTraineeNestedInput
     botSessions?: BotSessionUncheckedUpdateManyWithoutTraineeNestedInput
     outcomeEvents?: OutcomeEventUncheckedUpdateManyWithoutTraineeNestedInput
+    certificates?: CertificateUncheckedUpdateManyWithoutTraineeNestedInput
+    employmentHistory?: EmploymentHistoryUncheckedUpdateManyWithoutTraineeNestedInput
+    loginTokens?: TraineeLoginTokenUncheckedUpdateManyWithoutTraineeNestedInput
   }
 
   export type FollowupEventUpsertWithoutEmploymentClaimsInput = {
@@ -18828,6 +23561,9 @@ export namespace Prisma {
     followupEvents?: FollowupEventCreateNestedManyWithoutTraineeInput
     botSessions?: BotSessionCreateNestedManyWithoutTraineeInput
     employmentClaims?: EmploymentClaimCreateNestedManyWithoutTraineeInput
+    certificates?: CertificateCreateNestedManyWithoutTraineeInput
+    employmentHistory?: EmploymentHistoryCreateNestedManyWithoutTraineeInput
+    loginTokens?: TraineeLoginTokenCreateNestedManyWithoutTraineeInput
   }
 
   export type TraineeUncheckedCreateWithoutOutcomeEventsInput = {
@@ -18848,6 +23584,9 @@ export namespace Prisma {
     followupEvents?: FollowupEventUncheckedCreateNestedManyWithoutTraineeInput
     botSessions?: BotSessionUncheckedCreateNestedManyWithoutTraineeInput
     employmentClaims?: EmploymentClaimUncheckedCreateNestedManyWithoutTraineeInput
+    certificates?: CertificateUncheckedCreateNestedManyWithoutTraineeInput
+    employmentHistory?: EmploymentHistoryUncheckedCreateNestedManyWithoutTraineeInput
+    loginTokens?: TraineeLoginTokenUncheckedCreateNestedManyWithoutTraineeInput
   }
 
   export type TraineeCreateOrConnectWithoutOutcomeEventsInput = {
@@ -18919,6 +23658,9 @@ export namespace Prisma {
     followupEvents?: FollowupEventUpdateManyWithoutTraineeNestedInput
     botSessions?: BotSessionUpdateManyWithoutTraineeNestedInput
     employmentClaims?: EmploymentClaimUpdateManyWithoutTraineeNestedInput
+    certificates?: CertificateUpdateManyWithoutTraineeNestedInput
+    employmentHistory?: EmploymentHistoryUpdateManyWithoutTraineeNestedInput
+    loginTokens?: TraineeLoginTokenUpdateManyWithoutTraineeNestedInput
   }
 
   export type TraineeUncheckedUpdateWithoutOutcomeEventsInput = {
@@ -18939,6 +23681,9 @@ export namespace Prisma {
     followupEvents?: FollowupEventUncheckedUpdateManyWithoutTraineeNestedInput
     botSessions?: BotSessionUncheckedUpdateManyWithoutTraineeNestedInput
     employmentClaims?: EmploymentClaimUncheckedUpdateManyWithoutTraineeNestedInput
+    certificates?: CertificateUncheckedUpdateManyWithoutTraineeNestedInput
+    employmentHistory?: EmploymentHistoryUncheckedUpdateManyWithoutTraineeNestedInput
+    loginTokens?: TraineeLoginTokenUncheckedUpdateManyWithoutTraineeNestedInput
   }
 
   export type EmploymentClaimUpsertWithoutOutcomeEventsInput = {
@@ -19056,6 +23801,330 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     outcomeEvents?: OutcomeEventUncheckedUpdateManyWithoutEmploymentClaimNestedInput
+  }
+
+  export type TraineeCreateWithoutCertificatesInput = {
+    id?: string
+    publicId?: string
+    fullName: string
+    phoneE164: string
+    email?: string | null
+    district: string
+    language?: string
+    consentGiven?: boolean
+    consentGivenAt?: Date | string | null
+    consentMethod?: string | null
+    consentRevokedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    enrolments?: EnrolmentCreateNestedManyWithoutTraineeInput
+    followupEvents?: FollowupEventCreateNestedManyWithoutTraineeInput
+    botSessions?: BotSessionCreateNestedManyWithoutTraineeInput
+    employmentClaims?: EmploymentClaimCreateNestedManyWithoutTraineeInput
+    outcomeEvents?: OutcomeEventCreateNestedManyWithoutTraineeInput
+    employmentHistory?: EmploymentHistoryCreateNestedManyWithoutTraineeInput
+    loginTokens?: TraineeLoginTokenCreateNestedManyWithoutTraineeInput
+  }
+
+  export type TraineeUncheckedCreateWithoutCertificatesInput = {
+    id?: string
+    publicId?: string
+    fullName: string
+    phoneE164: string
+    email?: string | null
+    district: string
+    language?: string
+    consentGiven?: boolean
+    consentGivenAt?: Date | string | null
+    consentMethod?: string | null
+    consentRevokedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    enrolments?: EnrolmentUncheckedCreateNestedManyWithoutTraineeInput
+    followupEvents?: FollowupEventUncheckedCreateNestedManyWithoutTraineeInput
+    botSessions?: BotSessionUncheckedCreateNestedManyWithoutTraineeInput
+    employmentClaims?: EmploymentClaimUncheckedCreateNestedManyWithoutTraineeInput
+    outcomeEvents?: OutcomeEventUncheckedCreateNestedManyWithoutTraineeInput
+    employmentHistory?: EmploymentHistoryUncheckedCreateNestedManyWithoutTraineeInput
+    loginTokens?: TraineeLoginTokenUncheckedCreateNestedManyWithoutTraineeInput
+  }
+
+  export type TraineeCreateOrConnectWithoutCertificatesInput = {
+    where: TraineeWhereUniqueInput
+    create: XOR<TraineeCreateWithoutCertificatesInput, TraineeUncheckedCreateWithoutCertificatesInput>
+  }
+
+  export type TraineeUpsertWithoutCertificatesInput = {
+    update: XOR<TraineeUpdateWithoutCertificatesInput, TraineeUncheckedUpdateWithoutCertificatesInput>
+    create: XOR<TraineeCreateWithoutCertificatesInput, TraineeUncheckedCreateWithoutCertificatesInput>
+    where?: TraineeWhereInput
+  }
+
+  export type TraineeUpdateToOneWithWhereWithoutCertificatesInput = {
+    where?: TraineeWhereInput
+    data: XOR<TraineeUpdateWithoutCertificatesInput, TraineeUncheckedUpdateWithoutCertificatesInput>
+  }
+
+  export type TraineeUpdateWithoutCertificatesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    publicId?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    phoneE164?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    district?: StringFieldUpdateOperationsInput | string
+    language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    enrolments?: EnrolmentUpdateManyWithoutTraineeNestedInput
+    followupEvents?: FollowupEventUpdateManyWithoutTraineeNestedInput
+    botSessions?: BotSessionUpdateManyWithoutTraineeNestedInput
+    employmentClaims?: EmploymentClaimUpdateManyWithoutTraineeNestedInput
+    outcomeEvents?: OutcomeEventUpdateManyWithoutTraineeNestedInput
+    employmentHistory?: EmploymentHistoryUpdateManyWithoutTraineeNestedInput
+    loginTokens?: TraineeLoginTokenUpdateManyWithoutTraineeNestedInput
+  }
+
+  export type TraineeUncheckedUpdateWithoutCertificatesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    publicId?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    phoneE164?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    district?: StringFieldUpdateOperationsInput | string
+    language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    enrolments?: EnrolmentUncheckedUpdateManyWithoutTraineeNestedInput
+    followupEvents?: FollowupEventUncheckedUpdateManyWithoutTraineeNestedInput
+    botSessions?: BotSessionUncheckedUpdateManyWithoutTraineeNestedInput
+    employmentClaims?: EmploymentClaimUncheckedUpdateManyWithoutTraineeNestedInput
+    outcomeEvents?: OutcomeEventUncheckedUpdateManyWithoutTraineeNestedInput
+    employmentHistory?: EmploymentHistoryUncheckedUpdateManyWithoutTraineeNestedInput
+    loginTokens?: TraineeLoginTokenUncheckedUpdateManyWithoutTraineeNestedInput
+  }
+
+  export type TraineeCreateWithoutEmploymentHistoryInput = {
+    id?: string
+    publicId?: string
+    fullName: string
+    phoneE164: string
+    email?: string | null
+    district: string
+    language?: string
+    consentGiven?: boolean
+    consentGivenAt?: Date | string | null
+    consentMethod?: string | null
+    consentRevokedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    enrolments?: EnrolmentCreateNestedManyWithoutTraineeInput
+    followupEvents?: FollowupEventCreateNestedManyWithoutTraineeInput
+    botSessions?: BotSessionCreateNestedManyWithoutTraineeInput
+    employmentClaims?: EmploymentClaimCreateNestedManyWithoutTraineeInput
+    outcomeEvents?: OutcomeEventCreateNestedManyWithoutTraineeInput
+    certificates?: CertificateCreateNestedManyWithoutTraineeInput
+    loginTokens?: TraineeLoginTokenCreateNestedManyWithoutTraineeInput
+  }
+
+  export type TraineeUncheckedCreateWithoutEmploymentHistoryInput = {
+    id?: string
+    publicId?: string
+    fullName: string
+    phoneE164: string
+    email?: string | null
+    district: string
+    language?: string
+    consentGiven?: boolean
+    consentGivenAt?: Date | string | null
+    consentMethod?: string | null
+    consentRevokedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    enrolments?: EnrolmentUncheckedCreateNestedManyWithoutTraineeInput
+    followupEvents?: FollowupEventUncheckedCreateNestedManyWithoutTraineeInput
+    botSessions?: BotSessionUncheckedCreateNestedManyWithoutTraineeInput
+    employmentClaims?: EmploymentClaimUncheckedCreateNestedManyWithoutTraineeInput
+    outcomeEvents?: OutcomeEventUncheckedCreateNestedManyWithoutTraineeInput
+    certificates?: CertificateUncheckedCreateNestedManyWithoutTraineeInput
+    loginTokens?: TraineeLoginTokenUncheckedCreateNestedManyWithoutTraineeInput
+  }
+
+  export type TraineeCreateOrConnectWithoutEmploymentHistoryInput = {
+    where: TraineeWhereUniqueInput
+    create: XOR<TraineeCreateWithoutEmploymentHistoryInput, TraineeUncheckedCreateWithoutEmploymentHistoryInput>
+  }
+
+  export type TraineeUpsertWithoutEmploymentHistoryInput = {
+    update: XOR<TraineeUpdateWithoutEmploymentHistoryInput, TraineeUncheckedUpdateWithoutEmploymentHistoryInput>
+    create: XOR<TraineeCreateWithoutEmploymentHistoryInput, TraineeUncheckedCreateWithoutEmploymentHistoryInput>
+    where?: TraineeWhereInput
+  }
+
+  export type TraineeUpdateToOneWithWhereWithoutEmploymentHistoryInput = {
+    where?: TraineeWhereInput
+    data: XOR<TraineeUpdateWithoutEmploymentHistoryInput, TraineeUncheckedUpdateWithoutEmploymentHistoryInput>
+  }
+
+  export type TraineeUpdateWithoutEmploymentHistoryInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    publicId?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    phoneE164?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    district?: StringFieldUpdateOperationsInput | string
+    language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    enrolments?: EnrolmentUpdateManyWithoutTraineeNestedInput
+    followupEvents?: FollowupEventUpdateManyWithoutTraineeNestedInput
+    botSessions?: BotSessionUpdateManyWithoutTraineeNestedInput
+    employmentClaims?: EmploymentClaimUpdateManyWithoutTraineeNestedInput
+    outcomeEvents?: OutcomeEventUpdateManyWithoutTraineeNestedInput
+    certificates?: CertificateUpdateManyWithoutTraineeNestedInput
+    loginTokens?: TraineeLoginTokenUpdateManyWithoutTraineeNestedInput
+  }
+
+  export type TraineeUncheckedUpdateWithoutEmploymentHistoryInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    publicId?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    phoneE164?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    district?: StringFieldUpdateOperationsInput | string
+    language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    enrolments?: EnrolmentUncheckedUpdateManyWithoutTraineeNestedInput
+    followupEvents?: FollowupEventUncheckedUpdateManyWithoutTraineeNestedInput
+    botSessions?: BotSessionUncheckedUpdateManyWithoutTraineeNestedInput
+    employmentClaims?: EmploymentClaimUncheckedUpdateManyWithoutTraineeNestedInput
+    outcomeEvents?: OutcomeEventUncheckedUpdateManyWithoutTraineeNestedInput
+    certificates?: CertificateUncheckedUpdateManyWithoutTraineeNestedInput
+    loginTokens?: TraineeLoginTokenUncheckedUpdateManyWithoutTraineeNestedInput
+  }
+
+  export type TraineeCreateWithoutLoginTokensInput = {
+    id?: string
+    publicId?: string
+    fullName: string
+    phoneE164: string
+    email?: string | null
+    district: string
+    language?: string
+    consentGiven?: boolean
+    consentGivenAt?: Date | string | null
+    consentMethod?: string | null
+    consentRevokedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    enrolments?: EnrolmentCreateNestedManyWithoutTraineeInput
+    followupEvents?: FollowupEventCreateNestedManyWithoutTraineeInput
+    botSessions?: BotSessionCreateNestedManyWithoutTraineeInput
+    employmentClaims?: EmploymentClaimCreateNestedManyWithoutTraineeInput
+    outcomeEvents?: OutcomeEventCreateNestedManyWithoutTraineeInput
+    certificates?: CertificateCreateNestedManyWithoutTraineeInput
+    employmentHistory?: EmploymentHistoryCreateNestedManyWithoutTraineeInput
+  }
+
+  export type TraineeUncheckedCreateWithoutLoginTokensInput = {
+    id?: string
+    publicId?: string
+    fullName: string
+    phoneE164: string
+    email?: string | null
+    district: string
+    language?: string
+    consentGiven?: boolean
+    consentGivenAt?: Date | string | null
+    consentMethod?: string | null
+    consentRevokedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    enrolments?: EnrolmentUncheckedCreateNestedManyWithoutTraineeInput
+    followupEvents?: FollowupEventUncheckedCreateNestedManyWithoutTraineeInput
+    botSessions?: BotSessionUncheckedCreateNestedManyWithoutTraineeInput
+    employmentClaims?: EmploymentClaimUncheckedCreateNestedManyWithoutTraineeInput
+    outcomeEvents?: OutcomeEventUncheckedCreateNestedManyWithoutTraineeInput
+    certificates?: CertificateUncheckedCreateNestedManyWithoutTraineeInput
+    employmentHistory?: EmploymentHistoryUncheckedCreateNestedManyWithoutTraineeInput
+  }
+
+  export type TraineeCreateOrConnectWithoutLoginTokensInput = {
+    where: TraineeWhereUniqueInput
+    create: XOR<TraineeCreateWithoutLoginTokensInput, TraineeUncheckedCreateWithoutLoginTokensInput>
+  }
+
+  export type TraineeUpsertWithoutLoginTokensInput = {
+    update: XOR<TraineeUpdateWithoutLoginTokensInput, TraineeUncheckedUpdateWithoutLoginTokensInput>
+    create: XOR<TraineeCreateWithoutLoginTokensInput, TraineeUncheckedCreateWithoutLoginTokensInput>
+    where?: TraineeWhereInput
+  }
+
+  export type TraineeUpdateToOneWithWhereWithoutLoginTokensInput = {
+    where?: TraineeWhereInput
+    data: XOR<TraineeUpdateWithoutLoginTokensInput, TraineeUncheckedUpdateWithoutLoginTokensInput>
+  }
+
+  export type TraineeUpdateWithoutLoginTokensInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    publicId?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    phoneE164?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    district?: StringFieldUpdateOperationsInput | string
+    language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    enrolments?: EnrolmentUpdateManyWithoutTraineeNestedInput
+    followupEvents?: FollowupEventUpdateManyWithoutTraineeNestedInput
+    botSessions?: BotSessionUpdateManyWithoutTraineeNestedInput
+    employmentClaims?: EmploymentClaimUpdateManyWithoutTraineeNestedInput
+    outcomeEvents?: OutcomeEventUpdateManyWithoutTraineeNestedInput
+    certificates?: CertificateUpdateManyWithoutTraineeNestedInput
+    employmentHistory?: EmploymentHistoryUpdateManyWithoutTraineeNestedInput
+  }
+
+  export type TraineeUncheckedUpdateWithoutLoginTokensInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    publicId?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    phoneE164?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    district?: StringFieldUpdateOperationsInput | string
+    language?: StringFieldUpdateOperationsInput | string
+    consentGiven?: BoolFieldUpdateOperationsInput | boolean
+    consentGivenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    consentRevokedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    enrolments?: EnrolmentUncheckedUpdateManyWithoutTraineeNestedInput
+    followupEvents?: FollowupEventUncheckedUpdateManyWithoutTraineeNestedInput
+    botSessions?: BotSessionUncheckedUpdateManyWithoutTraineeNestedInput
+    employmentClaims?: EmploymentClaimUncheckedUpdateManyWithoutTraineeNestedInput
+    outcomeEvents?: OutcomeEventUncheckedUpdateManyWithoutTraineeNestedInput
+    certificates?: CertificateUncheckedUpdateManyWithoutTraineeNestedInput
+    employmentHistory?: EmploymentHistoryUncheckedUpdateManyWithoutTraineeNestedInput
   }
 
   export type CohortCreateManyProgrammeInput = {
@@ -19237,6 +24306,37 @@ export namespace Prisma {
     createdAt?: Date | string
   }
 
+  export type CertificateCreateManyTraineeInput = {
+    id?: string
+    name: string
+    issuer: string
+    issueDate: Date | string
+    expiryDate?: Date | string | null
+    fileUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type EmploymentHistoryCreateManyTraineeInput = {
+    id?: string
+    employer: string
+    role: string
+    salaryBand?: $Enums.SalaryBand | null
+    startDate: Date | string
+    endDate?: Date | string | null
+    isCurrent?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TraineeLoginTokenCreateManyTraineeInput = {
+    id?: string
+    tokenHash: string
+    expiresAt: Date | string
+    usedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
   export type EnrolmentUpdateWithoutTraineeInput = {
     id?: StringFieldUpdateOperationsInput | string
     certificationDate?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -19407,6 +24507,99 @@ export namespace Prisma {
     verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
     source?: StringFieldUpdateOperationsInput | string
     evidenceLevel?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CertificateUpdateWithoutTraineeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    issuer?: StringFieldUpdateOperationsInput | string
+    issueDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiryDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CertificateUncheckedUpdateWithoutTraineeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    issuer?: StringFieldUpdateOperationsInput | string
+    issueDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiryDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CertificateUncheckedUpdateManyWithoutTraineeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    issuer?: StringFieldUpdateOperationsInput | string
+    issueDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiryDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EmploymentHistoryUpdateWithoutTraineeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    employer?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    salaryBand?: NullableEnumSalaryBandFieldUpdateOperationsInput | $Enums.SalaryBand | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isCurrent?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EmploymentHistoryUncheckedUpdateWithoutTraineeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    employer?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    salaryBand?: NullableEnumSalaryBandFieldUpdateOperationsInput | $Enums.SalaryBand | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isCurrent?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EmploymentHistoryUncheckedUpdateManyWithoutTraineeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    employer?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    salaryBand?: NullableEnumSalaryBandFieldUpdateOperationsInput | $Enums.SalaryBand | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isCurrent?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TraineeLoginTokenUpdateWithoutTraineeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TraineeLoginTokenUncheckedUpdateWithoutTraineeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TraineeLoginTokenUncheckedUpdateManyWithoutTraineeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tokenHash?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 

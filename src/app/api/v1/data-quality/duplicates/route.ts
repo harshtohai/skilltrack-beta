@@ -7,6 +7,7 @@ import { createErrorResponse, handleZodError, validateInternalApiKey } from "~/a
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 
 const duplicateQuerySchema = z.object({
   cohortId: z.string().uuid().optional(),

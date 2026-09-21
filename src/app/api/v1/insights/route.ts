@@ -6,6 +6,7 @@ import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 
 const insightsQuerySchema = z.object({
   cohortId: z.string().uuid().optional(),

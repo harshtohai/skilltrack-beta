@@ -238,6 +238,40 @@ exports.Prisma.AuditEventScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.CertificateScalarFieldEnum = {
+  id: 'id',
+  traineeId: 'traineeId',
+  name: 'name',
+  issuer: 'issuer',
+  issueDate: 'issueDate',
+  expiryDate: 'expiryDate',
+  fileUrl: 'fileUrl',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.EmploymentHistoryScalarFieldEnum = {
+  id: 'id',
+  traineeId: 'traineeId',
+  employer: 'employer',
+  role: 'role',
+  salaryBand: 'salaryBand',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  isCurrent: 'isCurrent',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TraineeLoginTokenScalarFieldEnum = {
+  id: 'id',
+  traineeId: 'traineeId',
+  tokenHash: 'tokenHash',
+  expiresAt: 'expiresAt',
+  usedAt: 'usedAt',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -340,7 +374,10 @@ exports.Prisma.ModelName = {
   EmploymentClaim: 'EmploymentClaim',
   OutcomeEvent: 'OutcomeEvent',
   VerificationRequest: 'VerificationRequest',
-  AuditEvent: 'AuditEvent'
+  AuditEvent: 'AuditEvent',
+  Certificate: 'Certificate',
+  EmploymentHistory: 'EmploymentHistory',
+  TraineeLoginToken: 'TraineeLoginToken'
 };
 
 /**

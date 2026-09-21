@@ -6,6 +6,7 @@ import { createErrorResponse, handleZodError, validateInternalApiKey } from "~/a
 
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 
 const exportQuerySchema = z.object({
   cohortId: z.string().uuid(),
