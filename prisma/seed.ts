@@ -70,9 +70,9 @@ function randomPhone(): string {
   return `+91${Math.floor(Math.random() * 3000000000) + 7000000000}`
 }
 
-function randomEmail(name: string): string {
+function randomEmail(name: string, index: number): string {
   const clean = name.toLowerCase().replace(/[^a-z]/g, '')
-  return `${clean}${Math.floor(Math.random() * 9900) + 100}@example.com`
+  return `${clean}${index}${Math.floor(Math.random() * 9900) + 100}@example.com`
 }
 
 function randomDate(start: Date, end: Date): Date {
@@ -93,6 +93,7 @@ async function main() {
 
   // Clean existing data (in order of dependencies)
   await prisma.auditEvent.deleteMany()
+  await prisma.surveyResponse.deleteMany()
   await prisma.verificationRequest.deleteMany()
   await prisma.outcomeEvent.deleteMany()
   await prisma.employmentClaim.deleteMany()
@@ -142,7 +143,7 @@ async function main() {
   for (let i = 0; i < 500; i++) {
     const name = `Trainee ${i + 1} ${randomElement(['Kumar', 'Sharma', 'Patel', 'Singh', 'Gupta', 'Desai', 'Joshi', 'Mehta', 'Reddy', 'Nair'])}`
     const phone = randomPhone()
-    const email = randomEmail(name)
+    const email = randomEmail(name, i)
     const district = randomElement(DISTRICTS)
     const language = randomElement(['EN', 'HI'])
     const consentGiven = randomBool(0.85)
@@ -362,6 +363,45 @@ async function main() {
     })
   }
   console.log(`✅ Created ${auditCount} audit events`)
+
+  // Survey responses (30% of trainees)
+  const surveyTrainees = trainees.filter(() => randomBool(0.3)).slice(0, 150)
+  const EMPLOYMENT_STATUSES = ['employed_full', 'employed_part', 'self_employed', 'apprentice', 'looking', 'not_working']
+  const SALARY_RANGES = ['salary_0_10k', 'salary_10k_15k', 'salary_15k_25k', 'salary_25k_40k', 'salary_40k_60k', 'salary_60k_100k', 'salary_100k_plus', 'salary_prefer_not']
+  const SATISFACTION = ['sat_5', 'sat_4', 'sat_3', 'sat_2', 'sat_1']
+  const RELEVANCE = ['relevance_direct', 'relevance_partial', 'relevance_basics', 'relevance_none']
+  const SKILL_GAPS = ['gap_technical', 'gap_communication', 'gap_analytical', 'gap_domain', 'gap_etiquette', 'gap_financial', 'gap_none']
+  const ADD_TRAINING = ['train_adv_tech', 'train_cert', 'train_english', 'train_entrepreneur', 'train_leadership', 'train_digital', 'train_interview', 'train_none']
+  const CAREER_GOALS = ['goal_promotion', 'goal_switch', 'goal_education', 'goal_business', 'goal_abroad', 'goal_stay', 'goal_unsure']
+  const CHALLENGES = ['challenge_salary', 'challenge_growth', 'challenge_skills', 'challenge_location', 'challenge_balance', 'challenge_culture', 'challenge_contract', 'challenge_family', 'challenge_none']
+  const RECOMMENDATIONS = ['rec_practical', 'rec_internship', 'rec_tools', 'rec_softskills', 'rec_placement', 'rec_certs', 'rec_financial', 'rec_trainers', 'rec_good']
+
+  let surveyCount = 0
+  for (const t of surveyTrainees) {
+    const empStatus = randomElement(EMPLOYMENT_STATUSES)
+    const isEmployed = ['employed_full', 'employed_part', 'self_employed', 'apprentice'].includes(empStatus)
+
+    await prisma.surveyResponse.create({
+      data: {
+        phoneE164: t.phoneE164,
+        traineeId: t.id,
+        employmentStatus: empStatus,
+        employerName: isEmployed ? `Company ${Math.floor(Math.random() * 1000)}` : null,
+        role: isEmployed ? `Role ${Math.floor(Math.random() * 100)}` : null,
+        salaryRange: isEmployed ? randomElement(SALARY_RANGES) : null,
+        jobSatisfaction: isEmployed ? randomElement(SATISFACTION) : null,
+        trainingRelevance: randomElement(RELEVANCE),
+        skillGaps: [randomElement(SKILL_GAPS.filter(g => g !== 'gap_none'))],
+        additionalTraining: randomElement(ADD_TRAINING),
+        careerGoals: randomElement(CAREER_GOALS),
+        challenges: [randomElement(CHALLENGES.filter(c => c !== 'challenge_none'))],
+        recommendations: randomElement(RECOMMENDATIONS),
+        completedAt: new Date(Date.now() - Math.random() * 60 * 24 * 60 * 60 * 1000),
+      }
+    })
+    surveyCount++
+  }
+  console.log(`✅ Created ${surveyCount} survey responses`)
 
   console.log('🎉 Seed completed successfully!')
 }

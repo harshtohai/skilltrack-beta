@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // Enums
@@ -322,6 +323,29 @@ model TraineeLoginToken {
 //   // v_cohort_overview
 // }
 //
+model SurveyResponse {
+  id                   String   @id @default(uuid())
+  phoneE164            String
+  traineeId            String?
+  employmentStatus     String?
+  employerName         String?
+  role                 String?
+  salaryRange          String?
+  jobSatisfaction      String?
+  trainingRelevance    String?
+  skillGaps            String[]
+  additionalTraining   String?
+  careerGoals          String?
+  challenges           String[]
+  recommendations      String?
+  completedAt          DateTime @default(now())
+  createdAt            DateTime @default(now())
+
+  @@index([phoneE164])
+  @@index([traineeId])
+  @@map("survey_responses")
+}
+
 // model Retention {
 //   // v_retention
 // }

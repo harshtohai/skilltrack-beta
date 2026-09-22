@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { dbDirect } from "~/server/db-direct";
+import { db } from "~/server/db";
 import { createErrorResponse, handleZodError, validateInternalApiKey } from "~/app/api/v1/_utils";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     const cutoffDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
     // Find follow-up events that are SENT but not responded to, and are older than 24 hours
-    const expiredFollowups = await dbDirect.followupEvent.findMany({
+    const expiredFollowups = await db.followupEvent.findMany({
       where: {
         status: "SENT",
         sentAt: { lte: cutoffDate },
@@ -41,13 +41,13 @@ export async function POST(request: NextRequest) {
     let expiredCount = 0;
     for (const fu of expiredFollowups) {
       // Update followup event to EXPIRED
-      await dbDirect.followupEvent.update({
+      await db.followupEvent.update({
         where: { id: fu.id },
         data: { status: "EXPIRED" },
       });
 
       // Create outcome event with UNKNOWN status
-      await dbDirect.outcomeEvent.create({
+      await db.outcomeEvent.create({
         data: {
           traineeId: fu.traineeId,
           checkpointDays: fu.checkpointDays,
@@ -60,14 +60,14 @@ export async function POST(request: NextRequest) {
 
       // Update bot session to DONE if exists
       if (fu.botSessions[0]) {
-        await dbDirect.botSession.update({
+        await db.botSession.update({
           where: { id: fu.botSessions[0].id },
           data: { state: "DONE", expiresAt: new Date() },
         });
       }
 
       // Log audit event
-      await dbDirect.auditEvent.create({
+      await db.auditEvent.create({
         data: {
           entityType: "followup_event",
           entityId: fu.id,

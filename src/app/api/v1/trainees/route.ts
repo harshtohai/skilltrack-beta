@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { dbDirect } from "~/server/db-direct";
+import { db } from "~/server/db";
 import { createErrorResponse, handleZodError } from "../_utils";
 import { encryptPhone, hashPhone } from "~/lib/phone-encrypt";
 
@@ -39,14 +39,14 @@ export async function GET(request: NextRequest) {
     if (query.search) {
       where.OR = [
         { fullName: { contains: query.search, mode: "insensitive" } },
-        { phoneEncrypted: { contains: query.search } },
-        { phoneHash: { contains: query.search } },
+        { publicId: { contains: query.search, mode: "insensitive" } },
+        { phoneE164: { contains: query.search } },
         { email: { contains: query.search, mode: "insensitive" } },
       ];
     }
 
     const [trainees, total] = await Promise.all([
-      dbDirect.trainee.findMany({
+      db.trainee.findMany({
         where,
         include: {
           enrolments: {
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
         skip: (query.page - 1) * query.limit,
         take: query.limit,
       }),
-      dbDirect.trainee.count({ where }),
+      db.trainee.count({ where }),
     ]);
 
     return NextResponse.json({
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     const phoneEncrypted = encryptPhone(normalizedPhone);
     const phoneHash = hashPhone(normalizedPhone);
 
-    const trainee = await dbDirect.trainee.create({
+    const trainee = await db.trainee.create({
       data: {
         ...data,
         phoneE164: normalizedPhone,

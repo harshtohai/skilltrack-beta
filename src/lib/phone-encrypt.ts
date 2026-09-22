@@ -1,6 +1,6 @@
 import crypto from "crypto";
 
-const ENCRYPTION_KEY = process.env.PHONE_ENCRYPTION_KEY || crypto.randomBytes(32).toString("hex");
+const ENCRYPTION_KEY = process.env.PHONE_ENCRYPTION_KEY ?? crypto.randomBytes(32).toString("hex");
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
 const AUTH_TAG_LENGTH = 16;
@@ -35,7 +35,7 @@ export function decryptPhone(encryptedData: string): string {
 }
 
 export function hashPhone(phoneE164: string): string {
-  const pepper = process.env.PHONE_HASH_PEPPER || "outcometrack-phone-hash-pepper-2024-change-me";
+  const pepper = process.env.PHONE_HASH_PEPPER ?? "outcometrack-phone-hash-pepper-2024-change-me";
   const normalized = phoneE164.replace(/\D/g, "");
   return crypto.createHmac("sha256", pepper).update(normalized).digest("hex");
 }

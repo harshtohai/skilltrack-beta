@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Send, Loader2, MessageSquare, RefreshCw, Users } from "lucide-react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { Send, Loader2, MessageSquare, RefreshCw, Users, Search, Filter } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
@@ -38,11 +38,13 @@ export default function SimulatorPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [sessionActive, setSessionActive] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDistrict, setSelectedDistrict] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("/api/v1/trainees?limit=100")
+    fetch("/api/v1/trainees?limit=500")
       .then((res) => res.json())
       .then((data) => {
         setTrainees(data.data || []);
@@ -50,6 +52,30 @@ export default function SimulatorPage() {
       })
       .catch(console.error);
   }, []);
+
+  const districts = useMemo(() => {
+    const unique = new Set(trainees.map((t) => t.district));
+    return Array.from(unique).sort();
+  }, [trainees]);
+
+  const filteredTrainees = useMemo(() => {
+    return trainees.filter((t) => {
+      const matchesSearch =
+        t.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.publicId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.phoneE164.includes(searchQuery) ||
+        t.district.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesDistrict = !selectedDistrict || t.district === selectedDistrict;
+      return matchesSearch && matchesDistrict;
+    });
+  }, [trainees, searchQuery, selectedDistrict]);
+
+  const handleTraineeChange = (traineeId: string) => {
+    setSelectedTraineeId(traineeId);
+    setMessages([]);
+    setSessionActive(false);
+    setInput("");
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -149,12 +175,6 @@ export default function SimulatorPage() {
     }
   };
 
-  const handleTraineeChange = (traineeId: string) => {
-    setSelectedTraineeId(traineeId);
-    setMessages([]);
-    setSessionActive(false);
-  };
-
   const resetSession = async () => {
     setMessages([]);
     setSessionActive(false);
@@ -185,12 +205,39 @@ export default function SimulatorPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Search and Filter */}
+            <div className="space-y-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search by name, ID, phone, district..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Filter by district" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Districts</SelectItem>
+                  {districts.map((d) => (
+                    <SelectItem key={d} value={d}>
+                      {d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <Select value={selectedTraineeId} onValueChange={handleTraineeChange}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a trainee..." />
               </SelectTrigger>
               <SelectContent>
-                {trainees.map((t) => (
+                {filteredTrainees.map((t) => (
                   <SelectItem key={t.id} value={t.id}>
                     {t.fullName} ({t.district})
                   </SelectItem>

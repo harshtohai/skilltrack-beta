@@ -44,3 +44,5 @@ yarn-error.log*
 
 # idea files
 .idea
+# legacy standalone bot (now integrated in src/lib/bot)
+/bot-service/

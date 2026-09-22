@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { dbDirect } from "~/server/db-direct";
+import { db } from "~/server/db";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    await dbDirect.$queryRaw`SELECT 1`;
+    await db.$queryRaw`SELECT 1`;
     return NextResponse.json({ status: "ok", timestamp: new Date().toISOString() });
   } catch {
     return NextResponse.json({ status: "error", timestamp: new Date().toISOString() }, { status: 500 });

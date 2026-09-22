@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { dbDirect } from "~/server/db-direct";
+import { db } from "~/server/db";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+import { startConversation } from "~/lib/bot/conversation";
 import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
@@ -12,12 +13,12 @@ const verifySchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as unknown;
     const data = verifySchema.parse(body);
 
     const tokenHash = crypto.createHash("sha256").update(data.token).digest("hex");
 
-    const loginToken = await dbDirect.traineeLoginToken.findUnique({
+    const loginToken = await db.traineeLoginToken.findUnique({
       where: { tokenHash },
       include: {
         trainee: {
@@ -46,12 +47,12 @@ export async function POST(request: NextRequest) {
       return createErrorResponse("TOKEN_EXPIRED", "This magic link has expired", 401);
     }
 
-    await dbDirect.traineeLoginToken.update({
+    await db.traineeLoginToken.update({
       where: { id: loginToken.id },
       data: { usedAt: new Date() },
     });
 
-    await dbDirect.auditEvent.create({
+    await db.auditEvent.create({
       data: {
         entityType: "trainee_login_token",
         entityId: loginToken.id,
@@ -63,6 +64,13 @@ export async function POST(request: NextRequest) {
     });
 
     const trainee = loginToken.trainee;
+
+    // Trainee logged in — kick off the WhatsApp welcome + consent flow.
+    // Fire-and-forget: never block or fail the login because of the bot.
+    void startConversation(trainee.phoneE164, trainee.fullName).catch((err) =>
+      console.error("[BOT] Post-login trigger failed:", err)
+    );
+
     return NextResponse.json({
       trainee: {
         id: trainee.id,

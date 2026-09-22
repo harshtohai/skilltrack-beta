@@ -9,12 +9,12 @@ const adminLoginSchema = z.object({
   password: z.string().min(1),
 });
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@maharashtra.gov.in";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@maharashtra.gov.in";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "admin123";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as unknown;
     const data = adminLoginSchema.parse(body);
 
     if (data.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase() || data.password !== ADMIN_PASSWORD) {

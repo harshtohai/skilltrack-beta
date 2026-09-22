@@ -9,7 +9,7 @@ export async function sendMagicLinkEmail(email: string, name: string, magicLink:
   }
 
   const { error } = await resend.emails.send({
-    from: "OutcomeTrack <noreply@outcometrack.dev>",
+    from: process.env.EMAIL_FROM ?? "onboarding@resend.dev",
     to: email,
     subject: "Your OutcomeTrack Magic Link",
     html: `

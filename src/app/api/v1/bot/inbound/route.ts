@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { dbDirect } from "~/server/db-direct";
+import { db } from "~/server/db";
 import { createErrorResponse, handleZodError, normalizePhoneE164, validateInternalApiKey } from "~/app/api/v1/_utils";
 import crypto from "crypto";
 
@@ -173,7 +173,7 @@ function getConsentQuestion(language: string): { text: string; options: Array<{ 
 }
 
 async function findOrCreateBotSession(traineeId: string, followupEventId: string, checkpointDays: number) {
-  const existing = await dbDirect.botSession.findFirst({
+  const existing = await db.botSession.findFirst({
     where: { traineeId, followupEventId, state: { not: "DONE" } },
     orderBy: { createdAt: "desc" },
   });
@@ -183,7 +183,7 @@ async function findOrCreateBotSession(traineeId: string, followupEventId: string
   }
 
   // Check if trainee has given consent
-  const trainee = await dbDirect.trainee.findUnique({
+  const trainee = await db.trainee.findUnique({
     where: { id: traineeId },
     select: { consentGiven: true },
   });
@@ -205,7 +205,7 @@ async function findOrCreateBotSession(traineeId: string, followupEventId: string
     initialQuestion = "status";
   }
   
-  return dbDirect.botSession.create({
+  return db.botSession.create({
     data: {
       traineeId,
       followupEventId,
@@ -243,7 +243,7 @@ async function processStateMachine(session: any, text: string, trainee: any, fol
       }
       // Consent given - update trainee record
       collectedData.consent = "GIVEN";
-      await dbDirect.trainee.update({
+      await db.trainee.update({
         where: { id: trainee.id },
         data: {
           consentGiven: true,
@@ -411,7 +411,7 @@ async function processStateMachine(session: any, text: string, trainee: any, fol
   }
 
   // Update session
-  await dbDirect.botSession.update({
+  await db.botSession.update({
     where: { id: session.id },
     data: {
       state: newState,
@@ -429,7 +429,7 @@ async function createEmploymentClaimAndEvents(
   followupEvent: any,
   collectedData: CollectedData
 ) {
-  const claim = await dbDirect.employmentClaim.create({
+  const claim = await db.employmentClaim.create({
     data: {
       traineeId: trainee.id,
       followupEventId: followupEvent.id,
@@ -442,7 +442,7 @@ async function createEmploymentClaimAndEvents(
     },
   });
 
-  await dbDirect.outcomeEvent.create({
+  await db.outcomeEvent.create({
     data: {
       traineeId: trainee.id,
       employmentClaimId: claim.id,
@@ -459,7 +459,7 @@ async function createEmploymentClaimAndEvents(
   const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-  await dbDirect.verificationRequest.create({
+  await db.verificationRequest.create({
     data: {
       employmentClaimId: claim.id,
       tokenHash,
@@ -467,7 +467,7 @@ async function createEmploymentClaimAndEvents(
     },
   });
 
-  await dbDirect.auditEvent.create({
+  await db.auditEvent.create({
     data: {
       entityType: "employment_claim",
       entityId: claim.id,
@@ -479,7 +479,7 @@ async function createEmploymentClaimAndEvents(
   });
 
   // Update followup event status
-  await dbDirect.followupEvent.update({
+  await db.followupEvent.update({
     where: { id: followupEvent.id },
     data: { status: "RESPONDED", respondedAt: new Date() },
   });
@@ -504,7 +504,7 @@ async function createRetentionOutcomeEvent(
     outcomeStatus = "NOT_WORKING";
   }
 
-  await dbDirect.outcomeEvent.create({
+  await db.outcomeEvent.create({
     data: {
       traineeId: trainee.id,
       employmentClaimId: null, // Retention doesn't link to a claim
@@ -516,7 +516,7 @@ async function createRetentionOutcomeEvent(
     },
   });
 
-  await dbDirect.auditEvent.create({
+  await db.auditEvent.create({
     data: {
       entityType: "followup_event",
       entityId: followupEvent.id,
@@ -528,7 +528,7 @@ async function createRetentionOutcomeEvent(
   });
 
   // Update followup event status
-  await dbDirect.followupEvent.update({
+  await db.followupEvent.update({
     where: { id: followupEvent.id },
     data: { status: "RESPONDED", respondedAt: new Date() },
   });
@@ -545,7 +545,7 @@ export async function POST(request: NextRequest) {
     const data = inboundSchema.parse(body);
 
     // Idempotency check
-    const existingInbound = await dbDirect.auditEvent.findFirst({
+    const existingInbound = await db.auditEvent.findFirst({
       where: {
         entityType: "bot_inbound",
         entityId: data.provider_message_id,
@@ -558,11 +558,11 @@ export async function POST(request: NextRequest) {
 
     // Normalize phone and find trainee
     const phoneE164 = normalizePhoneE164(data.from_phone_e164);
-    const trainee = await dbDirect.trainee.findUnique({ where: { phoneE164 } });
+    const trainee = await db.trainee.findUnique({ where: { phoneE164 } });
 
     if (!trainee) {
       // Log unmatched inbound
-      await dbDirect.auditEvent.create({
+      await db.auditEvent.create({
         data: {
           entityType: "bot_inbound",
           entityId: data.provider_message_id,
@@ -575,7 +575,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find active follow-up event (30-day or 90-day checkpoint)
-    const followupEvent = await dbDirect.followupEvent.findFirst({
+    const followupEvent = await db.followupEvent.findFirst({
       where: {
         traineeId: trainee.id,
         checkpointDays: { in: [30, 90] },
@@ -585,7 +585,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!followupEvent) {
-      await dbDirect.auditEvent.create({
+      await db.auditEvent.create({
         data: {
           entityType: "bot_inbound",
           entityId: data.provider_message_id,
@@ -620,7 +620,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log inbound
-    await dbDirect.auditEvent.create({
+    await db.auditEvent.create({
       data: {
         entityType: "bot_inbound",
         entityId: data.provider_message_id,

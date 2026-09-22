@@ -234,7 +234,7 @@ export default async function TraineeDetailPage({ params }: { params: Promise<{ 
     );
   }
 
-  const latestClaim = trainee.employmentClaims && trainee.employmentClaims.length > 0
+  const latestClaim = trainee.employmentClaims?.length
     ? trainee.employmentClaims.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
     : null;
 

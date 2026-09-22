@@ -1,7 +1,7 @@
 import crypto from "crypto";
 
 export function hashPhone(phoneE164: string): string {
-  const pepper = process.env.PHONE_HASH_PEPPER || "default-pepper-change-in-production";
+  const pepper = process.env.PHONE_HASH_PEPPER ?? "default-pepper-change-in-production";
   const normalized = phoneE164.replace(/\D/g, "");
   return crypto.createHmac("sha256", pepper).update(normalized).digest("hex");
 }

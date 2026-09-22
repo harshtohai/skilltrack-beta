@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { dbDirect } from "~/server/db-direct";
+import { db } from "~/server/db";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 import crypto from "crypto";
 import { sendMagicLinkEmail } from "~/lib/email";
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as unknown;
     const data = magicLinkSchema.parse(body);
 
-    const trainee = await dbDirect.trainee.findFirst({
+    const trainee = await db.trainee.findFirst({
       where: { email: data.email.toLowerCase() },
     });
 
@@ -27,15 +27,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    if (!trainee.consentGiven) {
-      return createErrorResponse("CONSENT_REQUIRED", "Consent not given. Please contact your training institute.", 403);
-    }
-
     const token = crypto.randomBytes(32).toString("hex");
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
 
-    await dbDirect.traineeLoginToken.create({
+    await db.traineeLoginToken.create({
       data: {
         traineeId: trainee.id,
         tokenHash,
@@ -46,10 +42,17 @@ export async function POST(request: NextRequest) {
     const magicLink = `${process.env.APP_BASE_URL}/auth/trainee/${token}`;
 
     if (data.channel === "EMAIL" && trainee.email) {
-      await sendMagicLinkEmail(trainee.email, trainee.fullName, magicLink);
+      try {
+        await sendMagicLinkEmail(trainee.email, trainee.fullName, magicLink);
+      } catch (emailError) {
+        // Never fail the login request because of the email provider —
+        // log the link so it stays retrievable from server logs.
+        console.error("[MAGIC-LINK] Email send failed:", emailError);
+        console.log(`[MAGIC-LINK] Magic link for ${trainee.email}: ${magicLink}`);
+      }
     }
 
-    await dbDirect.auditEvent.create({
+    await db.auditEvent.create({
       data: {
         entityType: "trainee_login_token",
         entityId: tokenHash,

@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { dbDirect } from "~/server/db-direct";
+import { db } from "~/server/db";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 
 export const dynamic = "force-dynamic";
@@ -51,13 +51,17 @@ export async function GET(request: NextRequest) {
     }
 
     const [followups, total] = await Promise.all([
-      dbDirect.followupEvent.findMany({
+      db.followupEvent.findMany({
         where,
         include: {
           trainee: { select: { id: true, publicId: true, fullName: true, phoneE164: true, district: true } },
           cohort: {
-            select: { id: true, name: true, programmeId: true },
-            include: { programme: { select: { id: true, name: true } } },
+            select: {
+              id: true,
+              name: true,
+              programmeId: true,
+              programme: { select: { id: true, name: true } },
+            },
           },
           botSessions: { orderBy: { createdAt: "desc" }, take: 1 },
         },
@@ -65,7 +69,7 @@ export async function GET(request: NextRequest) {
         skip: (query.page - 1) * query.limit,
         take: query.limit,
       }),
-      dbDirect.followupEvent.count({ where }),
+      db.followupEvent.count({ where }),
     ]);
 
     return NextResponse.json({

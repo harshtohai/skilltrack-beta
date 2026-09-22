@@ -1,5 +1,18 @@
 # OutcomeTrack — Domain Model
 
+## Implementation State (as of Sep 2026)
+- **Bot integration**: Kapso (WhatsApp Business API via `https://api.kapso.ai/meta/whatsapp/v24.0`), NOT the standalone bot service. No `BOT_BASE_URL`. Inbound webhook at `/api/webhook` (GET verify + HMAC POST), zod-validated payload.
+- **Conversation flow** (`src/lib/bot/conversation.ts`): consent-first, in-memory Map store (dev/demo simplicity). Steps: `WELCOME` → `CONSENT` → `IDENTITY_VERIFY` → `EMPLOYMENT_STATUS` → `EMPLOYER_DETAILS` → `ROLE_DETAILS` → `SALARY_RANGE` → `JOB_SATISFACTION` → `TRAINING_RELEVANCE` → `SKILL_GAPS` → `ADDITIONAL_TRAINING` → `CAREER_GOALS` → `CHALLENGES` → `RECOMMENDATIONS` → `COMPLETE`. `startConversation(phone, name)` fires post-login (trainee magic-link verify).
+- **Consent**: `Trainee.consentGiven` + `consentGivenAt` + `consentMethod` (`WHATSAPP` | `SEED`); recorded by the WhatsApp consent handler (source of truth). Magic-link no longer 403s without consent.
+- **DB access**: pure Prisma ORM (`src/server/db.ts`, single client, pooled `DATABASE_URL` 6543). No raw SQL, no `db-direct.ts`. `DIRECT_URL` (pooler :5432) unreachable from Node — do not use.
+- **API routes**: only 20 remain; unused ones deleted (data-quality, email, export, insights, kpis/retention, kpis/wage-progression, sidh, trainees/import, trainees/[public_id]). List endpoints paginated (`page`/`limit`). Analytics routes no longer gate on `X-API-Key` (frontend never sent it; middleware protects `/admin` by session role).
+- **Analytics** (`src/server/analytics.ts`): shared `getMonthlyOutcomes()` — 3 flat Prisma queries + in-memory monthly aggregation, `limit` param (max 60 months).
+- **Timeline**: per-trainee timeline on `/trainees/[public_id]`; dashboard Recent Activity timeline fed by `recentActivity` in `kpis/overview`.
+- **Auth**: admin `admin@maharashtra.gov.in`/`admin123` (env-overridable), trainee magic-link, employer login via verificationRequest match.
+- **Seeded** (confirmed): trainees 501, cohorts 15, programmes 5, enrolments 500, followups 1000, outcomes 155. Test user `+0000000000` (Test User, consent given).
+- **Path alias**: `~/*` → `./src/*` only (NOT `@/*`).
+- **Pending**: endpoint loop-testing after refactor; external WhatsApp testing needs ngrok/production URL.
+
 ## Overview
 OutcomeTrack is a longitudinal skilling-outcomes platform. It follows up with trainees via WhatsApp at 30/90/180/365 days post-certification, captures employment claims, enables employer verification, and surfaces cohort-level KPIs with evidence levels.
 

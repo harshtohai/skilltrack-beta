@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { dbDirect } from "~/server/db-direct";
+import { db } from "~/server/db";
 import { createErrorResponse, handleZodError } from "../../_utils";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const query = cohortDetailQuerySchema.parse(Object.fromEntries(searchParams));
 
-    const cohort = await dbDirect.cohort.findUnique({
+    const cohort = await db.cohort.findUnique({
       where: { id },
       include: {
         programme: true,
@@ -36,7 +36,7 @@ export async function GET(
     }
 
     const traineeIds = cohort.enrolments.map((e) => e.traineeId);
-    const followups = await dbDirect.followupEvent.findMany({
+    const followups = await db.followupEvent.findMany({
       where: { traineeId: { in: traineeIds }, checkpointDays: 30 },
     });
 

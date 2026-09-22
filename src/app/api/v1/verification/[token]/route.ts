@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { dbDirect } from "~/server/db-direct";
+import { db } from "~/server/db";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 import crypto from "crypto";
 
@@ -31,7 +31,7 @@ export async function GET(
 
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
-    const verificationRequest = await dbDirect.verificationRequest.findUnique({
+    const verificationRequest = await db.verificationRequest.findUnique({
       where: { tokenHash },
       include: {
         employmentClaim: {
@@ -91,7 +91,7 @@ export async function POST(
 
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
-    const verificationRequest = await dbDirect.verificationRequest.findUnique({
+    const verificationRequest = await db.verificationRequest.findUnique({
       where: { tokenHash },
       include: {
         employmentClaim: {
@@ -116,7 +116,7 @@ export async function POST(
     const now = new Date();
 
     if (data.action === "confirm") {
-      await dbDirect.$transaction(async (tx) => {
+      await db.$transaction(async (tx) => {
         await tx.employmentClaim.update({
           where: { id: claim.id },
           data: {
@@ -171,7 +171,7 @@ export async function POST(
       if (data.role !== undefined) updateData.role = data.role;
       if (data.salaryBand !== undefined) updateData.salaryBand = data.salaryBand;
 
-      await dbDirect.$transaction(async (tx) => {
+      await db.$transaction(async (tx) => {
         if (Object.keys(updateData).length > 0) {
           await tx.employmentClaim.update({
             where: { id: claim.id },
@@ -219,7 +219,7 @@ export async function POST(
 
       return NextResponse.json({ success: true, status: "edited" });
     } else {
-      await dbDirect.$transaction(async (tx) => {
+      await db.$transaction(async (tx) => {
         await tx.employmentClaim.update({
           where: { id: claim.id },
           data: {

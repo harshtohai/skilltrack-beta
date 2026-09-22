@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { dbDirect } from "~/server/db-direct";
+import { db } from "~/server/db";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 
 export const dynamic = "force-dynamic";
@@ -35,19 +35,19 @@ export async function GET(request: NextRequest) {
     }
 
     const [auditLogs, total] = await Promise.all([
-      dbDirect.auditEvent.findMany({
+      db.auditEvent.findMany({
         where,
         orderBy: { createdAt: "desc" },
         skip: (query.page - 1) * query.limit,
         take: query.limit,
       }),
-      dbDirect.auditEvent.count({ where }),
+      db.auditEvent.count({ where }),
     ]);
 
     // Get unique entity types and actions for filter dropdowns
     const [entityTypes, actions] = await Promise.all([
-      dbDirect.auditEvent.groupBy({ by: ["entityType"], orderBy: { entityType: "asc" } }),
-      dbDirect.auditEvent.groupBy({ by: ["action"], orderBy: { action: "asc" } }),
+      db.auditEvent.groupBy({ by: ["entityType"], orderBy: { entityType: "asc" } }),
+      db.auditEvent.groupBy({ by: ["action"], orderBy: { action: "asc" } }),
     ]);
 
     return NextResponse.json({

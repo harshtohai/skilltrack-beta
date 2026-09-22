@@ -26,6 +26,11 @@ interface GovernmentAnalyticsData {
     verifiedRate: number;
     wageProgressionRate: number;
   };
+  pagination: {
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
 }
 
 interface MonthlyData {
@@ -58,6 +63,7 @@ export default function GovernmentAnalyticsDashboard() {
   const [timeWindow, setTimeWindow] = useState("12m");
   const [programmeId, setProgrammeId] = useState("");
   const [district, setDistrict] = useState("");
+  const [limit, setLimit] = useState("24");
 
   const DISTRICTS = [
     "Mumbai", "Pune", "Nagpur", "Nashik", "Aurangabad",
@@ -69,7 +75,7 @@ export default function GovernmentAnalyticsDashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ timeWindow });
+      const params = new URLSearchParams({ timeWindow, limit });
       if (programmeId) params.append("programmeId", programmeId);
       if (district) params.append("district", district);
 
@@ -86,7 +92,7 @@ export default function GovernmentAnalyticsDashboard() {
 
   useEffect(() => {
     void fetchData();
-  }, [timeWindow, programmeId, district, fetchData]);
+  }, [timeWindow, programmeId, district, limit, fetchData]);
 
   if (loading) {
     return (
@@ -161,6 +167,17 @@ export default function GovernmentAnalyticsDashboard() {
                       {d}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+              <Select value={limit} onValueChange={setLimit}>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue placeholder="Months" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="12">12 Months</SelectItem>
+                  <SelectItem value="24">24 Months</SelectItem>
+                  <SelectItem value="36">36 Months</SelectItem>
+                  <SelectItem value="48">48 Months</SelectItem>
                 </SelectContent>
               </Select>
               <Button variant="outline" className="gap-2">

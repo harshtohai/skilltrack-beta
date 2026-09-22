@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowRight, TrendingUp, Users, ShieldCheck, AlertTriangle, Loader2 } from "lucide-react";
+import { ArrowRight, TrendingUp, Users, ShieldCheck, AlertTriangle, Loader2, Calendar, Briefcase } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { Badge } from "~/components/ui/badge";
-import { formatDate } from "~/lib/utils";
+import { formatDate, formatDateTime } from "~/lib/utils";
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
@@ -27,6 +27,13 @@ interface KPIData {
     verified: { count: number; label: string };
   };
   followupResponseRate: { rate: number; numerator: number; denominator: number };
+  recentActivity?: Array<{
+    type: "FOLLOWUP" | "CLAIM" | "VERIFICATION";
+    date: string;
+    title: string;
+    traineeName: string;
+    traineePublicId: string;
+  }>;
 }
 
 interface Cohort {
@@ -125,6 +132,55 @@ function FunnelChart({ funnel }: { funnel: KPIData["funnel"] }) {
   );
 }
 
+function ActivityTimeline({ activity }: { activity: NonNullable<KPIData["recentActivity"]> }) {
+  const icons: Record<string, React.ComponentType<{ className?: string }>> = {
+    FOLLOWUP: Calendar,
+    CLAIM: Briefcase,
+    VERIFICATION: ShieldCheck,
+  };
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Recent Activity</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {activity.map((event, index) => {
+            const Icon = icons[event.type] ?? Calendar;
+            return (
+              <div key={`${event.type}-${event.date}-${index}`} className="flex gap-3">
+                <div className="relative flex-shrink-0">
+                  <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Icon className="h-3.5 w-3.5 text-primary" />
+                  </div>
+                  {index < activity.length - 1 && (
+                    <div className="absolute left-3 top-7 bottom-0 w-0.5 bg-border" />
+                  )}
+                </div>
+                <div className="pt-0.5">
+                  <p className="text-sm font-medium">{event.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {event.traineeName} • {formatDateTime(new Date(event.date))}
+                  </p>
+                  <Link
+                    href={`/trainees/${event.traineePublicId}`}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    View trainee
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+          {activity.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">No activity yet</div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function CohortTable({ cohorts }: { cohorts: Cohort[] }) {
   return (
     <Card>
@@ -193,8 +249,6 @@ function DashboardContent() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 5000); // Poll every 5 seconds
-    return () => clearInterval(interval);
   }, []);
 
   if (loading && !kpis) {
@@ -259,27 +313,7 @@ function DashboardContent() {
 
       <div className="grid gap-6 lg:grid-cols-2 mb-8">
         {kpis && <FunnelChart funnel={kpis.funnel} />}
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold">Quick Actions</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Link
-              href="/cohorts"
-              className="p-4 border rounded-lg hover:bg-muted/50 transition-colors text-left"
-            >
-              <Users className="h-6 w-6 text-primary mb-2" />
-              <h3 className="font-semibold">View Cohorts</h3>
-              <p className="text-sm text-muted-foreground">Browse all training cohorts</p>
-            </Link>
-            <Link
-              href="/simulator"
-              className="p-4 border rounded-lg hover:bg-muted/50 transition-colors text-left"
-            >
-              <Loader2 className="h-6 w-6 text-primary mb-2" />
-              <h3 className="font-semibold">WhatsApp Simulator</h3>
-              <p className="text-sm text-muted-foreground">Test the conversation flow</p>
-            </Link>
-          </div>
-        </div>
+        {kpis?.recentActivity && <ActivityTimeline activity={kpis.recentActivity} />}
       </div>
 
       <CohortTable cohorts={cohorts} />

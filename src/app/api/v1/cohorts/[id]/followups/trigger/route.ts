@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { dbDirect } from "~/server/db-direct";
+import { db } from "~/server/db";
 import { createErrorResponse, handleZodError } from "../../../../_utils";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +20,7 @@ export async function POST(
     const body = (await request.json()) as unknown;
     const data = triggerSchema.parse(body);
 
-    const cohort = await dbDirect.cohort.findUnique({
+    const cohort = await db.cohort.findUnique({
       where: { id },
       include: { enrolments: { select: { traineeId: true } } },
     });
@@ -33,7 +33,7 @@ export async function POST(
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
 
-    const results = await dbDirect.$transaction(async (tx) => {
+    const results = await db.$transaction(async (tx) => {
       const created: Array<{ followupId: string; botSessionId: string; traineeId: string }> = [];
 
       for (const traineeId of targetTraineeIds) {
