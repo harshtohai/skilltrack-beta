@@ -1,9 +1,11 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 import crypto from "crypto";
+
+export const dynamic = "force-dynamic";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -29,7 +31,7 @@ export async function GET(
 
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
-    const verificationRequest = await db.verificationRequest.findUnique({
+    const verificationRequest = await dbDirect.verificationRequest.findUnique({
       where: { tokenHash },
       include: {
         employmentClaim: {
@@ -89,7 +91,7 @@ export async function POST(
 
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
-    const verificationRequest = await db.verificationRequest.findUnique({
+    const verificationRequest = await dbDirect.verificationRequest.findUnique({
       where: { tokenHash },
       include: {
         employmentClaim: {
@@ -114,7 +116,7 @@ export async function POST(
     const now = new Date();
 
     if (data.action === "confirm") {
-      await db.$transaction(async (tx) => {
+      await dbDirect.$transaction(async (tx) => {
         await tx.employmentClaim.update({
           where: { id: claim.id },
           data: {
@@ -169,7 +171,7 @@ export async function POST(
       if (data.role !== undefined) updateData.role = data.role;
       if (data.salaryBand !== undefined) updateData.salaryBand = data.salaryBand;
 
-      await db.$transaction(async (tx) => {
+      await dbDirect.$transaction(async (tx) => {
         if (Object.keys(updateData).length > 0) {
           await tx.employmentClaim.update({
             where: { id: claim.id },
@@ -217,7 +219,7 @@ export async function POST(
 
       return NextResponse.json({ success: true, status: "edited" });
     } else {
-      await db.$transaction(async (tx) => {
+      await dbDirect.$transaction(async (tx) => {
         await tx.employmentClaim.update({
           where: { id: claim.id },
           data: {

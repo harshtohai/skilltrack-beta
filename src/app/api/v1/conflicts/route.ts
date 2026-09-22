@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+
+export const dynamic = "force-dynamic";
 
 const conflictsQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -20,7 +22,7 @@ export async function GET(request: NextRequest) {
     };
 
     // We need to filter by cohort through the followupEvent
-    const conflicts = await db.employmentClaim.findMany({
+    const conflicts = await dbDirect.employmentClaim.findMany({
       where,
       include: {
         trainee: {

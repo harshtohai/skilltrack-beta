@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError } from "../_utils";
+
+export const dynamic = "force-dynamic";
 
 const cohortQuerySchema = z.object({
   programmeId: z.string().uuid().optional(),
@@ -15,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     const where = query.programmeId ? { programmeId: query.programmeId } : {};
 
-    const cohorts = await db.cohort.findMany({
+    const cohorts = await dbDirect.cohort.findMany({
       where,
       include: {
         programme: true,

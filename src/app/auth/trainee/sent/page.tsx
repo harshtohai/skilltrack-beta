@@ -2,11 +2,12 @@
 
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Suspense } from "react";
 import { GraduationCap, CheckCircle, Clock, Loader2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 
-export default function MagicLinkSentPage() {
+function MagicLinkSentContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "your email";
 
@@ -73,5 +74,13 @@ export default function MagicLinkSentPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function MagicLinkSentPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <MagicLinkSentContent />
+    </Suspense>
   );
 }

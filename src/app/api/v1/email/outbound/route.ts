@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError, validateInternalApiKey } from "~/app/api/v1/_utils";
+
+export const dynamic = "force-dynamic";
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
@@ -30,7 +32,7 @@ export async function POST(request: NextRequest) {
     console.log(`[EMAIL OUTBOUND] To: ${data.to_email}, Subject: ${data.subject}`);
 
     // Log the outbound email
-    await db.auditEvent.create({
+    await dbDirect.auditEvent.create({
       data: {
         entityType: "email_outbound",
         entityId: data.message_id,

@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError, validateInternalApiKey } from "~/app/api/v1/_utils";
+
+export const dynamic = "force-dynamic";
 
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -31,7 +33,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const query = exportQuerySchema.parse(Object.fromEntries(searchParams));
 
-    const cohort = await db.cohort.findUnique({
+    const cohort = await dbDirect.cohort.findUnique({
       where: { id: query.cohortId },
       include: { programme: true },
     });
@@ -41,7 +43,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all trainees in this cohort with their latest outcomes
-    const trainees = await db.trainee.findMany({
+    const trainees = await dbDirect.trainee.findMany({
       where: { enrolments: { some: { cohortId: query.cohortId } } },
       include: {
         enrolments: {

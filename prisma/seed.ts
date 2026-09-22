@@ -90,7 +90,7 @@ async function main() {
   console.log(`✅ Created ${programmes.length} programmes`)
 
   // Create cohorts (15 total, 3 per programme)
-  const cohorts = []
+  const cohorts: Array<{ id: string; programmeId: string; name: string; startDate: Date; endDate: Date; createdAt: Date; updatedAt: Date }> = []
   const baseStart = new Date('2023-01-01')
   for (const prog of programmes) {
     for (let i = 0; i < 3; i++) {
@@ -113,7 +113,7 @@ async function main() {
   console.log(`✅ Created ${cohorts.length} cohorts`)
 
   // Create 500 trainees
-  const trainees = []
+  const trainees: Array<{ id: string; fullName: string; phoneE164: string; email: string | null; district: string; language: string; consentGiven: boolean; consentGivenAt: Date | null; consentMethod: string | null; consentRevokedAt: Date | null; createdAt: Date; updatedAt: Date; publicId: string }> = []
   for (let i = 0; i < 500; i++) {
     const name = `Trainee ${i + 1} ${randomElement(['Kumar', 'Sharma', 'Patel', 'Singh', 'Gupta', 'Desai', 'Joshi', 'Mehta', 'Reddy', 'Nair'])}`
     const phone = randomPhone()
@@ -139,7 +139,7 @@ async function main() {
   console.log(`✅ Created ${trainees.length} trainees`)
 
   // Enroll trainees in cohorts (each trainee in 1 cohort)
-  const enrolments = []
+  const enrolments: Array<{ id: string; traineeId: string; cohortId: string; certificationDate: Date; createdAt: Date; updatedAt: Date }> = []
   for (const trainee of trainees) {
     const cohort = randomElement(cohorts)
     const certDate = randomDate(
@@ -158,7 +158,7 @@ async function main() {
   console.log(`✅ Created ${enrolments.length} enrolments`)
 
   // Create follow-up events (30-day and 90-day for each enrolment)
-  const followupEvents = []
+  const followupEvents: Array<{ id: string; traineeId: string; cohortId: string; checkpointDays: number; status: any; channel: any; sentAt: Date | null; respondedAt: Date | null; createdAt: Date; updatedAt: Date }> = []
   for (const enrolment of enrolments) {
     for (const checkpoint of [30, 90]) {
       const status = randomElement(FOLLOWUP_STATUSES.filter(s => s !== 'SCHEDULED'))

@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 import crypto from "crypto";
 import { sendMagicLinkEmail } from "~/lib/email";
+
+export const dynamic = "force-dynamic";
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
@@ -17,7 +19,7 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as unknown;
     const data = magicLinkSchema.parse(body);
 
-    const trainee = await db.trainee.findFirst({
+    const trainee = await dbDirect.trainee.findFirst({
       where: { email: data.email.toLowerCase() },
     });
 
@@ -33,7 +35,7 @@ export async function POST(request: NextRequest) {
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
 
-    await db.traineeLoginToken.create({
+    await dbDirect.traineeLoginToken.create({
       data: {
         traineeId: trainee.id,
         tokenHash,
@@ -47,7 +49,7 @@ export async function POST(request: NextRequest) {
       await sendMagicLinkEmail(trainee.email, trainee.fullName, magicLink);
     }
 
-    await db.auditEvent.create({
+    await dbDirect.auditEvent.create({
       data: {
         entityType: "trainee_login_token",
         entityId: tokenHash,

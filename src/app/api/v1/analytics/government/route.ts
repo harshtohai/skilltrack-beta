@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError, validateInternalApiKey } from "~/app/api/v1/_utils";
 import { subMonths, startOfMonth, endOfMonth, format } from "date-fns";
+
+export const dynamic = "force-dynamic";
+
 
 const governmentAnalyticsSchema = z.object({
   timeWindow: z.enum(["6m", "12m", "24m", "all"]).default("12m"),
@@ -50,7 +53,7 @@ export async function GET(request: NextRequest) {
       whereClause.district = query.district;
     }
 
-    const trainees = await db.trainee.findMany({
+    const trainees = await dbDirect.trainee.findMany({
       where: whereClause,
       include: {
         enrolments: {
@@ -72,7 +75,7 @@ export async function GET(request: NextRequest) {
       const monthStart = startOfMonth(subMonths(new Date(), monthsBack - 1 - idx));
       const monthEnd = endOfMonth(monthStart);
 
-      const monthTrainees = trainees.filter((t) => {
+      const monthTrainees = trainees.filter((t: typeof trainees[0]) => {
         const enrolment = t.enrolments[0];
         return enrolment && enrolment.certificationDate >= monthStart && enrolment.certificationDate <= monthEnd;
       });
@@ -145,18 +148,18 @@ export async function GET(request: NextRequest) {
 
     const overall = {
       totalCertified: trainees.length,
-      totalEmployed: trainees.filter((t) => {
+      totalEmployed: trainees.filter((t: typeof trainees[0]) => {
         const outcome30 = t.outcomeEvents.find((e) => e.checkpointDays === 30);
         const outcome90 = t.outcomeEvents.find((e) => e.checkpointDays === 90);
         const latest = outcome90 || outcome30;
         return latest && ["EMPLOYED", "SELF_EMPLOYED", "APPRENTICE"].includes(latest.outcomeStatus);
       }).length,
-      totalRetained: trainees.filter((t) => {
+      totalRetained: trainees.filter((t: typeof trainees[0]) => {
         const outcome30 = t.outcomeEvents.find((e) => e.checkpointDays === 30);
         const outcome90 = t.outcomeEvents.find((e) => e.checkpointDays === 90);
         return outcome30 && outcome90 && ["EMPLOYED", "SELF_EMPLOYED", "APPRENTICE"].includes(outcome30.outcomeStatus) && ["EMPLOYED", "SELF_EMPLOYED", "APPRENTICE"].includes(outcome90.outcomeStatus);
       }).length,
-      totalVerified: trainees.filter((t) => {
+      totalVerified: trainees.filter((t: typeof trainees[0]) => {
         const outcome30 = t.outcomeEvents.find((e) => e.checkpointDays === 30);
         const outcome90 = t.outcomeEvents.find((e) => e.checkpointDays === 90);
         const latest = outcome90 || outcome30;

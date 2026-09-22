@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+
+export const dynamic = "force-dynamic";
 
 const retentionQuerySchema = z.object({
   cohortId: z.string().uuid().optional(),
@@ -22,7 +24,7 @@ export async function GET(request: NextRequest) {
     const cohortFilter = query.cohortId ? { cohortId: query.cohortId } : {};
 
     // Get trainees with enrolments in the filtered cohorts
-    const trainees = await db.trainee.findMany({
+    const trainees = await dbDirect.trainee.findMany({
       where: {
         enrolments: {
           some: cohortFilter,
@@ -87,7 +89,7 @@ export async function GET(request: NextRequest) {
     // Cohort breakdown
     const cohortBreakdown = await Promise.all(
       Object.entries(retentionByCohort).map(async ([cohortId, data]) => {
-        const cohort = await db.cohort.findUnique({ where: { id: cohortId } });
+        const cohort = await dbDirect.cohort.findUnique({ where: { id: cohortId } });
         return {
           cohortId,
           cohortName: cohort?.name ?? "Unknown",

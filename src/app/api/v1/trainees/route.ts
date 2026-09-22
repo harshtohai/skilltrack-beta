@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError } from "../_utils";
+
+export const dynamic = "force-dynamic";
 
 const traineeCreateSchema = z.object({
   fullName: z.string().min(1),
@@ -42,7 +44,7 @@ export async function GET(request: NextRequest) {
     }
 
     const [trainees, total] = await Promise.all([
-      db.trainee.findMany({
+      dbDirect.trainee.findMany({
         where,
         include: {
           enrolments: {
@@ -53,7 +55,7 @@ export async function GET(request: NextRequest) {
         skip: (query.page - 1) * query.limit,
         take: query.limit,
       }),
-      db.trainee.count({ where }),
+      dbDirect.trainee.count({ where }),
     ]);
 
     return NextResponse.json({
@@ -80,7 +82,7 @@ export async function POST(request: NextRequest) {
     const phoneE164 = data.phoneE164.replace(/\D/g, "");
     const normalizedPhone = phoneE164.length === 10 ? `+91${phoneE164}` : phoneE164.length === 12 ? `+${phoneE164}` : data.phoneE164;
 
-    const trainee = await db.trainee.create({
+    const trainee = await dbDirect.trainee.create({
       data: {
         ...data,
         phoneE164: normalizedPhone,

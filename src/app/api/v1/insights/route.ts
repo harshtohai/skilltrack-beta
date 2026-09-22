@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+
+export const dynamic = "force-dynamic";
 
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -159,7 +161,7 @@ export async function GET(request: NextRequest) {
     if (query.programmeId) cohortFilter.cohort = { programmeId: query.programmeId };
 
     // Get trainees in scope
-    const trainees = await db.trainee.findMany({
+    const trainees = await dbDirect.trainee.findMany({
       where: {
         enrolments: {
           some: cohortFilter,
@@ -215,7 +217,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Response rate from followup events
-      const followups = await db.followupEvent.findMany({
+      const followups = await dbDirect.followupEvent.findMany({
         where: { traineeId: trainee.id },
       });
       responseRateDenom += followups.filter((f) => f.status === "SENT" || f.status === "RESPONDED").length;
@@ -225,7 +227,7 @@ export async function GET(request: NextRequest) {
     // Get wage progression data
     let wageProgressionData: { upwardMobilityRate: number; stableRate: number; downwardRate: number } | undefined;
     try {
-      const claims = await db.employmentClaim.findMany({
+      const claims = await dbDirect.employmentClaim.findMany({
         where: { followupEvent: cohortFilter },
         include: { followupEvent: true },
       });
@@ -267,7 +269,7 @@ export async function GET(request: NextRequest) {
     let trainingRelevanceData: { rate: number } | undefined;
     try {
       // Get claims with followupEvent and outcomeEvents
-      const claimsWithProgramme = await db.employmentClaim.findMany({
+      const claimsWithProgramme = await dbDirect.employmentClaim.findMany({
         where: { followupEvent: cohortFilter },
         include: {
           followupEvent: { include: { cohort: { include: { programme: true } } } },

@@ -1,9 +1,11 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError, validateInternalApiKey } from "~/app/api/v1/_utils";
 import { parse } from "csv-parse/sync";
+
+export const dynamic = "force-dynamic";
 
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
@@ -73,19 +75,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Find or create programme
-    let programme = await db.programme.findUnique({ where: { code: data.programmeCode } });
+    let programme = await dbDirect.programme.findUnique({ where: { code: data.programmeCode } });
     if (!programme) {
-      programme = await db.programme.create({
+      programme = await dbDirect.programme.create({
         data: { name: data.programmeCode, code: data.programmeCode },
       });
     }
 
     // Find or create cohort
-    let cohort = await db.cohort.findFirst({
+    let cohort = await dbDirect.cohort.findFirst({
       where: { programmeId: programme.id, name: data.cohortName },
     });
     if (!cohort) {
-      cohort = await db.cohort.create({
+      cohort = await dbDirect.cohort.create({
         data: {
           programmeId: programme.id,
           name: data.cohortName,
@@ -103,10 +105,10 @@ export async function POST(request: NextRequest) {
     for (const trainee of data.trainees) {
       try {
         const phoneE164 = normalizePhone(trainee.phoneE164);
-        const existing = await db.trainee.findUnique({ where: { phoneE164 } });
+        const existing = await dbDirect.trainee.findUnique({ where: { phoneE164 } });
 
         if (existing) {
-          await db.trainee.update({
+          await dbDirect.trainee.update({
             where: { id: existing.id },
             data: {
               fullName: trainee.fullName,
@@ -116,14 +118,14 @@ export async function POST(request: NextRequest) {
             },
           });
           // Ensure enrolment exists
-          await db.enrolment.upsert({
+          await dbDirect.enrolment.upsert({
             where: { traineeId_cohortId: { traineeId: existing.id, cohortId: cohort.id } },
             create: { traineeId: existing.id, cohortId: cohort.id, certificationDate: new Date(data.endDate) },
             update: {},
           });
           updated++;
         } else {
-          const newTrainee = await db.trainee.create({
+          const newTrainee = await dbDirect.trainee.create({
             data: {
               publicId: trainee.publicId || `TRN-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
               fullName: trainee.fullName,

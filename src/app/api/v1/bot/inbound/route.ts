@@ -1,9 +1,11 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError, normalizePhoneE164, validateInternalApiKey } from "~/app/api/v1/_utils";
 import crypto from "crypto";
+
+export const dynamic = "force-dynamic";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -171,7 +173,7 @@ function getConsentQuestion(language: string): { text: string; options: Array<{ 
 }
 
 async function findOrCreateBotSession(traineeId: string, followupEventId: string, checkpointDays: number) {
-  const existing = await db.botSession.findFirst({
+  const existing = await dbDirect.botSession.findFirst({
     where: { traineeId, followupEventId, state: { not: "DONE" } },
     orderBy: { createdAt: "desc" },
   });
@@ -181,7 +183,7 @@ async function findOrCreateBotSession(traineeId: string, followupEventId: string
   }
 
   // Check if trainee has given consent
-  const trainee = await db.trainee.findUnique({
+  const trainee = await dbDirect.trainee.findUnique({
     where: { id: traineeId },
     select: { consentGiven: true },
   });
@@ -203,7 +205,7 @@ async function findOrCreateBotSession(traineeId: string, followupEventId: string
     initialQuestion = "status";
   }
   
-  return db.botSession.create({
+  return dbDirect.botSession.create({
     data: {
       traineeId,
       followupEventId,
@@ -241,7 +243,7 @@ async function processStateMachine(session: any, text: string, trainee: any, fol
       }
       // Consent given - update trainee record
       collectedData.consent = "GIVEN";
-      await db.trainee.update({
+      await dbDirect.trainee.update({
         where: { id: trainee.id },
         data: {
           consentGiven: true,
@@ -409,7 +411,7 @@ async function processStateMachine(session: any, text: string, trainee: any, fol
   }
 
   // Update session
-  await db.botSession.update({
+  await dbDirect.botSession.update({
     where: { id: session.id },
     data: {
       state: newState,
@@ -427,7 +429,7 @@ async function createEmploymentClaimAndEvents(
   followupEvent: any,
   collectedData: CollectedData
 ) {
-  const claim = await db.employmentClaim.create({
+  const claim = await dbDirect.employmentClaim.create({
     data: {
       traineeId: trainee.id,
       followupEventId: followupEvent.id,
@@ -440,7 +442,7 @@ async function createEmploymentClaimAndEvents(
     },
   });
 
-  await db.outcomeEvent.create({
+  await dbDirect.outcomeEvent.create({
     data: {
       traineeId: trainee.id,
       employmentClaimId: claim.id,
@@ -457,7 +459,7 @@ async function createEmploymentClaimAndEvents(
   const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-  await db.verificationRequest.create({
+  await dbDirect.verificationRequest.create({
     data: {
       employmentClaimId: claim.id,
       tokenHash,
@@ -465,7 +467,7 @@ async function createEmploymentClaimAndEvents(
     },
   });
 
-  await db.auditEvent.create({
+  await dbDirect.auditEvent.create({
     data: {
       entityType: "employment_claim",
       entityId: claim.id,
@@ -477,7 +479,7 @@ async function createEmploymentClaimAndEvents(
   });
 
   // Update followup event status
-  await db.followupEvent.update({
+  await dbDirect.followupEvent.update({
     where: { id: followupEvent.id },
     data: { status: "RESPONDED", respondedAt: new Date() },
   });
@@ -502,7 +504,7 @@ async function createRetentionOutcomeEvent(
     outcomeStatus = "NOT_WORKING";
   }
 
-  await db.outcomeEvent.create({
+  await dbDirect.outcomeEvent.create({
     data: {
       traineeId: trainee.id,
       employmentClaimId: null, // Retention doesn't link to a claim
@@ -514,7 +516,7 @@ async function createRetentionOutcomeEvent(
     },
   });
 
-  await db.auditEvent.create({
+  await dbDirect.auditEvent.create({
     data: {
       entityType: "followup_event",
       entityId: followupEvent.id,
@@ -526,7 +528,7 @@ async function createRetentionOutcomeEvent(
   });
 
   // Update followup event status
-  await db.followupEvent.update({
+  await dbDirect.followupEvent.update({
     where: { id: followupEvent.id },
     data: { status: "RESPONDED", respondedAt: new Date() },
   });
@@ -543,7 +545,7 @@ export async function POST(request: NextRequest) {
     const data = inboundSchema.parse(body);
 
     // Idempotency check
-    const existingInbound = await db.auditEvent.findFirst({
+    const existingInbound = await dbDirect.auditEvent.findFirst({
       where: {
         entityType: "bot_inbound",
         entityId: data.provider_message_id,
@@ -556,11 +558,11 @@ export async function POST(request: NextRequest) {
 
     // Normalize phone and find trainee
     const phoneE164 = normalizePhoneE164(data.from_phone_e164);
-    const trainee = await db.trainee.findUnique({ where: { phoneE164 } });
+    const trainee = await dbDirect.trainee.findUnique({ where: { phoneE164 } });
 
     if (!trainee) {
       // Log unmatched inbound
-      await db.auditEvent.create({
+      await dbDirect.auditEvent.create({
         data: {
           entityType: "bot_inbound",
           entityId: data.provider_message_id,
@@ -573,7 +575,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find active follow-up event (30-day or 90-day checkpoint)
-    const followupEvent = await db.followupEvent.findFirst({
+    const followupEvent = await dbDirect.followupEvent.findFirst({
       where: {
         traineeId: trainee.id,
         checkpointDays: { in: [30, 90] },
@@ -583,7 +585,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!followupEvent) {
-      await db.auditEvent.create({
+      await dbDirect.auditEvent.create({
         data: {
           entityType: "bot_inbound",
           entityId: data.provider_message_id,
@@ -618,7 +620,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log inbound
-    await db.auditEvent.create({
+    await dbDirect.auditEvent.create({
       data: {
         entityType: "bot_inbound",
         entityId: data.provider_message_id,

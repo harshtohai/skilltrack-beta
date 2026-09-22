@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError, validateInternalApiKey, normalizePhoneE164 } from "~/app/api/v1/_utils";
+
+export const dynamic = "force-dynamic";
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
@@ -28,7 +30,7 @@ export async function POST(request: NextRequest) {
     const data = emailInboundSchema.parse(body);
 
     // Idempotency check
-    const existingInbound = await db.auditEvent.findFirst({
+    const existingInbound = await dbDirect.auditEvent.findFirst({
       where: {
         entityType: "email_inbound",
         entityId: data.provider_message_id,
@@ -40,17 +42,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Try to find trainee by phone (if provided) or by email
-    let trainee = null;
+    let trainee: { id: string; phoneE164: string; email: string | null; fullName: string; consentGiven: boolean } | null = null;
     if (data.trainee_phone_e164) {
       const phoneE164 = normalizePhoneE164(data.trainee_phone_e164);
-      trainee = await db.trainee.findUnique({ where: { phoneE164 } });
+      trainee = await dbDirect.trainee.findUnique({ where: { phoneE164 } });
     }
     if (!trainee && data.from_email) {
-      trainee = await db.trainee.findFirst({ where: { email: data.from_email.toLowerCase() } });
+      trainee = await dbDirect.trainee.findFirst({ where: { email: data.from_email.toLowerCase() } });
     }
 
     if (!trainee) {
-      await db.auditEvent.create({
+      await dbDirect.auditEvent.create({
         data: {
           entityType: "email_inbound",
           entityId: data.provider_message_id,
@@ -63,7 +65,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find active follow-up event
-    const followupEvent = await db.followupEvent.findFirst({
+    const followupEvent = await dbDirect.followupEvent.findFirst({
       where: {
         traineeId: trainee.id,
         checkpointDays: { in: [30, 90] },
@@ -73,7 +75,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!followupEvent) {
-      await db.auditEvent.create({
+      await dbDirect.auditEvent.create({
         data: {
           entityType: "email_inbound",
           entityId: data.provider_message_id,
@@ -86,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log the inbound email
-    await db.auditEvent.create({
+    await dbDirect.auditEvent.create({
       data: {
         entityType: "email_inbound",
         entityId: data.provider_message_id,

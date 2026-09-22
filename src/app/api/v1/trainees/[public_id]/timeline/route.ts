@@ -1,7 +1,9 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse } from "../../../_utils";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(
   request: NextRequest,
@@ -10,7 +12,7 @@ export async function GET(
   try {
     const { public_id } = await params;
 
-    const trainee = await db.trainee.findUnique({
+    const trainee = await dbDirect.trainee.findUnique({
       where: { publicId: public_id },
       select: { id: true },
     });
@@ -20,21 +22,21 @@ export async function GET(
     }
 
     const [enrolments, followups, claims, verifications] = await Promise.all([
-      db.enrolment.findMany({
+      dbDirect.enrolment.findMany({
         where: { traineeId: trainee.id },
         include: { cohort: { include: { programme: true } } },
         orderBy: { certificationDate: "asc" },
       }),
-      db.followupEvent.findMany({
+      dbDirect.followupEvent.findMany({
         where: { traineeId: trainee.id },
         orderBy: { checkpointDays: "asc" },
       }),
-      db.employmentClaim.findMany({
+      dbDirect.employmentClaim.findMany({
         where: { traineeId: trainee.id },
         include: { followupEvent: true, verificationRequests: true },
         orderBy: { createdAt: "asc" },
       }),
-      db.verificationRequest.findMany({
+      dbDirect.verificationRequest.findMany({
         where: { employmentClaim: { traineeId: trainee.id } },
         include: { employmentClaim: true },
         orderBy: { createdAt: "asc" },

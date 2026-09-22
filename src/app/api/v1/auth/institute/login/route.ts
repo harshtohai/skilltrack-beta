@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+
+export const dynamic = "force-dynamic";
 
 const instituteLoginSchema = z.object({
   email: z.string().email(),
@@ -13,7 +15,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const data = instituteLoginSchema.parse(body);
 
-    const programme = await db.programme.findFirst({
+    const programme = await dbDirect.programme.findFirst({
       where: {
         OR: [
           { code: { equals: data.email.split("@")[0], mode: "insensitive" } },

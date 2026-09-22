@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError, validateInternalApiKey } from "~/app/api/v1/_utils";
+
+export const dynamic = "force-dynamic";
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
@@ -48,7 +50,7 @@ export async function GET(request: NextRequest) {
 
     const cohortFilter = query.cohortId ? { cohortId: query.cohortId } : {};
 
-    const trainees = await db.trainee.findMany({
+    const trainees = await dbDirect.trainee.findMany({
       where: { enrolments: { some: cohortFilter } },
       select: { id: true, publicId: true, fullName: true, phoneE164: true, district: true },
     });

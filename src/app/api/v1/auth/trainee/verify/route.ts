@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 import crypto from "crypto";
+
+export const dynamic = "force-dynamic";
 
 const verifySchema = z.object({
   token: z.string().min(32).max(64),
@@ -15,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     const tokenHash = crypto.createHash("sha256").update(data.token).digest("hex");
 
-    const loginToken = await db.traineeLoginToken.findUnique({
+    const loginToken = await dbDirect.traineeLoginToken.findUnique({
       where: { tokenHash },
       include: {
         trainee: {
@@ -44,12 +46,12 @@ export async function POST(request: NextRequest) {
       return createErrorResponse("TOKEN_EXPIRED", "This magic link has expired", 401);
     }
 
-    await db.traineeLoginToken.update({
+    await dbDirect.traineeLoginToken.update({
       where: { id: loginToken.id },
       data: { usedAt: new Date() },
     });
 
-    await db.auditEvent.create({
+    await dbDirect.auditEvent.create({
       data: {
         entityType: "trainee_login_token",
         entityId: loginToken.id,

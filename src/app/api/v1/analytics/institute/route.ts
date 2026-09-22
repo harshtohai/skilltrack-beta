@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError, validateInternalApiKey } from "~/app/api/v1/_utils";
 import { subMonths, startOfMonth, endOfMonth, format } from "date-fns";
+
+export const dynamic = "force-dynamic";
 
 const instituteAnalyticsSchema = z.object({
   timeWindow: z.enum(["6m", "12m", "24m", "all"]).default("12m"),
@@ -50,7 +52,7 @@ export async function GET(request: NextRequest) {
       whereClause.id = query.cohortId;
     }
 
-    const cohorts = await db.cohort.findMany({
+    const cohorts = await dbDirect.cohort.findMany({
       where: whereClause,
       include: {
         programme: true,

@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+
+export const dynamic = "force-dynamic";
 
 const followupsQuerySchema = z.object({
   status: z.enum(["SCHEDULED", "SENT", "RESPONDED", "FAILED", "EXPIRED"]).optional(),
@@ -49,7 +51,7 @@ export async function GET(request: NextRequest) {
     }
 
     const [followups, total] = await Promise.all([
-      db.followupEvent.findMany({
+      dbDirect.followupEvent.findMany({
         where,
         include: {
           trainee: { select: { id: true, publicId: true, fullName: true, phoneE164: true, district: true } },
@@ -63,7 +65,7 @@ export async function GET(request: NextRequest) {
         skip: (query.page - 1) * query.limit,
         take: query.limit,
       }),
-      db.followupEvent.count({ where }),
+      dbDirect.followupEvent.count({ where }),
     ]);
 
     return NextResponse.json({

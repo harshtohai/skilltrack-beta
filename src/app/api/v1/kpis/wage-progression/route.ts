@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+
+export const dynamic = "force-dynamic";
 
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
@@ -24,7 +26,7 @@ export async function GET(request: NextRequest) {
     if (query.programmeId) cohortFilter.cohort = { programmeId: query.programmeId };
 
     // Get all employment claims with salary bands and trainee info
-    const claims = await db.employmentClaim.findMany({
+    const claims = await dbDirect.employmentClaim.findMany({
       where: {
         salaryBand: { not: null },
         followupEvent: cohortFilter,
@@ -44,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     // Get all outcome events for 30-day and 90-day to track progression
     const traineesWithClaims = claims.map((c) => c.traineeId);
-    const outcomeEvents = await db.outcomeEvent.findMany({
+    const outcomeEvents = await dbDirect.outcomeEvent.findMany({
       where: {
         traineeId: { in: traineesWithClaims },
         checkpointDays: { in: [30, 90] },

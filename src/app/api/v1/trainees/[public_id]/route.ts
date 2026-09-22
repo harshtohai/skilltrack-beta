@@ -1,7 +1,9 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse } from "../../_utils";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(
   request: NextRequest,
@@ -10,7 +12,7 @@ export async function GET(
   try {
     const { public_id } = await params;
 
-    const trainee = await db.trainee.findUnique({
+    const trainee = await dbDirect.trainee.findUnique({
       where: { publicId: public_id },
       include: {
         enrolments: {

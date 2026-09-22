@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError } from "../../_utils";
+
+export const dynamic = "force-dynamic";
 
 const cohortDetailQuerySchema = z.object({
   district: z.string().optional(),
@@ -19,7 +21,7 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const query = cohortDetailQuerySchema.parse(Object.fromEntries(searchParams));
 
-    const cohort = await db.cohort.findUnique({
+    const cohort = await dbDirect.cohort.findUnique({
       where: { id },
       include: {
         programme: true,
@@ -34,11 +36,11 @@ export async function GET(
     }
 
     const traineeIds = cohort.enrolments.map((e) => e.traineeId);
-    const followups = await db.followupEvent.findMany({
+    const followups = await dbDirect.followupEvent.findMany({
       where: { traineeId: { in: traineeIds }, checkpointDays: 30 },
     });
 
-    const followupMap = new Map(followups.map((f) => [f.traineeId, f]));
+    const followupMap = new Map<string, { id: string; traineeId: string; cohortId: string; checkpointDays: number; status: string; channel: string; sentAt: Date | null; respondedAt: Date | null }>(followups.map((f) => [f.traineeId, f]));
 
     let trainees = cohort.enrolments.map((e) => ({
       ...e.trainee,

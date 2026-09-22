@@ -1,37 +1,39 @@
 import { NextResponse } from "next/server";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse } from "../../_utils";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
     // Total certified trainees
-    const totalTrainees = await db.trainee.count({
+    const totalTrainees = await dbDirect.trainee.count({
       where: {
         enrolments: { some: {} },
       },
     });
 
     // Trainees with known outcome (not UNKNOWN)
-    const traineesWithOutcome = await db.trainee.count({
+    const traineesWithOutcome = await dbDirect.trainee.count({
       where: {
         outcomeEvents: { some: { outcomeStatus: { not: "UNKNOWN" } } },
       },
     });
 
     // Trainees with verified employment (EMPLOYER_CONFIRMED)
-    const verifiedEmployed = await db.employmentClaim.count({
+    const verifiedEmployed = await dbDirect.employmentClaim.count({
       where: { verificationStatus: "EMPLOYER_CONFIRMED" },
     });
 
     // Conflicts
-    const conflicts = await db.employmentClaim.count({
+    const conflicts = await dbDirect.employmentClaim.count({
       where: { verificationStatus: "CONFLICT" },
     });
 
     // Funnel data
     const certified = totalTrainees;
     const outcomeKnown = traineesWithOutcome;
-    const employed = await db.employmentClaim.count({
+    const employed = await dbDirect.employmentClaim.count({
       where: {
         verificationStatus: { in: ["SELF_REPORTED", "EMPLOYER_CONFIRMED"] },
         OR: [
@@ -43,8 +45,8 @@ export async function GET() {
     const verified = verifiedEmployed;
 
     // Follow-up response rate
-    const followupsSent = await db.followupEvent.count({ where: { status: "SENT" } });
-    const followupsResponded = await db.followupEvent.count({ where: { status: "RESPONDED" } });
+    const followupsSent = await dbDirect.followupEvent.count({ where: { status: "SENT" } });
+    const followupsResponded = await dbDirect.followupEvent.count({ where: { status: "RESPONDED" } });
 
     return NextResponse.json({
       trainees: {

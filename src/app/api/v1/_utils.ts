@@ -1,7 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import type { ZodError } from "zod";
-import { db } from "~/server/db";
 
 export interface ApiErrorResponse {
   error: {
@@ -23,17 +22,6 @@ export function validateInternalApiKey(request: NextRequest): boolean {
   const apiKey = request.headers.get("X-API-Key");
   const expectedKey = process.env.INTERNAL_API_KEY;
   return apiKey === expectedKey && expectedKey !== undefined;
-}
-
-export async function getTraineeByPhone(phoneE164: string) {
-  return db.trainee.findUnique({
-    where: { phoneE164 },
-    include: {
-      enrolments: {
-        include: { cohort: true },
-      },
-    },
-  });
 }
 
 export function normalizePhoneE164(phone: string): string {

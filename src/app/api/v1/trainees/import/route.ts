@@ -2,8 +2,10 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import Papa from "papaparse";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError, normalizePhoneE164 } from "../../_utils";
+
+export const dynamic = "force-dynamic";
 
 const importRowSchema = z.object({
   full_name: z.string().min(1),
@@ -37,14 +39,14 @@ export async function POST(request: NextRequest) {
         const validated = importRowSchema.parse(row);
         const phoneE164 = normalizePhoneE164(validated.phone_e164);
 
-        const existing = await db.trainee.findUnique({ where: { phoneE164 } });
+        const existing = await dbDirect.trainee.findUnique({ where: { phoneE164 } });
         if (existing) {
           results.skipped++;
           results.errors.push(`Row ${index + 1}: Phone ${validated.phone_e164} already exists`);
           continue;
         }
 
-        await db.trainee.create({
+        await dbDirect.trainee.create({
           data: {
             fullName: validated.full_name,
             phoneE164,

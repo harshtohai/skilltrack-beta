@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "~/server/db";
+import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+
+export const dynamic = "force-dynamic";
 
 const employerLoginSchema = z.object({
   email: z.string().email(),
@@ -13,7 +15,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const data = employerLoginSchema.parse(body);
 
-    const verificationRequest = await db.verificationRequest.findFirst({
+    const verificationRequest = await dbDirect.verificationRequest.findFirst({
       where: {
         employmentClaim: {
           employerName: { contains: data.email.split("@")[0], mode: "insensitive" },
