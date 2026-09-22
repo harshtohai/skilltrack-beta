@@ -136,14 +136,16 @@ function LoginPageContent() {
             <button
               key={type.value}
               onClick={() => setSelectedType(type.value)}
-              className={`relative p-4 rounded-lg border-2 transition-all text-left ${
+              className={`relative p-4 rounded-xl border-2 transition-all text-left ${
                 selectedType === type.value
-                  ? "border-primary bg-primary/5"
-                  : "border-input hover:border-primary/50 hover:bg-accent"
+                  ? "border-primary bg-primary/10 shadow-lg shadow-primary/10 ring-2 ring-primary/20"
+                  : "border-input hover:border-primary/50 hover:bg-accent hover:shadow-md"
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                  selectedType === type.value ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"
+                }`}>
                   <type.icon className="h-5 w-5" />
                 </div>
                 <div>
@@ -152,12 +154,18 @@ function LoginPageContent() {
                 </div>
               </div>
               {selectedType === type.value && (
-                <div className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs">
+                <div className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shadow-lg">
                   ✓
                 </div>
               )}
             </button>
           ))}
+        </div>
+
+        <div className="mb-6 p-3 rounded-lg bg-primary/5 border border-primary/20 text-center">
+          <p className="text-sm font-medium text-primary">
+            Selected: <span className="capitalize">{selectedType}</span>
+          </p>
         </div>
 
         <Card className="w-full">
@@ -202,6 +210,9 @@ function LoginPageContent() {
                     required
                     disabled={loading}
                   />
+                  <div className="text-xs text-muted-foreground font-mono bg-muted p-2 rounded">
+                    Demo: {selectedType === "admin" ? "admin@maharashtra.gov.in / admin123" : selectedType === "institute" ? "institute@pmkvy.gov.in / institute123" : "hr@company.com / employer123"}
+                  </div>
                 </div>
               )}
 

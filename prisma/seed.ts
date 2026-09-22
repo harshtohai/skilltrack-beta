@@ -1,4 +1,5 @@
-import { PrismaClient } from "../generated/prisma"
+import { PrismaClient } from "@prisma/client"
+import crypto from "crypto"
 
 const prisma = new PrismaClient({
   datasources: {
@@ -7,6 +8,30 @@ const prisma = new PrismaClient({
     },
   },
 })
+
+const PHONE_HASH_PEPPER = process.env.PHONE_HASH_PEPPER || "outcometrack-phone-hash-pepper-2024-change-me"
+const PHONE_ENCRYPTION_KEY = process.env.PHONE_ENCRYPTION_KEY || crypto.randomBytes(32).toString("hex")
+const ALGORITHM = "aes-256-gcm"
+const IV_LENGTH = 12
+const AUTH_TAG_LENGTH = 16
+
+function getKey(): Buffer {
+  return Buffer.from(PHONE_ENCRYPTION_KEY, "hex")
+}
+
+function encryptPhone(phoneE164: string): string {
+  const iv = crypto.randomBytes(IV_LENGTH)
+  const cipher = crypto.createCipheriv(ALGORITHM, getKey(), iv)
+  const normalized = phoneE164.replace(/\D/g, "")
+  const encrypted = Buffer.concat([cipher.update(normalized, "utf8"), cipher.final()])
+  const authTag = cipher.getAuthTag()
+  return Buffer.concat([iv, encrypted, authTag]).toString("base64")
+}
+
+function hashPhone(phoneE164: string): string {
+  const normalized = phoneE164.replace(/\D/g, "");
+  return crypto.createHmac("sha256", PHONE_HASH_PEPPER).update(normalized).digest("hex");
+}
 
 const DISTRICTS = [
   'Mumbai', 'Pune', 'Nagpur', 'Nashik', 'Aurangabad',
@@ -126,6 +151,8 @@ async function main() {
       data: {
         fullName: name,
         phoneE164: phone,
+        phoneEncrypted: encryptPhone(phone),
+        phoneHash: hashPhone(phone),
         email,
         district,
         language,

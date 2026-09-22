@@ -4,6 +4,7 @@ import { z } from "zod";
 import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError, validateInternalApiKey } from "~/app/api/v1/_utils";
 import { parse } from "csv-parse/sync";
+import { encryptPhone, hashPhone } from "~/lib/phone-encrypt";
 
 export const dynamic = "force-dynamic";
 
@@ -130,6 +131,8 @@ export async function POST(request: NextRequest) {
               publicId: trainee.publicId || `TRN-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
               fullName: trainee.fullName,
               phoneE164,
+              phoneEncrypted: encryptPhone(phoneE164),
+              phoneHash: hashPhone(phoneE164),
               email: trainee.email,
               district: trainee.district,
               language: trainee.language,

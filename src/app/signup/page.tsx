@@ -10,6 +10,7 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { Alert, AlertDescription } from "~/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -150,7 +151,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
             <GraduationCap className="h-10 w-10 text-primary" />
@@ -244,24 +245,22 @@ export default function SignupPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="district">District</Label>
-                <select
-                  id="district"
-                  name="district"
+                <Select
                   value={formData.district}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, district: value }))}
                   disabled={loading}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  aria-invalid={!!errors.district}
-                  aria-describedby={errors.district ? "district-error" : undefined}
                 >
-                  <option value="">Select your district</option>
-                  {DISTRICTS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger id="district" aria-invalid={!!errors.district} aria-describedby={errors.district ? "district-error" : undefined}>
+                    <SelectValue placeholder="Select your district" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DISTRICTS.map((d) => (
+                      <SelectItem key={d} value={d}>
+                        {d}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {errors.district && (
                   <p id="district-error" className="text-sm text-destructive flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />

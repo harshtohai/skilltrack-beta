@@ -112,7 +112,9 @@ model Trainee {
   publicId        String    @unique @default(uuid())
   fullName        String
   phoneE164       String    @unique
-  email           String?
+  phoneEncrypted  String    @unique
+  phoneHash       String    @unique
+  email           String?   @unique
   district        String
   language        String    @default("EN")
   consentGiven    Boolean   @default(false)
@@ -132,6 +134,9 @@ model Trainee {
   loginTokens          TraineeLoginToken[]
 
   @@index([phoneE164])
+  @@index([phoneEncrypted])
+  @@index([phoneHash])
+  @@index([email])
   @@map("trainees")
 }
 

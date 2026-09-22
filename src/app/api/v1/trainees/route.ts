@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError } from "../_utils";
+import { encryptPhone, hashPhone } from "~/lib/phone-encrypt";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,8 @@ export async function GET(request: NextRequest) {
     if (query.search) {
       where.OR = [
         { fullName: { contains: query.search, mode: "insensitive" } },
-        { phoneE164: { contains: query.search } },
+        { phoneEncrypted: { contains: query.search } },
+        { phoneHash: { contains: query.search } },
         { email: { contains: query.search, mode: "insensitive" } },
       ];
     }
@@ -81,11 +83,15 @@ export async function POST(request: NextRequest) {
 
     const phoneE164 = data.phoneE164.replace(/\D/g, "");
     const normalizedPhone = phoneE164.length === 10 ? `+91${phoneE164}` : phoneE164.length === 12 ? `+${phoneE164}` : data.phoneE164;
+    const phoneEncrypted = encryptPhone(normalizedPhone);
+    const phoneHash = hashPhone(normalizedPhone);
 
     const trainee = await dbDirect.trainee.create({
       data: {
         ...data,
         phoneE164: normalizedPhone,
+        phoneEncrypted,
+        phoneHash,
         publicId: `TRN-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
       },
     });

@@ -4,6 +4,7 @@ import { z } from "zod";
 import Papa from "papaparse";
 import { dbDirect } from "~/server/db-direct";
 import { createErrorResponse, handleZodError, normalizePhoneE164 } from "../../_utils";
+import { encryptPhone, hashPhone } from "~/lib/phone-encrypt";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +51,8 @@ export async function POST(request: NextRequest) {
           data: {
             fullName: validated.full_name,
             phoneE164,
+            phoneEncrypted: encryptPhone(phoneE164),
+            phoneHash: hashPhone(phoneE164),
             email: validated.email ?? null,
             district: validated.district,
             language: validated.language,
