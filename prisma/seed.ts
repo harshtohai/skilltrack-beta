@@ -109,13 +109,59 @@ async function main() {
 
   console.log('🧹 Cleaned existing data')
 
+  // Create training centers
+  const CENTER_NAMES = [
+    { code: 'TC-PUN-01', name: 'Pune Skills Academy', district: 'Pune' },
+    { code: 'TC-MUM-01', name: 'Mumbai Industrial Training Institute', district: 'Mumbai' },
+    { code: 'TC-NAG-01', name: 'Nagarro Skill Center Nagpur', district: 'Nagpur' },
+    { code: 'TC-NAS-01', name: 'Nashik Vocational Academy', district: 'Nashik' },
+    { code: 'TC-AUR-01', name: 'Aurangabad Technical Institute', district: 'Aurangabad' },
+    { code: 'TC-SOL-01', name: 'Solapur Skills Foundation', district: 'Solapur' },
+    { code: 'TC-KOL-01', name: 'Kolhapur Trades Academy', district: 'Kolhapur' },
+    { code: 'TC-AMR-01', name: 'Amravati Skill Development Center', district: 'Amravati' },
+    { code: 'TC-SAN-01', name: 'Sangli PMKVY Center', district: 'Sangli' },
+    { code: 'TC-THA-01', name: 'Thane Kaushal Vikas Kendra', district: 'Thane' },
+  ]
+  const centers = await Promise.all(
+    CENTER_NAMES.map(c => prisma.trainingCenter.create({ data: c }))
+  )
+  console.log(`✅ Created ${centers.length} training centers`)
+
+  // Create courses (PMKVY-style catalogue for recommendations)
+  const COURSE_CATALOGUE: Array<{ name: string; category: string; skills: string[]; durationWeeks: number; level: string; provider: string; description: string }> = [
+    { name: 'Advanced Excel for Business', category: 'IT', skills: ['excel', 'data-analysis', 'reporting'], durationWeeks: 6, level: 'INTERMEDIATE', provider: 'PMKVY', description: 'Master spreadsheets, pivot tables, and dashboards for office roles.' },
+    { name: 'Tally with GST', category: 'Accounting', skills: ['accounting', 'tally', 'gst'], durationWeeks: 8, level: 'INTERMEDIATE', provider: 'PMKVY', description: 'Computerized accounting and GST filing for finance jobs.' },
+    { name: 'Digital Marketing Fundamentals', category: 'Marketing', skills: ['marketing', 'social-media', 'seo'], durationWeeks: 10, level: 'BEGINNER', provider: 'PMKVY', description: 'Social media, SEO, and ad campaigns for small businesses.' },
+    { name: 'Python Programming Basics', category: 'IT', skills: ['python', 'programming', 'logic'], durationWeeks: 12, level: 'BEGINNER', provider: 'NSDC', description: 'First steps in coding with Python for automation and data.' },
+    { name: 'Full-Stack Web Development', category: 'IT', skills: ['javascript', 'react', 'node', 'web-development'], durationWeeks: 24, level: 'ADVANCED', provider: 'NSDC', description: 'Build modern web applications end to end.' },
+    { name: 'Retail Store Operations', category: 'Retail', skills: ['retail', 'customer-service', 'sales'], durationWeeks: 8, level: 'BEGINNER', provider: 'PMKVY', description: 'Store management, billing, and customer handling.' },
+    { name: 'CNC Machine Operation', category: 'Manufacturing', skills: ['cnc', 'machining', 'blueprint-reading'], durationWeeks: 16, level: 'INTERMEDIATE', provider: 'PMKVY', description: 'Operate CNC machines for precision manufacturing.' },
+    { name: 'Industrial Electrician', category: 'Electrical', skills: ['electrical', 'wiring', 'safety'], durationWeeks: 16, level: 'INTERMEDIATE', provider: 'PMKVY', description: 'Installation, maintenance, and safety for industrial electricians.' },
+    { name: 'Solar Panel Technician', category: 'Renewable Energy', skills: ['solar', 'electrical', 'installation'], durationWeeks: 12, level: 'INTERMEDIATE', provider: 'NSDC', description: 'Install and maintain rooftop solar systems.' },
+    { name: 'Welding (TIG & MIG)', category: 'Manufacturing', skills: ['welding', 'fabrication', 'blueprint-reading'], durationWeeks: 12, level: 'BEGINNER', provider: 'PMKVY', description: 'Arc and gas welding techniques for fabrication jobs.' },
+    { name: 'Hospitality & Hotel Operations', category: 'Hospitality', skills: ['hospitality', 'customer-service', 'food-service'], durationWeeks: 12, level: 'BEGINNER', provider: 'PMKVY', description: 'Front office, housekeeping, and F&B service.' },
+    { name: 'Healthcare Nursing Assistant', category: 'Healthcare', skills: ['healthcare', 'patient-care', 'nursing'], durationWeeks: 16, level: 'INTERMEDIATE', provider: 'PMKVY', description: 'Assist nurses with patient care and ward duties.' },
+    { name: 'Beauty & Wellness Entrepreneurship', category: 'Beauty', skills: ['beauty', 'wellness', 'entrepreneurship'], durationWeeks: 8, level: 'BEGINNER', provider: 'PMKVY', description: 'Salon skills plus small-business basics for self-employment.' },
+    { name: 'Logistics & Supply Chain Basics', category: 'Logistics', skills: ['logistics', 'supply-chain', 'inventory'], durationWeeks: 10, level: 'BEGINNER', provider: 'PMKVY', description: 'Warehouse operations, inventory, and dispatch.' },
+    { name: 'Banking & Financial Services', category: 'Finance', skills: ['banking', 'finance', 'customer-service'], durationWeeks: 12, level: 'INTERMEDIATE', provider: 'NSDC', description: 'Banking operations, KYC, and financial products.' },
+    { name: 'Data Entry & Office Assistant', category: 'IT', skills: ['data-entry', 'typing', 'ms-office'], durationWeeks: 6, level: 'BEGINNER', provider: 'PMKVY', description: 'Fast, accurate data entry and office documentation.' },
+    { name: 'Mobile Repair Technician', category: 'Electronics', skills: ['mobile-repair', 'electronics', 'troubleshooting'], durationWeeks: 8, level: 'INTERMEDIATE', provider: 'PMKVY', description: 'Smartphone hardware and software repair.' },
+    { name: 'Automotive Service Technician', category: 'Automotive', skills: ['automotive', 'mechanical', 'diagnostics'], durationWeeks: 16, level: 'INTERMEDIATE', provider: 'PMKVY', description: 'Two-wheeler and four-wheeler service and diagnostics.' },
+    { name: 'Construction Site Supervisor', category: 'Construction', skills: ['construction', 'site-management', 'safety'], durationWeeks: 12, level: 'ADVANCED', provider: 'PMKVY', description: 'Supervise site work, materials, and safety compliance.' },
+    { name: 'Spoken English & Workplace Communication', category: 'Soft Skills', skills: ['communication', 'english', 'interview-skills'], durationWeeks: 8, level: 'BEGINNER', provider: 'NSDC', description: 'Confident workplace English and interview preparation.' },
+  ]
+  for (const c of COURSE_CATALOGUE) {
+    await prisma.course.upsert({ where: { name: c.name }, create: c, update: { skills: c.skills } })
+  }
+  console.log(`✅ Created ${COURSE_CATALOGUE.length} courses`)
+
   // Create programmes
   const programmes = await Promise.all(
     PROGRAMMES.map(p => prisma.programme.create({ data: p }))
   )
   console.log(`✅ Created ${programmes.length} programmes`)
 
-  // Create cohorts (15 total, 3 per programme)
+  // Create cohorts (15 total, 3 per programme, round-robin across centers)
   const cohorts: Array<{ id: string; programmeId: string; name: string; startDate: Date; endDate: Date; createdAt: Date; updatedAt: Date }> = []
   const baseStart = new Date('2023-01-01')
   for (const prog of programmes) {
@@ -125,9 +171,11 @@ async function main() {
         new Date(baseStart.getTime() + (i + 1) * 90 * 24 * 60 * 60 * 1000)
       )
       const endDate = new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000)
+      const center = centers[(cohorts.length + i) % centers.length]
       const cohort = await prisma.cohort.create({
         data: {
           programmeId: prog.id,
+          trainingCenterId: center?.id,
           name: `${prog.code} Batch ${i + 1}`,
           startDate,
           endDate,

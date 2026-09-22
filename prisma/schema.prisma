@@ -81,6 +81,34 @@ enum ActorType {
 }
 
 // Core Tables
+model TrainingCenter {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  code        String   @unique
+  district    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cohorts     Cohort[]
+
+  @@map("training_centers")
+}
+
+model Course {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  category    String
+  skills      String[]
+  durationWeeks Int
+  level       String   // BEGINNER, INTERMEDIATE, ADVANCED
+  provider    String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("courses")
+}
+
 model Programme {
   id        String    @id @default(uuid())
   name      String
@@ -95,6 +123,7 @@ model Programme {
 model Cohort {
   id               String    @id @default(uuid())
   programmeId      String
+  trainingCenterId String?
   name             String
   startDate        DateTime
   endDate          DateTime
@@ -102,6 +131,7 @@ model Cohort {
   updatedAt        DateTime  @updatedAt
 
   programme        Programme @relation(fields: [programmeId], references: [id])
+  trainingCenter   TrainingCenter? @relation(fields: [trainingCenterId], references: [id])
   enrolments       Enrolment[]
   followupEvents   FollowupEvent[]
 
