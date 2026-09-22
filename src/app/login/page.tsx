@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { GraduationCap, Building2, User, Shield } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -11,47 +11,70 @@ import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+
 type UserType = "trainee" | "employer" | "institute" | "admin";
 
-const userTypes: { value: UserType; label: string; description: string; icon: React.ComponentType<{ className?: string }>; href: string }[] = [
+const userTypes: { value: UserType; label: string; description: string; icon: React.ComponentType<{ className?: string }> }[] = [
   {
     value: "trainee",
     label: "Trainee",
     description: "Access your profile, update employment, upload certificates, view outcomes",
     icon: User,
-    href: "/auth/trainee/login",
   },
   {
     value: "employer",
     label: "Employer",
     description: "Verify employment claims, confirm trainee details, manage verification requests",
     icon: Building2,
-    href: "/employer/login",
   },
   {
     value: "institute",
     label: "Training Institute",
     description: "Manage cohorts, track placement rates, view analytics, export reports",
     icon: GraduationCap,
-    href: "/institute/login",
   },
   {
     value: "admin",
     label: "Government Admin",
     description: "District/state analytics, policy insights, provider accountability, SIDH exports",
     icon: Shield,
-    href: "/admin/login",
   },
 ];
 
+const roleEndpoints: Record<UserType, string> = {
+  trainee: "/api/v1/trainee/magic-link",
+  employer: "/api/v1/auth/employer/login",
+  institute: "/api/v1/auth/institute/login",
+  admin: "/api/v1/auth/admin/login",
+};
+
+const roleRedirects: Record<UserType, string> = {
+  trainee: "/auth/trainee/sent",
+  employer: "/employer/analytics",
+  institute: "/institute/analytics",
+  admin: "/admin/analytics",
+};
+
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedType, setSelectedType] = useState<UserType>("trainee");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const currentType = userTypes.find(t => t.value === selectedType)!;
+  const redirect = searchParams.get("redirect") ?? "";
+  const urlError = searchParams.get("error") ?? "";
+
+  if (urlError && !error) {
+    setError(urlError === "unauthorized" ? "Unauthorized access. Please log in with the correct role." : urlError);
+  }
+
+  const currentType = userTypes.find((t) => t.value === selectedType)!;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -71,7 +94,22 @@ export default function LoginPage() {
         }
         router.push(`/auth/trainee/sent?email=${encodeURIComponent(email)}`);
       } else {
-        router.push(currentType.href);
+        if (!password) {
+          throw new Error("Password is required");
+        }
+        const res = await fetch(roleEndpoints[selectedType], {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        if (!res.ok) {
+          const data = (await res.json()) as { error?: string };
+          throw new Error(data.error ?? "Login failed");
+        }
+        const userData = await res.json();
+        document.cookie = `outcometrack_auth=${userData.user.role}; path=/; max-age=${60 * 60 * 24 * 7}`;
+        const targetUrl = redirect || roleRedirects[selectedType];
+        router.push(targetUrl);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -158,6 +196,8 @@ export default function LoginPage() {
                     id="password"
                     type="password"
                     placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={loading}
                   />
