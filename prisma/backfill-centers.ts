@@ -116,12 +116,21 @@ async function main() {
       take: 300,
     });
     const RELEVANCES = ["2", "3", "3", "4", "4", "5", "1"];
+    const GAP_POOL = [
+      ["gap_technical", "gap_communication"],
+      ["gap_analytical"],
+      ["gap_communication"],
+      ["gap_technical"],
+      ["gap_technical", "gap_analytical", "gap_communication"],
+      [],
+      ["gap_communication", "gap_technical"],
+    ];
     const surveyData = trainees.map((t) => ({
       phoneE164: t.phoneE164,
       traineeId: t.id,
       employmentStatus: "employed_full",
       trainingRelevance: RELEVANCES[Math.floor(Math.random() * RELEVANCES.length)],
-      skillGaps: [],
+      skillGaps: GAP_POOL[Math.floor(Math.random() * GAP_POOL.length)],
       challenges: [],
       completedAt: new Date(),
     }));
