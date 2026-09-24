@@ -1,40 +1,23 @@
+import NextAuth from "next-auth";
+import { authConfig, protectedRoutes } from "~/lib/auth.config";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
-const protectedRoutes = [
-  { path: "/admin", roles: ["admin"] },
-  { path: "/institute", roles: ["institute", "admin"] },
-  { path: "/employer", roles: ["employer", "admin"] },
-  { path: "/auth/trainee", roles: ["trainee"] },
-];
+const { auth } = NextAuth(authConfig);
 
-const publicRoutes = ["/", "/login", "/signup", "/api/v1/auth/trainee/verify", "/api/v1/trainee/magic-link"];
+export default auth((req) => {
+  const role = req.auth?.user?.role;
+  const routeConfig = protectedRoutes.find((route) =>
+    req.nextUrl.pathname.startsWith(route.path)
+  );
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  if (!routeConfig) return NextResponse.next();
+  if (role && routeConfig.roles.includes(role)) return NextResponse.next();
 
-  if (publicRoutes.some((route) => pathname.startsWith(route))) {
-    return NextResponse.next();
-  }
-
-  const authCookie = request.cookies.get("outcometrack_auth");
-  const userRole = authCookie?.value;
-
-  if (!userRole) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  const routeConfig = protectedRoutes.find((route) => pathname.startsWith(route.path));
-  if (routeConfig && !routeConfig.roles.includes(userRole)) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("error", "unauthorized");
-    return NextResponse.redirect(loginUrl);
-  }
-
-  return NextResponse.next();
-}
+  const loginUrl = new URL("/login", req.nextUrl.origin);
+  loginUrl.searchParams.set("redirect", req.nextUrl.pathname);
+  if (role) loginUrl.searchParams.set("error", "unauthorized");
+  return NextResponse.redirect(loginUrl);
+});
 
 export const config = {
   matcher: [

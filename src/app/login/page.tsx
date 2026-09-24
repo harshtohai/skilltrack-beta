@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { signIn } from "next-auth/react";
 import { GraduationCap, Building2, User, Shield } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -45,12 +46,7 @@ const userTypes: { value: UserType; label: string; description: string; icon: Re
   },
 ];
 
-const roleEndpoints: Record<UserType, string> = {
-  trainee: "/api/v1/trainee/magic-link",
-  employer: "/api/v1/auth/employer/login",
-  institute: "/api/v1/auth/institute/login",
-  admin: "/api/v1/auth/admin/login",
-};
+const magicLinkEndpoint = "/api/v1/trainee/magic-link";
 
 const roleRedirects: Record<UserType, string> = {
   trainee: "/auth/trainee/sent",
@@ -84,7 +80,7 @@ function LoginPageContent() {
 
     try {
       if (selectedType === "trainee") {
-        const res = await fetch("/api/v1/trainee/magic-link", {
+        const res = await fetch(magicLinkEndpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, channel: "EMAIL" }),
@@ -98,19 +94,23 @@ function LoginPageContent() {
         if (!password) {
           throw new Error("Password is required");
         }
-        const res = await fetch(roleEndpoints[selectedType], {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+        const result = await signIn("credentials", {
+          email,
+          password,
+          role: selectedType,
+          redirect: false,
         });
-        if (!res.ok) {
-          const data = (await res.json()) as { error?: string };
-          throw new Error(data.error ?? "Login failed");
+        if (!result?.ok) {
+          const code = result?.error ?? "CredentialsSignin";
+          throw new Error(
+            code === "CredentialsSignin" || code.includes("credentials")
+              ? "Invalid email or password"
+              : "Login failed"
+          );
         }
-        const userData = await res.json();
-        document.cookie = `outcometrack_auth=${userData.user.role}; path=/; max-age=${60 * 60 * 24 * 7}`;
         const targetUrl = redirect || roleRedirects[selectedType];
         router.push(targetUrl);
+        router.refresh();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");

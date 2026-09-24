@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { encode } from "next-auth/jwt";
 import { db } from "~/server/db";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 import { startConversation } from "~/lib/bot/conversation";
@@ -65,13 +66,29 @@ export async function POST(request: NextRequest) {
 
     const trainee = loginToken.trainee;
 
+    // Mint a NextAuth (Auth.js v5) session so /auth/trainee/* pages are
+    // protected by the middleware with role "trainee".
+    const secure = process.env.NODE_ENV === "production" && process.env.APP_BASE_URL?.startsWith("https");
+    const cookieName = secure ? "__Secure-authjs.session-token" : "authjs.session-token";
+    const sessionJwt = await encode({
+      secret: process.env.AUTH_SECRET ?? "",
+      salt: cookieName,
+      maxAge: 60 * 60 * 24 * 30,
+      token: {
+        sub: trainee.id,
+        email: trainee.email,
+        name: trainee.fullName,
+        role: "trainee",
+      },
+    });
+
     // Trainee logged in — kick off the WhatsApp welcome + consent flow.
     // Fire-and-forget: never block or fail the login because of the bot.
     void startConversation(trainee.phoneE164, trainee.fullName).catch((err) =>
       console.error("[BOT] Post-login trigger failed:", err)
     );
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       trainee: {
         id: trainee.id,
         publicId: trainee.publicId,
@@ -126,6 +143,16 @@ export async function POST(request: NextRequest) {
         })),
       },
     });
+
+    response.cookies.set(cookieName, sessionJwt, {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      secure: Boolean(secure),
+      maxAge: 60 * 60 * 24 * 30,
+    });
+
+    return response;
   } catch (error) {
     if (error instanceof z.ZodError) return handleZodError(error);
     console.error("POST /api/v1/auth/trainee/verify error:", error);
