@@ -5,6 +5,7 @@ import { Send, Loader2, MessageSquare, RefreshCw, Users, Search, Filter } from "
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Badge } from "~/components/ui/badge";
@@ -34,12 +35,15 @@ interface Message {
 export default function SimulatorPage() {
   const [trainees, setTrainees] = useState<Trainee[]>([]);
   const [selectedTraineeId, setSelectedTraineeId] = useState<string>("");
+  const [phoneInput, setPhoneInput] = useState("");
+  const [starting, setStarting] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [sessionActive, setSessionActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
+  const [activePhone, setActivePhone] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -88,7 +92,8 @@ export default function SimulatorPage() {
   };
 
   const handleSend = async () => {
-    if (!input.trim() || !selectedTraineeId || loading) return;
+    const phone = activePhone || trainees.find((t) => t.id === selectedTraineeId)?.phoneE164;
+    if (!input.trim() || !phone || loading) return;
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -103,9 +108,6 @@ export default function SimulatorPage() {
     setLoading(true);
 
     try {
-      const trainee = trainees.find((t) => t.id === selectedTraineeId);
-      if (!trainee) throw new Error("Trainee not found");
-
       const res = await fetch("/api/v1/bot/inbound", {
         method: "POST",
         headers: {
@@ -115,7 +117,7 @@ export default function SimulatorPage() {
         body: JSON.stringify({
           provider: "simulator",
           provider_message_id: `sim_${Date.now()}`,
-          from_phone_e164: trainee.phoneE164,
+          from_phone_e164: phone,
           text: currentInput,
           received_at: new Date().toISOString(),
           channel: "whatsapp",
@@ -179,6 +181,69 @@ export default function SimulatorPage() {
     setMessages([]);
     setSessionActive(false);
     setInput("");
+    setActivePhone("");
+  };
+
+  const handleStartSimulation = async () => {
+    const phone = phoneInput.trim();
+    if (!phone || starting) return;
+
+    setStarting(true);
+    setMessages([]);
+
+    try {
+      const res = await fetch("/api/v1/bot/start", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": process.env.NEXT_PUBLIC_INTERNAL_API_KEY || "",
+        },
+        body: JSON.stringify({ phone_e164: phone }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        const errorMessage: Message = {
+          id: crypto.randomUUID(),
+          role: "bot",
+          content: data.error ?? "Could not start simulation for this phone number.",
+          timestamp: new Date(),
+        };
+        setMessages([errorMessage]);
+        setSessionActive(false);
+        return;
+      }
+
+      // Sync the trainee select with the direct-started phone
+      const match = trainees.find((t) => t.phoneE164 === phone);
+      if (match) setSelectedTraineeId(match.id);
+      setActivePhone(phone);
+
+      if (data.reply) {
+        const botMessage: Message = {
+          id: crypto.randomUUID(),
+          role: "bot",
+          content: data.reply.text,
+          options: data.reply.options,
+          timestamp: new Date(),
+        };
+        setMessages([botMessage]);
+        setSessionActive(true);
+      }
+    } catch (err) {
+      console.error("Start simulation error:", err);
+      const errorMessage: Message = {
+        id: crypto.randomUUID(),
+        role: "bot",
+        content: "Error starting simulation. Please try again.",
+        timestamp: new Date(),
+      };
+      setMessages([errorMessage]);
+    } finally {
+      setStarting(false);
+      setTimeout(scrollToBottom, 100);
+    }
   };
 
   const trainee = trainees.find((t) => t.id === selectedTraineeId);
@@ -205,6 +270,35 @@ export default function SimulatorPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Direct start by phone */}
+            <div className="space-y-2 p-3 rounded-lg border border-primary/20 bg-primary/5">
+              <Label htmlFor="phone-start" className="text-sm font-medium">
+                Direct Start (by phone)
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="phone-start"
+                  type="tel"
+                  placeholder="+919876543210"
+                  value={phoneInput}
+                  onChange={(e) => setPhoneInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void handleStartSimulation();
+                    }
+                  }}
+                  disabled={starting}
+                />
+                <Button onClick={() => void handleStartSimulation()} disabled={starting || !phoneInput.trim()}>
+                  {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Start"}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Runs the WhatsApp flow immediately — auto-creates a follow-up if none is active.
+              </p>
+            </div>
+
             {/* Search and Filter */}
             <div className="space-y-2">
               <div className="relative">
