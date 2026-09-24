@@ -3,24 +3,35 @@ import { sendKapsoMessage } from "../src/lib/bot/kapso";
 
 const prisma = new PrismaClient();
 
+// Test trainee credentials — read from env, never hardcoded (personal
+// data must not be committed).
+const TEST_PHONE = process.env.TEST_TRAINEE_PHONE ?? "";
+const TEST_NAME = process.env.TEST_TRAINEE_NAME ?? "Test User";
+const TEST_EMAIL = process.env.TEST_TRAINEE_EMAIL ?? "";
+
 async function main() {
+  if (!TEST_PHONE) {
+    console.log("Set TEST_TRAINEE_PHONE (and optionally TEST_TRAINEE_NAME/EMAIL) in .env to run this script.");
+    return;
+  }
+
   // Find the test user
   const user = await prisma.trainee.findFirst({
-    where: { phoneE164: "+0000000000" },
+    where: { phoneE164: TEST_PHONE },
     include: { enrolments: { include: { cohort: { include: { programme: true } } } } },
   });
 
   if (!user) {
-    console.log("Test user +0000000000 not found. Creating...");
-    
+    console.log("Test user not found. Creating...");
+
     // Create the test user
     const newUser = await prisma.trainee.create({
       data: {
-        fullName: "Test User",
-        phoneE164: "+0000000000",
+        fullName: TEST_NAME,
+        phoneE164: TEST_PHONE,
         phoneEncrypted: "", // Will be filled by encryptPhone
         phoneHash: "",
-        email: "test.user@gmail.com",
+        email: TEST_EMAIL || null,
         district: "Mumbai",
         language: "EN",
         consentGiven: false,
@@ -41,7 +52,7 @@ async function main() {
 
   // Send the welcome message to start the conversation
   const result = await sendKapsoMessage({
-    toPhoneE164: "+0000000000",
+    toPhoneE164: TEST_PHONE,
     text: `👋 *Hello ${user.fullName}!*
 
 Welcome to *OutcomeTrack* – the official placement tracking & career guidance platform by *Maharashtra State Skill Development Society (MSSDS)* under the *Pradhan Mantri Kaushal Vikas Yojana (PMKVY)*.

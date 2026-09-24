@@ -41,7 +41,8 @@ function renderMagicLinkHtml(name: string, magicLink: string): string {
 
 export async function sendMagicLinkEmail(email: string, name: string, magicLink: string): Promise<void> {
   const apiKey = process.env.BREVO_API_KEY;
-  if (!apiKey) {
+  const from = process.env.EMAIL_FROM;
+  if (!apiKey || !from) {
     console.log(`[EMAIL-MOCK] Magic link sent to ${email}: ${magicLink}`);
     return;
   }
@@ -54,7 +55,7 @@ export async function sendMagicLinkEmail(email: string, name: string, magicLink:
       accept: "application/json",
     },
     body: JSON.stringify({
-      sender: { name: "OutcomeTrack", email: process.env.EMAIL_FROM ?? "test.user+brevo@gmail.com" },
+      sender: { name: "OutcomeTrack", email: from },
       to: [{ email }],
       subject: "Your OutcomeTrack Magic Link",
       htmlContent: renderMagicLinkHtml(name, magicLink),

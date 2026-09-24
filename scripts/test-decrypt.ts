@@ -4,9 +4,15 @@ import { decryptPhone } from "../src/lib/phone-encrypt";
 const prisma = new PrismaClient();
 
 async function main() {
+  const TEST_EMAIL = process.env.TEST_TRAINEE_EMAIL ?? "";
+  if (!TEST_EMAIL) {
+    console.log("Set TEST_TRAINEE_EMAIL in .env to run this script.");
+    return;
+  }
+
   // Find the test user
   const user = await prisma.trainee.findFirst({
-    where: { email: "test.user@gmail.com" },
+    where: { email: TEST_EMAIL },
   });
 
   if (!user) {

@@ -11,9 +11,9 @@
 - **Path alias**: `~/*` → `./src/*` only (NOT `@/*`).
 - **Bot integration**: Kapso via `https://api.kapso.ai/meta/whatsapp/v24.0`, webhook `/api/webhook` (zod + idempotent by message id), consent-first conversation (in-memory), `startConversation` fires post-login. Consent recorded via WhatsApp (source of truth).
 - **Analytics**: no API-key gate on analytics routes (middleware protects `/admin` by session role); list endpoints paginated.
-- **Email**: Resend free tier only sends to `test.user+resend@gmail.com`; magic link logged on send failure (`[MAGIC-LINK] Magic link for...` in dev log); graceful 200.
-- **Test user**: `+0000000000` (Test User, `test.user@gmail.com`, publicId `TRN-MUCLQDDW-T2A5`), consent given.
-- **Env**: `INTERNAL_API_KEY="sk_live_REDACTED"`, `KAPSO_API_KEY`, `KAPSO_PHONE_NUMBER_ID=1364763996715263`, `RESEND_API_KEY`, `APP_BASE_URL=http://localhost:3000`. NOTE: `/bot-service/` is gitignored (legacy, contains hardcoded key — push protection blocks it); never `git add -A` blindly.
+- **Email**: Brevo free tier (300 emails/day); sender must be a verified sender email in the Brevo account (account owner's own address works); send failures are caught — magic link logged on failure (`[MAGIC-LINK] Magic link for...` in dev log); graceful 200. Resend removed.
+- **Test user**: seeded demo trainee (consent given) — see `scripts/test-bot-trigger.ts` (reads credentials from env, no hardcoded personal data).
+- **Env**: no actual values documented here (personal/secret data must never be committed). Notable keys in `.env` (untracked): `DATABASE_URL`, `DIRECT_URL`, `INTERNAL_API_KEY` (dummy), `BREVO_API_KEY`, `EMAIL_FROM`, `AUTH_SECRET`, `KAPSO_API_KEY`, `KAPSO_PHONE_NUMBER_ID`, `APP_BASE_URL`. NOTE: `/bot-service/` is gitignored (legacy, contains hardcoded key — push protection blocks it); never `git add -A` blindly.
 - **Lint**: 0 errors across repo (fixed: kapso.ts types, webhook zod, ConversationData typing, `??` operators, optional chains).
 - **Prior decisions**: don't change `.env` URLs; keep API routes thin (user asked for server actions but API routes kept); trainee detail timeline exists at `/trainees/[public_id]`; `/cohorts` page never existed (only `/cohorts/[id]` + API).
 
