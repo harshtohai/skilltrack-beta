@@ -30,6 +30,8 @@ export async function POST(request: NextRequest) {
       return createErrorResponse("TRAINEE_NOT_FOUND", "No trainee found for this phone number", 404);
     }
 
+    let autoCreated = false;
+
     // Auto-create a follow-up from the trainee's enrolment if none is active
     let followupEvent = await db.followupEvent.findFirst({
       where: {
@@ -60,6 +62,7 @@ export async function POST(request: NextRequest) {
           sentAt: new Date(),
         },
       });
+      autoCreated = true;
     }
 
     // Initial question: consent first, retention for 90-day, else status
@@ -112,7 +115,7 @@ export async function POST(request: NextRequest) {
         action: "SIMULATOR_START",
         actorType: "SYSTEM",
         actorId: trainee.id,
-        metadata: { phoneE164, followupEventId: followupEvent.id, autoCreated: false },
+        metadata: { phoneE164, followupEventId: followupEvent.id, autoCreated },
       },
     });
 

@@ -86,7 +86,11 @@ export async function GET(_request: NextRequest) {
             o.checkpointDays > ref.checkpointDays &&
             o.createdAt > ref.createdAt
         );
-      sustainedByClaim.set(claimId, later ? isEmployed(later.outcomeStatus) : null);
+      // UNKNOWN later checkpoint = insufficient evidence, not "not sustained"
+      sustainedByClaim.set(
+        claimId,
+        later && later.outcomeStatus !== "UNKNOWN" ? isEmployed(later.outcomeStatus) : null
+      );
     }
 
     // Group claims by normalized employer name

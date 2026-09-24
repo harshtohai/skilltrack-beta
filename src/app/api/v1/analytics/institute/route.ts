@@ -41,9 +41,15 @@ export async function GET(request: NextRequest) {
     const totalCertificates = await db.certificate.count({
       where: { trainee: { enrolments: { some: enrolmentWhere } } },
     });
-    const avgCertificatesPerTrainee = latest && latest.certified > 0
-      ? totalCertificates / latest.certified
-      : 0;
+    // Institute's own certs-per-trainee must use the same all-time
+    // denominator basis as the peer stats (certTotal / certifiedCount).
+    const scopedCohorts = grouped.byCohort.filter((c) =>
+      cohortRows.some((row) => row.id === c.key)
+    );
+    const scopedCertTotal = scopedCohorts.reduce((a, c) => a + c.certTotal, 0);
+    const scopedCertified = scopedCohorts.reduce((a, c) => a + c.certifiedCount, 0);
+    const avgCertificatesPerTrainee =
+      scopedCertified > 0 ? scopedCertTotal / scopedCertified : 0;
 
     return NextResponse.json({
       timeWindow: query.timeWindow,

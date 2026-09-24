@@ -101,7 +101,10 @@ export async function GET(_request: NextRequest) {
       const later = [...events]
         .reverse()
         .find((e) => e.createdAt > own.createdAt && e.checkpointDays > own.checkpointDays);
-      if (later) laterOutcome.set(claim.id, later.outcomeStatus);
+      // UNKNOWN later checkpoint = insufficient evidence, not "not sustained"
+      if (later && later.outcomeStatus !== "UNKNOWN") {
+        laterOutcome.set(claim.id, later.outcomeStatus);
+      }
     }
 
     const retention = computeEmployerRetention(
