@@ -13,7 +13,13 @@ export const protectedRoutes: { path: string; roles: UserRole[] }[] = [
   // credential; the verify endpoint mints the session after verification.
 ];
 
-const publicRoutes = ["/", "/login", "/signup", "/api", "/terms", "/privacy"];
+export const publicRoutes = ["/login", "/signup", "/api", "/terms", "/privacy", "/employer/login"];
+
+/** "/" must match exactly — startsWith("/") would make every path public. */
+export function isPublicPath(pathname: string): boolean {
+  if (pathname === "/") return true;
+  return publicRoutes.some((route) => pathname.startsWith(route));
+}
 
 declare module "next-auth" {
   interface Session {
@@ -46,7 +52,7 @@ export const authConfig = {
     authorized({ auth, request }) {
       const { pathname } = request.nextUrl;
 
-      if (publicRoutes.some((route) => pathname.startsWith(route))) {
+      if (isPublicPath(pathname)) {
         return true;
       }
 

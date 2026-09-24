@@ -1,10 +1,16 @@
 import NextAuth from "next-auth";
-import { authConfig, protectedRoutes } from "~/lib/auth.config";
+import { authConfig, protectedRoutes, isPublicPath } from "~/lib/auth.config";
 import { NextResponse } from "next/server";
 
 const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
+  const { pathname } = req.nextUrl;
+
+  if (isPublicPath(pathname)) {
+    return NextResponse.next();
+  }
+
   const role = req.auth?.user?.role;
   const routeConfig = protectedRoutes.find((route) =>
     req.nextUrl.pathname.startsWith(route.path)
@@ -14,7 +20,7 @@ export default auth((req) => {
   if (role && routeConfig.roles.includes(role)) return NextResponse.next();
 
   const loginUrl = new URL("/login", req.nextUrl.origin);
-  loginUrl.searchParams.set("redirect", req.nextUrl.pathname);
+  loginUrl.searchParams.set("redirect", pathname);
   if (role) loginUrl.searchParams.set("error", "unauthorized");
   return NextResponse.redirect(loginUrl);
 });
