@@ -3,8 +3,11 @@ import {
   computeCenterScores,
   computeEmployerRetention,
   normalizeEmployerName,
+  computePeerStats,
+  percentile75,
   type CenterInput,
   type EmployerClaimInput,
+  type CategoryRates,
 } from "./scoring";
 
 describe("computeCenterScores", () => {
@@ -141,5 +144,59 @@ describe("normalizeEmployerName", () => {
 
   it("is idempotent", () => {
     expect(normalizeEmployerName(normalizeEmployerName(" Acme Corp "))).toBe("ACME CORP");
+  });
+});
+describe("percentile75", () => {
+  it("returns 0 for an empty array", () => {
+    expect(percentile75([])).toBe(0);
+  });
+
+  it("returns the single value for one element", () => {
+    expect(percentile75([42])).toBe(42);
+  });
+
+  it("returns the nearest-rank p75", () => {
+    const values = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+    expect(percentile75(values)).toBe(80);
+  });
+
+  it("is order-independent", () => {
+    const values = [100, 10, 60, 30, 90, 20, 80, 40, 50, 70];
+    expect(percentile75(values)).toBe(80);
+  });
+});
+
+describe("computePeerStats", () => {
+  const rates = (over: Partial<CategoryRates>): CategoryRates => ({
+    placementRate: 50,
+    retentionRate: 50,
+    verifiedRate: 50,
+    wageProgressionRate: 50,
+    certificatesPerTrainee: 1,
+    ...over,
+  });
+
+  it("averages each category across groups", () => {
+    const stats = computePeerStats([rates({ placementRate: 60 }), rates({ placementRate: 80 })]);
+    expect(stats.avg.placementRate).toBe(70);
+    expect(stats.avg.retentionRate).toBe(50);
+    expect(stats.avg.certificatesPerTrainee).toBe(1);
+  });
+
+  it("returns top-quartile (p75) values per category", () => {
+    const stats = computePeerStats([
+      rates({ placementRate: 30, retentionRate: 10 }),
+      rates({ placementRate: 50, retentionRate: 30 }),
+      rates({ placementRate: 70, retentionRate: 50 }),
+      rates({ placementRate: 90, retentionRate: 70 }),
+    ]);
+    expect(stats.topQuartile.placementRate).toBe(70);
+    expect(stats.topQuartile.retentionRate).toBe(50);
+  });
+
+  it("returns zeros when no groups exist", () => {
+    const stats = computePeerStats([]);
+    expect(stats.avg.placementRate).toBe(0);
+    expect(stats.topQuartile.placementRate).toBe(0);
   });
 });

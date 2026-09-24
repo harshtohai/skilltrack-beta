@@ -27,12 +27,34 @@ interface InstituteAnalyticsData {
     verifiedRate: number;
     wageProgressionRate: number;
     avgPlacementRate: number;
+    avgRetentionRate: number;
+    avgVerifiedRate: number;
+    avgWageProgressionRate: number;
+    avgCertificatesPerTrainee: number;
+    topQuartilePlacementRate: number;
+    topQuartileRetentionRate: number;
+    topQuartileVerifiedRate: number;
+    topQuartileWageProgressionRate: number;
+    topQuartileCertificatesPerTrainee: number;
+    gaps: {
+      placementRate: number;
+      retentionRate: number;
+      verifiedRate: number;
+      wageProgressionRate: number;
+      certificatesPerTrainee: number;
+    };
+    centerCount: number;
   };
   cohorts: Array<{
     id: string;
     name: string;
     programme: string;
     traineeCount: number;
+    placementRate: number;
+    retentionRate: number;
+    verifiedRate: number;
+    wageProgressionRate: number;
+    certificatesPerTrainee: number;
   }>;
 }
 
@@ -48,7 +70,6 @@ interface InstituteMonthlyData {
   verifiedRate: number;
   wageProgressionRate: number;
   avgSalaryBand: number;
-  peerAvgPlacementRate: number;
 }
 
 const TIME_WINDOWS = [
@@ -110,7 +131,6 @@ export default function InstituteAnalyticsDashboard() {
   }
 
   const latest = data.monthlyData[data.monthlyData.length - 1];
-  const peerGap = ((latest?.placementRate ?? 0) - (data.peerComparison.avgPlacementRate ?? 0)).toFixed(1);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -222,7 +242,7 @@ export default function InstituteAnalyticsDashboard() {
                 data={data.monthlyData.map((d) => ({
                   name: d.month,
                   actual: d.placementRate,
-                  expected: d.peerAvgPlacementRate,
+                  expected: data.peerComparison.avgPlacementRate,
                 }))}
                 xKey="name"
                 height={300}
@@ -301,15 +321,25 @@ export default function InstituteAnalyticsDashboard() {
 
         <div className="grid gap-6 lg:grid-cols-2 mb-8">
           <Card>
-            <CardHeader>
-              <CardTitle>Institute Placement Rate vs Peer Academies</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Placement Rate: Your Institute vs Peers</CardTitle>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="flex items-center gap-1">
+                  <span className="w-3 h-3 rounded bg-blue-500" />
+                  Your Institute
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-3 h-3 rounded bg-amber-500/30" />
+                  Peer Average
+                </span>
+              </div>
             </CardHeader>
             <CardContent>
               <PeerComparisonChart
                 data={[
                   { name: "Your Institute", value: latest?.placementRate ?? 0, isCurrent: true },
                   { name: "Peer Average", value: data.peerComparison.avgPlacementRate, isCurrent: false },
-                  { name: "Top Quartile", value: data.peerComparison.avgPlacementRate * 1.25, isCurrent: false },
+                  { name: "Top Quartile", value: data.peerComparison.topQuartilePlacementRate, isCurrent: false },
                   { name: "State Target", value: 70, isCurrent: false },
                 ]}
                 xKey="name"
@@ -322,9 +352,11 @@ export default function InstituteAnalyticsDashboard() {
               <div className="mt-4 p-4 rounded-lg bg-blue-50">
                 <p className="text-sm text-blue-800">
                   <strong>Gap Analysis:</strong> Your institute is{" "}
-                  {peerGap.startsWith("-") ? "below" : "above"} peer average by{" "}
-                  <span className="font-semibold">{Math.abs(Number(peerGap)).toFixed(1)}%</span>
-                  .
+                  {data.peerComparison.gaps.placementRate < 0 ? "below" : "above"} peer average by{" "}
+                  <span className="font-semibold">
+                    {Math.abs(data.peerComparison.gaps.placementRate).toFixed(1)}%
+                  </span>{" "}
+                  across {data.peerComparison.centerCount} centers.
                 </p>
               </div>
             </CardContent>
@@ -332,22 +364,22 @@ export default function InstituteAnalyticsDashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Institute Retention Rate vs Peers</CardTitle>
+              <CardTitle>Retention Rate vs Peers</CardTitle>
             </CardHeader>
             <CardContent>
               <PeerComparisonChart
                 data={[
                   { name: "Your Institute", value: latest?.retentionRate ?? 0, isCurrent: true },
-                  { name: "Peer Average", value: data.peerComparison.avgPlacementRate * 0.75, isCurrent: false },
-                  { name: "Top Quartile", value: data.peerComparison.avgPlacementRate * 0.9, isCurrent: false },
-                  { name: "State Target", value: 60, isCurrent: false },
+                  { name: "Peer Average", value: data.peerComparison.avgRetentionRate, isCurrent: false },
+                  { name: "Top Quartile", value: data.peerComparison.topQuartileRetentionRate, isCurrent: false },
+                  { name: "Benchmark", value: 60, isCurrent: false },
                 ]}
                 xKey="name"
                 height={300}
                 yAxisLabel="Retention Rate (%)"
                 color="#8b5cf6"
                 showAverage={true}
-                averageValue={data.peerComparison.avgPlacementRate * 0.75}
+                averageValue={data.peerComparison.avgRetentionRate}
               />
             </CardContent>
           </Card>
@@ -360,8 +392,8 @@ export default function InstituteAnalyticsDashboard() {
               <PeerComparisonChart
                 data={[
                   { name: "Your Institute", value: latest?.wageProgressionRate ?? 0, isCurrent: true },
-                  { name: "Peer Average", value: data.peerComparison.avgPlacementRate * 0.4, isCurrent: false },
-                  { name: "Top Quartile", value: data.peerComparison.avgPlacementRate * 0.55, isCurrent: false },
+                  { name: "Peer Average", value: data.peerComparison.avgWageProgressionRate, isCurrent: false },
+                  { name: "Top Quartile", value: data.peerComparison.topQuartileWageProgressionRate, isCurrent: false },
                   { name: "State Target", value: 30, isCurrent: false },
                 ]}
                 xKey="name"
@@ -369,7 +401,7 @@ export default function InstituteAnalyticsDashboard() {
                 yAxisLabel="Wage Progression Rate (%)"
                 color="#22c55e"
                 showAverage={true}
-                averageValue={data.peerComparison.avgPlacementRate * 0.4}
+                averageValue={data.peerComparison.avgWageProgressionRate}
               />
             </CardContent>
           </Card>
@@ -381,17 +413,17 @@ export default function InstituteAnalyticsDashboard() {
             <CardContent>
               <PeerComparisonChart
                 data={[
-                  { name: "Your Institute", value: data.overall.avgCertificatesPerTrainee * 10, isCurrent: true },
-                  { name: "Peer Average", value: data.overall.avgCertificatesPerTrainee * 8, isCurrent: false },
-                  { name: "Top Quartile", value: data.overall.avgCertificatesPerTrainee * 12, isCurrent: false },
-                  { name: "Benchmark", value: 15, isCurrent: false },
+                  { name: "Your Institute", value: data.overall.avgCertificatesPerTrainee, isCurrent: true },
+                  { name: "Peer Average", value: data.peerComparison.avgCertificatesPerTrainee, isCurrent: false },
+                  { name: "Top Quartile", value: data.peerComparison.topQuartileCertificatesPerTrainee, isCurrent: false },
+                  { name: "Benchmark", value: 2, isCurrent: false },
                 ]}
                 xKey="name"
                 height={300}
-                yAxisLabel="Avg Certificates × 10"
+                yAxisLabel="Avg Certificates per Trainee"
                 color="#f59e0b"
                 showAverage={true}
-                averageValue={data.overall.avgCertificatesPerTrainee * 8}
+                averageValue={data.peerComparison.avgCertificatesPerTrainee}
               />
             </CardContent>
           </Card>
@@ -404,30 +436,32 @@ export default function InstituteAnalyticsDashboard() {
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 text-left text-gray-500">
-                    <th className="pb-3 font-medium">Cohort</th>
-                    <th className="pb-3 font-medium">Programme</th>
-                    <th className="pb-3 font-medium">Trainees</th>
-                    <th className="pb-3 font-medium">Placement Rate</th>
-                    <th className="pb-3 font-medium">Retention Rate</th>
-                    <th className="pb-3 font-medium">Verified Rate</th>
-                    <th className="pb-3 font-medium">Wage Progression</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.cohorts.map((cohort) => (
-                    <tr key={cohort.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 font-medium">{cohort.name}</td>
-                      <td className="py-3">{cohort.programme}</td>
-                      <td className="py-3">{cohort.traineeCount}</td>
-                      <td className="py-3">{(latest?.placementRate ?? 0).toFixed(1)}%</td>
-                      <td className="py-3">{(latest?.retentionRate ?? 0).toFixed(1)}%</td>
-                      <td className="py-3">{(latest?.verifiedRate ?? 0).toFixed(1)}%</td>
-                      <td className="py-3">{(latest?.wageProgressionRate ?? 0).toFixed(1)}%</td>
+                  <thead>
+                    <tr className="border-b border-gray-200 text-left text-gray-500">
+                      <th className="pb-3 font-medium">Cohort</th>
+                      <th className="pb-3 font-medium">Programme</th>
+                      <th className="pb-3 font-medium">Trainees</th>
+                      <th className="pb-3 font-medium">Placement Rate</th>
+                      <th className="pb-3 font-medium">Retention Rate</th>
+                      <th className="pb-3 font-medium">Verified Rate</th>
+                      <th className="pb-3 font-medium">Wage Progression</th>
+                      <th className="pb-3 font-medium">Certs/Trainee</th>
                     </tr>
-                  ))}
-                </tbody>
+                  </thead>
+                  <tbody>
+                    {data.cohorts.map((cohort) => (
+                      <tr key={cohort.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-3 font-medium">{cohort.name}</td>
+                        <td className="py-3">{cohort.programme}</td>
+                        <td className="py-3">{cohort.traineeCount}</td>
+                        <td className="py-3">{cohort.placementRate.toFixed(1)}%</td>
+                        <td className="py-3">{cohort.retentionRate.toFixed(1)}%</td>
+                        <td className="py-3">{cohort.verifiedRate.toFixed(1)}%</td>
+                        <td className="py-3">{cohort.wageProgressionRate.toFixed(1)}%</td>
+                        <td className="py-3">{cohort.certificatesPerTrainee.toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
               </table>
             </div>
           </CardContent>

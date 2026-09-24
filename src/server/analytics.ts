@@ -1,6 +1,6 @@
 import { db } from "~/server/db";
 import { subMonths, startOfMonth, endOfMonth, format } from "date-fns";
-import { computeCenterScores, type CenterScore, type CenterInput } from "~/server/scoring";
+import { computeCenterScores, computePeerStats, type CenterScore, type CenterInput, type CategoryRates } from "~/server/scoring";
 
 export const EMPLOYED_STATUSES = ["EMPLOYED", "SELF_EMPLOYED", "APPRENTICE"] as const;
 export const VERIFIED_STATUSES = ["EMPLOYER_CONFIRMED", "DOCUMENT_VERIFIED"] as const;
@@ -298,4 +298,204 @@ export async function getTrainingCenterScores(): Promise<CenterScore[]> {
   }
 
   return computeCenterScores(inputs);
+}
+
+export interface GroupRates extends CategoryRates {
+  key: string;
+  certifiedCount: number;
+  traineeCount: number;
+  outcomesKnown: number;
+  employed: number;
+  verified: number;
+  retained: number;
+  wageProgress: number;
+  certTotal: number;
+}
+
+interface GroupTally {
+  certifiedCount: number;
+  trainees: Set<string>;
+  outcomesKnown: number;
+  employed: number;
+  verified: number;
+  retained: number;
+  wageProgress: number;
+  certTotal: number;
+}
+
+function finalizeGroup(key: string, tally: GroupTally): GroupRates {
+  const certifiedCount = tally.certifiedCount;
+  const employed = tally.employed;
+  const traineeCount = tally.trainees.size;
+  return {
+    key,
+    certifiedCount,
+    traineeCount,
+    outcomesKnown: tally.outcomesKnown,
+    employed,
+    verified: tally.verified,
+    retained: tally.retained,
+    wageProgress: tally.wageProgress,
+    certTotal: tally.certTotal,
+    placementRate: tally.outcomesKnown > 0 ? (employed / tally.outcomesKnown) * 100 : 0,
+    retentionRate: employed > 0 ? (tally.retained / employed) * 100 : 0,
+    verifiedRate: employed > 0 ? (tally.verified / employed) * 100 : 0,
+    wageProgressionRate: employed > 0 ? (tally.wageProgress / employed) * 100 : 0,
+    certificatesPerTrainee: certifiedCount > 0 ? tally.certTotal / certifiedCount : 0,
+  };
+}
+
+/**
+ * Per-center and per-cohort raw outcome rates in one flat pass, for peer
+ * benchmarking and cohort comparison tables.
+ */
+export async function getGroupedRates(): Promise<{ byCenter: GroupRates[]; byCohort: GroupRates[] }> {
+  const [enrolments, outcomes, claims, certificates] = await Promise.all([
+    db.enrolment.findMany({
+      select: {
+        traineeId: true,
+        cohortId: true,
+        cohort: { select: { trainingCenterId: true } },
+      },
+    }),
+    db.outcomeEvent.findMany({
+      select: {
+        traineeId: true,
+        checkpointDays: true,
+        outcomeStatus: true,
+        verificationStatus: true,
+        employmentClaimId: true,
+      },
+      orderBy: { createdAt: "asc" },
+    }),
+    db.employmentClaim.findMany({ select: { id: true, salaryBand: true } }),
+    db.certificate.findMany({ select: { traineeId: true } }),
+  ]);
+
+  const claimBand = new Map(claims.map((c) => [c.id, c.salaryBand]));
+
+  // Per-trainee aggregates: latest outcome, checkpoint pairs, cert count
+  const traineeAgg = new Map<string, {
+    outcomeStatus: string;
+    verificationStatus: string;
+    has30: boolean;
+    has90: boolean;
+    employed30: boolean;
+    employed90: boolean;
+    band30: number;
+    band90: number;
+    certs: number;
+  }>();
+
+  for (const o of outcomes) {
+    const agg = traineeAgg.get(o.traineeId) ?? {
+      outcomeStatus: o.outcomeStatus,
+      verificationStatus: o.verificationStatus,
+      has30: false,
+      has90: false,
+      employed30: false,
+      employed90: false,
+      band30: 0,
+      band90: 0,
+      certs: 0,
+    };
+
+    if (o.checkpointDays === 30) {
+      agg.has30 = true;
+      if ((EMPLOYED_STATUSES as readonly string[]).includes(o.outcomeStatus)) {
+        agg.employed30 = true;
+        const band = o.employmentClaimId ? claimBand.get(o.employmentClaimId) : null;
+        if (band) agg.band30 = SALARY_BAND_ORDER.indexOf(band);
+      }
+    }
+    if (o.checkpointDays === 90) {
+      agg.has90 = true;
+      if ((EMPLOYED_STATUSES as readonly string[]).includes(o.outcomeStatus)) {
+        agg.employed90 = true;
+        const band = o.employmentClaimId ? claimBand.get(o.employmentClaimId) : null;
+        if (band) agg.band90 = SALARY_BAND_ORDER.indexOf(band);
+      }
+    }
+    traineeAgg.set(o.traineeId, agg);
+  }
+
+  const certCount = new Map<string, number>();
+  for (const c of certificates) {
+    certCount.set(c.traineeId, (certCount.get(c.traineeId) ?? 0) + 1);
+  }
+  for (const [traineeId, count] of certCount) {
+    const agg = traineeAgg.get(traineeId);
+    if (agg) agg.certs = count;
+  }
+
+  const isEmployed = (status: string) => (EMPLOYED_STATUSES as readonly string[]).includes(status);
+  const isVerified = (status: string) => (VERIFIED_STATUSES as readonly string[]).includes(status);
+
+  const centerTallies = new Map<string, GroupTally>();
+  const cohortTallies = new Map<string, GroupTally>();
+
+  for (const enrolment of enrolments) {
+    const agg = traineeAgg.get(enrolment.traineeId);
+
+    const applyTo = (tally: GroupTally | undefined) => {
+      if (!tally) return;
+      tally.certifiedCount++;
+      tally.trainees.add(enrolment.traineeId);
+      tally.certTotal += certCount.get(enrolment.traineeId) ?? 0;
+      if (!agg) return;
+      if (agg.outcomeStatus === "UNKNOWN") return;
+
+      tally.outcomesKnown++;
+      if (isEmployed(agg.outcomeStatus)) {
+        tally.employed++;
+        if (isVerified(agg.verificationStatus)) tally.verified++;
+        if (agg.has30 && agg.has90 && agg.employed30 && agg.employed90) {
+          tally.retained++;
+          if (agg.band90 > agg.band30) tally.wageProgress++;
+        }
+      }
+    };
+
+    if (enrolment.cohort.trainingCenterId) {
+      const tally = centerTallies.get(enrolment.cohort.trainingCenterId) ?? {
+        certifiedCount: 0, trainees: new Set<string>(), outcomesKnown: 0,
+        employed: 0, verified: 0, retained: 0, wageProgress: 0, certTotal: 0,
+      };
+      applyTo(tally);
+      centerTallies.set(enrolment.cohort.trainingCenterId, tally);
+    }
+
+    const cohortTally = cohortTallies.get(enrolment.cohortId) ?? {
+      certifiedCount: 0, trainees: new Set<string>(), outcomesKnown: 0,
+      employed: 0, verified: 0, retained: 0, wageProgress: 0, certTotal: 0,
+    };
+    applyTo(cohortTally);
+    cohortTallies.set(enrolment.cohortId, cohortTally);
+  }
+
+  const byCenter: GroupRates[] = [];
+  for (const [key, tally] of centerTallies) byCenter.push(finalizeGroup(key, tally));
+  const byCohort: GroupRates[] = [];
+  for (const [key, tally] of cohortTallies) byCohort.push(finalizeGroup(key, tally));
+
+  return { byCenter, byCohort };
+}
+
+/** Peer benchmark stats (avg + top quartile) across center/cohort groups. */
+export async function getPeerBenchmarks(): Promise<{
+  avg: CategoryRates;
+  topQuartile: CategoryRates;
+  centerCount: number;
+}> {
+  const { byCenter } = await getGroupedRates();
+  const stats = computePeerStats(
+    byCenter.map((c) => ({
+      placementRate: c.placementRate,
+      retentionRate: c.retentionRate,
+      verifiedRate: c.verifiedRate,
+      wageProgressionRate: c.wageProgressionRate,
+      certificatesPerTrainee: c.certificatesPerTrainee,
+    }))
+  );
+  return { ...stats, centerCount: byCenter.length };
 }

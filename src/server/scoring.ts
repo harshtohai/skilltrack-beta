@@ -143,3 +143,52 @@ export function computeEmployerRetention(claims: EmployerClaimInput[]): Retentio
 export function normalizeEmployerName(name: string): string {
   return name.trim().replace(/\s+/g, " ").toUpperCase();
 }
+
+export interface CategoryRates {
+  placementRate: number;
+  retentionRate: number;
+  verifiedRate: number;
+  wageProgressionRate: number;
+  certificatesPerTrainee: number;
+}
+
+export interface PeerStats {
+  avg: CategoryRates;
+  topQuartile: CategoryRates;
+}
+
+function mean(values: number[]): number {
+  if (values.length === 0) return 0;
+  return values.reduce((a, b) => a + b, 0) / values.length;
+}
+
+/** Nearest-rank 75th percentile: smallest value with 75% of data at or below it. */
+export function percentile75(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const index = Math.ceil(0.75 * sorted.length) - 1;
+  return sorted[Math.max(0, Math.min(sorted.length - 1, index))] ?? 0;
+}
+
+/**
+ * Peer benchmark stats across a set of centers/cohorts: per-category
+ * average and top-quartile (p75) values.
+ */
+export function computePeerStats(groups: CategoryRates[]): PeerStats {
+  return {
+    avg: {
+      placementRate: mean(groups.map((g) => g.placementRate)),
+      retentionRate: mean(groups.map((g) => g.retentionRate)),
+      verifiedRate: mean(groups.map((g) => g.verifiedRate)),
+      wageProgressionRate: mean(groups.map((g) => g.wageProgressionRate)),
+      certificatesPerTrainee: mean(groups.map((g) => g.certificatesPerTrainee)),
+    },
+    topQuartile: {
+      placementRate: percentile75(groups.map((g) => g.placementRate)),
+      retentionRate: percentile75(groups.map((g) => g.retentionRate)),
+      verifiedRate: percentile75(groups.map((g) => g.verifiedRate)),
+      wageProgressionRate: percentile75(groups.map((g) => g.wageProgressionRate)),
+      certificatesPerTrainee: percentile75(groups.map((g) => g.certificatesPerTrainee)),
+    },
+  };
+}

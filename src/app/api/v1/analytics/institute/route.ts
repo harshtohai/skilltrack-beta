@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "~/server/db";
-import { getMonthlyOutcomes, EMPLOYED_STATUSES } from "~/server/analytics";
+import { getMonthlyOutcomes, getGroupedRates, getPeerBenchmarks, EMPLOYED_STATUSES } from "~/server/analytics";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +36,14 @@ export async function GET(request: NextRequest) {
     });
 
     const latest = monthlyData[monthlyData.length - 1];
+    const [grouped, peer] = await Promise.all([getGroupedRates(), getPeerBenchmarks()]);
+    const cohortRates = new Map(grouped.byCohort.map((c) => [c.key, c]));
+    const totalCertificates = await db.certificate.count({
+      where: { trainee: { enrolments: { some: enrolmentWhere } } },
+    });
+    const avgCertificatesPerTrainee = latest && latest.certified > 0
+      ? totalCertificates / latest.certified
+      : 0;
 
     return NextResponse.json({
       timeWindow: query.timeWindow,
@@ -43,22 +51,47 @@ export async function GET(request: NextRequest) {
       monthlyData,
       overall: {
         ...overall,
-        totalCertificates: await db.certificate.count({
-          where: { trainee: { enrolments: { some: enrolmentWhere } } },
-        }),
+        totalCertificates,
+        avgCertificatesPerTrainee,
       },
       peerComparison: {
         placementRate: latest?.placementRate ?? 0,
         retentionRate: latest?.retentionRate ?? 0,
         verifiedRate: latest?.verifiedRate ?? 0,
         wageProgressionRate: latest?.wageProgressionRate ?? 0,
+        avgPlacementRate: peer.avg.placementRate,
+        avgRetentionRate: peer.avg.retentionRate,
+        avgVerifiedRate: peer.avg.verifiedRate,
+        avgWageProgressionRate: peer.avg.wageProgressionRate,
+        avgCertificatesPerTrainee: peer.avg.certificatesPerTrainee,
+        topQuartilePlacementRate: peer.topQuartile.placementRate,
+        topQuartileRetentionRate: peer.topQuartile.retentionRate,
+        topQuartileVerifiedRate: peer.topQuartile.verifiedRate,
+        topQuartileWageProgressionRate: peer.topQuartile.wageProgressionRate,
+        topQuartileCertificatesPerTrainee: peer.topQuartile.certificatesPerTrainee,
+        gaps: {
+          placementRate: (latest?.placementRate ?? 0) - peer.avg.placementRate,
+          retentionRate: (latest?.retentionRate ?? 0) - peer.avg.retentionRate,
+          verifiedRate: (latest?.verifiedRate ?? 0) - peer.avg.verifiedRate,
+          wageProgressionRate: (latest?.wageProgressionRate ?? 0) - peer.avg.wageProgressionRate,
+          certificatesPerTrainee: avgCertificatesPerTrainee - peer.avg.certificatesPerTrainee,
+        },
+        centerCount: peer.centerCount,
       },
-      cohorts: cohortRows.map((c) => ({
-        id: c.id,
-        name: c.name,
-        programme: c.programme.name,
-        traineeCount: 0,
-      })),
+      cohorts: cohortRows.map((c) => {
+        const rates = cohortRates.get(c.id);
+        return {
+          id: c.id,
+          name: c.name,
+          programme: c.programme.name,
+          traineeCount: rates?.traineeCount ?? 0,
+          placementRate: rates?.placementRate ?? 0,
+          retentionRate: rates?.retentionRate ?? 0,
+          verifiedRate: rates?.verifiedRate ?? 0,
+          wageProgressionRate: rates?.wageProgressionRate ?? 0,
+          certificatesPerTrainee: rates?.certificatesPerTrainee ?? 0,
+        };
+      }),
       employedStatuses: EMPLOYED_STATUSES,
     });
   } catch (error) {
