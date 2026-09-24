@@ -5,6 +5,7 @@ import { db } from "~/server/db";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Separator } from "~/components/ui/separator";
+import { CopyButton } from "~/components/copy-button";
 import { formatDateTime, maskPhoneE164 } from "~/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -256,7 +257,10 @@ export default async function TraineeDetailPage({ params }: { params: Promise<{ 
               <User className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="text-sm text-muted-foreground">Trainee ID</p>
-                <p className="font-mono">{trainee.publicId}</p>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-lg font-bold text-primary">{trainee.publicId}</span>
+                  <CopyButton value={trainee.publicId} />
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-3">

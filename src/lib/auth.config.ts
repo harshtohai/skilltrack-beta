@@ -7,6 +7,8 @@ export const protectedRoutes: { path: string; roles: UserRole[] }[] = [
   { path: "/admin", roles: ["admin"] },
   { path: "/institute", roles: ["institute", "admin"] },
   { path: "/employer", roles: ["employer", "admin"] },
+  { path: "/trainees", roles: ["admin", "institute"] },
+  { path: "/dashboard", roles: ["admin", "institute", "trainee"] },
   // /auth/trainee/* stays public: the one-time magic-link token is the
   // credential; the verify endpoint mints the session after verification.
 ];
