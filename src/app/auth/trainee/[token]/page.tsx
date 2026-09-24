@@ -173,6 +173,9 @@ export default function TraineeAuthPage() {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">Signed in as {profile.fullName}</span>
+            <Button variant="outline" size="sm" onClick={() => router.push("/trainee/profile")}>
+              Edit Profile
+            </Button>
             <Button variant="ghost" size="sm" onClick={() => router.push("/login")}>
               Sign Out
             </Button>
