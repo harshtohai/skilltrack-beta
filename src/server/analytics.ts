@@ -1,5 +1,6 @@
 import { db } from "~/server/db";
 import { subMonths, startOfMonth, endOfMonth, format } from "date-fns";
+import { computeCenterScores, type CenterScore, type CenterInput } from "~/server/scoring";
 
 export const EMPLOYED_STATUSES = ["EMPLOYED", "SELF_EMPLOYED", "APPRENTICE"] as const;
 export const VERIFIED_STATUSES = ["EMPLOYER_CONFIRMED", "DOCUMENT_VERIFIED"] as const;
@@ -181,4 +182,120 @@ export async function getMonthlyOutcomes(opts: {
     monthlyData,
     overall: { totalCertified, totalEmployed, totalRetained, totalVerified },
   };
+}
+
+/**
+ * Training-center leaderboard data: per-center aggregates computed with
+ * the same flat-query + in-memory pattern as getMonthlyOutcomes, then
+ * scored by the pure scoring engine.
+ */
+export async function getTrainingCenterScores(): Promise<CenterScore[]> {
+  const [enrolments, outcomes, certificates, surveys, centers] = await Promise.all([
+    db.enrolment.findMany({
+      select: {
+        traineeId: true,
+        cohort: { select: { trainingCenterId: true, trainingCenter: { select: { name: true } } } },
+      },
+    }),
+    db.outcomeEvent.findMany({
+      select: { traineeId: true, outcomeStatus: true, verificationStatus: true, createdAt: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    db.certificate.findMany({ select: { traineeId: true } }),
+    db.surveyResponse.findMany({
+      where: { traineeId: { not: null }, trainingRelevance: { not: null } },
+      select: { traineeId: true, trainingRelevance: true },
+    }),
+    db.trainingCenter.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+  ]);
+
+  // Latest outcome per trainee
+  const latestOutcome = new Map<string, { outcomeStatus: string; verificationStatus: string }>();
+  for (const o of outcomes) {
+    latestOutcome.set(o.traineeId, {
+      outcomeStatus: o.outcomeStatus,
+      verificationStatus: o.verificationStatus,
+    });
+  }
+
+  const isEmployed = (status: string) => (EMPLOYED_STATUSES as readonly string[]).includes(status);
+  const isVerified = (status: string) => (VERIFIED_STATUSES as readonly string[]).includes(status);
+
+  const relevanceSums = new Map<string, number>();
+  const relevanceCounts = new Map<string, number>();
+  for (const s of surveys) {
+    if (!s.traineeId) continue;
+    const relevance = Number(s.trainingRelevance);
+    if (Number.isNaN(relevance)) continue;
+    relevanceSums.set(s.traineeId, (relevanceSums.get(s.traineeId) ?? 0) + relevance);
+    relevanceCounts.set(s.traineeId, (relevanceCounts.get(s.traineeId) ?? 0) + 1);
+  }
+
+  // Per-center tallies (single pass over enrolments)
+  const tallies = new Map<string, CenterInput & { certTotal: number; relevanceTotal: number; relevanceTrainees: number }>();
+  for (const center of centers) {
+    tallies.set(center.id, {
+      centerId: center.id,
+      centerName: center.name,
+      certifiedCount: 0,
+      employedKnown: 0,
+      employedVerified: 0,
+      outcomesKnown: 0,
+      certificatesPerTrainee: 0,
+      trainingRelevanceAvg: null,
+      certTotal: 0,
+      relevanceTotal: 0,
+      relevanceTrainees: 0,
+    });
+  }
+
+  const certCount = new Map<string, number>();
+  for (const c of certificates) {
+    certCount.set(c.traineeId, (certCount.get(c.traineeId) ?? 0) + 1);
+  }
+
+  for (const enrolment of enrolments) {
+    const centerId = enrolment.cohort.trainingCenterId;
+    if (!centerId) continue;
+    const tally = tallies.get(centerId);
+    if (!tally) continue;
+
+    tally.certifiedCount++;
+    tally.certTotal += certCount.get(enrolment.traineeId) ?? 0;
+
+    const relCount = relevanceCounts.get(enrolment.traineeId);
+    if (relCount) {
+      tally.relevanceTotal += (relevanceSums.get(enrolment.traineeId) ?? 0) / relCount;
+      tally.relevanceTrainees++;
+    }
+
+    const latest = latestOutcome.get(enrolment.traineeId);
+    if (!latest) continue;
+    if (latest.outcomeStatus === "UNKNOWN") continue;
+
+    tally.outcomesKnown++;
+    if (isEmployed(latest.outcomeStatus)) {
+      tally.employedKnown++;
+      if (isVerified(latest.verificationStatus)) tally.employedVerified++;
+    }
+  }
+
+  // Finalize per-center averages
+  const inputs: CenterInput[] = [];
+  for (const tally of tallies.values()) {
+    inputs.push({
+      centerId: tally.centerId,
+      centerName: tally.centerName,
+      certifiedCount: tally.certifiedCount,
+      employedKnown: tally.employedKnown,
+      employedVerified: tally.employedVerified,
+      outcomesKnown: tally.outcomesKnown,
+      certificatesPerTrainee:
+        tally.certifiedCount > 0 ? tally.certTotal / tally.certifiedCount : 0,
+      trainingRelevanceAvg:
+        tally.relevanceTrainees > 0 ? tally.relevanceTotal / tally.relevanceTrainees : null,
+    });
+  }
+
+  return computeCenterScores(inputs);
 }

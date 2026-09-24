@@ -86,6 +86,48 @@ async function main() {
 
   const unassigned = await prisma.cohort.count({ where: { trainingCenterId: null } });
   if (unassigned > 0) console.log(`⚠️ ${unassigned} cohorts remain unassigned`);
+
+  // Demo certificates (1-2 per enrolment) so academic scores have signal
+  const certCount = await prisma.certificate.count();
+  if (certCount === 0) {
+    console.log("📜 Seeding demo certificates...");
+    const enrolments = await prisma.enrolment.findMany({
+      select: { traineeId: true, cohort: { select: { programme: { select: { name: true } } } } },
+    });
+    const certData = enrolments.flatMap((e) => {
+      const certs = [{ traineeId: e.traineeId, name: `${e.cohort.programme.name} Certificate`, issuer: "MSSDS", issueDate: new Date() }];
+      if (Math.random() < 0.3) {
+        certs.push({ traineeId: e.traineeId, name: "Spoken English & Workplace Communication Certificate", issuer: "NSDC", issueDate: new Date() });
+      }
+      return certs;
+    });
+    await prisma.certificate.createMany({ data: certData });
+    console.log(`✅ ${certData.length} certificates created`);
+  }
+
+  // Demo survey responses (training relevance varies by trainee) so the
+  // academic axis differentiates centers
+  const surveyCount = await prisma.surveyResponse.count();
+  if (surveyCount === 0) {
+    console.log("📋 Seeding demo survey responses...");
+    const trainees = await prisma.trainee.findMany({
+      where: { consentGiven: true },
+      select: { id: true, phoneE164: true },
+      take: 300,
+    });
+    const RELEVANCES = ["2", "3", "3", "4", "4", "5", "1"];
+    const surveyData = trainees.map((t) => ({
+      phoneE164: t.phoneE164,
+      traineeId: t.id,
+      employmentStatus: "employed_full",
+      trainingRelevance: RELEVANCES[Math.floor(Math.random() * RELEVANCES.length)],
+      skillGaps: [],
+      challenges: [],
+      completedAt: new Date(),
+    }));
+    await prisma.surveyResponse.createMany({ data: surveyData });
+    console.log(`✅ ${surveyData.length} survey responses created`);
+  }
 }
 
 main()

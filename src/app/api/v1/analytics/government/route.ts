@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "~/server/db";
-import { getMonthlyOutcomes } from "~/server/analytics";
+import { getMonthlyOutcomes, getTrainingCenterScores } from "~/server/analytics";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 
 export const dynamic = "force-dynamic";
@@ -25,11 +25,14 @@ export async function GET(request: NextRequest) {
       district: query.district,
     });
 
+    const trainingCenters = await getTrainingCenterScores();
+
     return NextResponse.json({
       timeWindow: query.timeWindow,
       labels: monthlyData.map((m) => m.month),
       monthlyData,
       overall,
+      trainingCenters: trainingCenters.sort((a, b) => b.overallScore - a.overallScore),
       targets: {
         placementRate: 70,
         retentionRate: 60,

@@ -10,6 +10,23 @@ import { ComparisonChart } from "~/components/charts/ComparisonChart";
 import { MetricCard } from "~/components/charts/MetricCard";
 import { format } from "date-fns";
 
+interface TrainingCenterScore {
+  centerId: string;
+  centerName: string;
+  placementScore: number;
+  academicScore: number;
+  volumeScore: number;
+  overallScore: number;
+  numerators: {
+    employedKnown: number;
+    employedVerified: number;
+    outcomesKnown: number;
+    certifiedCount: number;
+    certificatesPerTrainee: number;
+    trainingRelevanceAvg: number | null;
+  };
+}
+
 interface GovernmentAnalyticsData {
   timeWindow: string;
   labels: string[];
@@ -20,6 +37,7 @@ interface GovernmentAnalyticsData {
     totalRetained: number;
     totalVerified: number;
   };
+  trainingCenters: TrainingCenterScore[];
   targets: {
     placementRate: number;
     retentionRate: number;
@@ -56,6 +74,12 @@ const TIME_WINDOWS = [
   { value: "24m", label: "Last 24 Months" },
   { value: "all", label: "All Time" },
 ];
+
+function scoreTone(score: number): string {
+  if (score >= 75) return "bg-green-100 text-green-800";
+  if (score >= 50) return "bg-yellow-100 text-yellow-800";
+  return "bg-red-100 text-red-800";
+}
 
 export default function GovernmentAnalyticsDashboard() {
   const [data, setData] = useState<GovernmentAnalyticsData | null>(null);
@@ -379,6 +403,57 @@ export default function GovernmentAnalyticsDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Training Agency Leaderboard</CardTitle>
+            <p className="text-sm text-gray-500">
+              Overall = 50% placement + 30% academic + 20% volume. Placement is verified-weighted (employer-confirmed 1.0, self-reported 0.5) among trainees with known outcomes.
+            </p>
+          </CardHeader>
+          <CardContent>
+            {data.trainingCenters.length === 0 ? (
+              <p className="text-sm text-gray-500">No training centers with enrolments yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 text-left text-gray-500">
+                      <th className="pb-3 font-medium">#</th>
+                      <th className="pb-3 font-medium">Training Center</th>
+                      <th className="pb-3 font-medium">Overall</th>
+                      <th className="pb-3 font-medium">Placement</th>
+                      <th className="pb-3 font-medium">Academic</th>
+                      <th className="pb-3 font-medium">Volume</th>
+                      <th className="pb-3 font-medium">Certified</th>
+                      <th className="pb-3 font-medium">Known Outcomes</th>
+                      <th className="pb-3 font-medium">Verified</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.trainingCenters.map((center, index) => (
+                      <tr key={center.centerId} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-3 font-bold text-gray-400">{index + 1}</td>
+                        <td className="py-3 font-medium">{center.centerName}</td>
+                        <td className="py-3">
+                          <span className={`inline-block px-2 py-0.5 rounded font-semibold ${scoreTone(center.overallScore)}`}>
+                            {center.overallScore}
+                          </span>
+                        </td>
+                        <td className="py-3">{center.placementScore}</td>
+                        <td className="py-3">{center.academicScore}</td>
+                        <td className="py-3">{center.volumeScore}</td>
+                        <td className="py-3">{center.numerators.certifiedCount}</td>
+                        <td className="py-3">{center.numerators.outcomesKnown}</td>
+                        <td className="py-3">{center.numerators.employedVerified}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>

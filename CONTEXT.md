@@ -1,17 +1,21 @@
 # OutcomeTrack — Domain Model
 
 ## Implementation State (as of Sep 2026)
-- **Bot integration**: Kapso (WhatsApp Business API via `https://api.kapso.ai/meta/whatsapp/v24.0`), NOT the standalone bot service. No `BOT_BASE_URL`. Inbound webhook at `/api/webhook` (GET verify + HMAC POST), zod-validated payload.
-- **Conversation flow** (`src/lib/bot/conversation.ts`): consent-first, in-memory Map store (dev/demo simplicity). Steps: `WELCOME` → `CONSENT` → `IDENTITY_VERIFY` → `EMPLOYMENT_STATUS` → `EMPLOYER_DETAILS` → `ROLE_DETAILS` → `SALARY_RANGE` → `JOB_SATISFACTION` → `TRAINING_RELEVANCE` → `SKILL_GAPS` → `ADDITIONAL_TRAINING` → `CAREER_GOALS` → `CHALLENGES` → `RECOMMENDATIONS` → `COMPLETE`. `startConversation(phone, name)` fires post-login (trainee magic-link verify).
-- **Consent**: `Trainee.consentGiven` + `consentGivenAt` + `consentMethod` (`WHATSAPP` | `SEED`); recorded by the WhatsApp consent handler (source of truth). Magic-link no longer 403s without consent.
-- **DB access**: pure Prisma ORM (`src/server/db.ts`, single client, pooled `DATABASE_URL` 6543). No raw SQL, no `db-direct.ts`. `DIRECT_URL` (pooler :5432) unreachable from Node — do not use.
-- **API routes**: only 20 remain; unused ones deleted (data-quality, email, export, insights, kpis/retention, kpis/wage-progression, sidh, trainees/import, trainees/[public_id]). List endpoints paginated (`page`/`limit`). Analytics routes no longer gate on `X-API-Key` (frontend never sent it; middleware protects `/admin` by session role).
-- **Analytics** (`src/server/analytics.ts`): shared `getMonthlyOutcomes()` — 3 flat Prisma queries + in-memory monthly aggregation, `limit` param (max 60 months).
-- **Timeline**: per-trainee timeline on `/trainees/[public_id]`; dashboard Recent Activity timeline fed by `recentActivity` in `kpis/overview`.
-- **Auth**: admin `admin@maharashtra.gov.in`/`admin123` (env-overridable), trainee magic-link, employer login via verificationRequest match.
-- **Seeded** (confirmed): trainees 501, cohorts 15, programmes 5, enrolments 500, followups 1000, outcomes 155. Test user `+0000000000` (Test User, consent given).
+- **Git remote**: `origin` → https://github.com/harshtohai/skilltrack-beta (changed from skilltrack; push there only)
+- **Spec/tickets**: parent spec #23; tickets #24 (T1 centers+courses) ✅, #25 (T2 scoring+gov leaderboard) 🔄 in progress, #26 (T3 institute gaps), #27 (T4 recommendations), #28 (T5 simulator direct-run), #29 (T6 trainee profile+session), #30 (T7 ID visibility), #31 (T8 employer dashboard). Order: T1→T2→{T3,T4,T8}; T5,T6,T7 independent.
+- **T1 DONE**: `TrainingCenter` model (+`trainingCenterId` on Cohort), `Course` model; 10 centers seeded, 15 cohorts round-robin assigned, 20 PMKVY-style courses; demo certificates (359) + survey responses (300) seeded via idempotent `prisma/backfill-centers.ts` (upserts only, creates certs/surveys if count 0). seed.ts also creates centers/courses on fresh seeds.
+- **T2**: pure scoring engine `src/server/scoring.ts` (`computeCenterScores` — placement verified-weighted (confirmed 1.0/self 0.5)/academic (60% relevance + 40% certs vs benchmark 2)/volume (relative to max)/overall 50-30-20; `computeEmployerRetention` — confirmed claims with later-checkpoint sustained employment, null when insufficient; `normalizeEmployerName`) — 15 vitest unit tests green (`npx vitest run src/server/scoring.test.ts`, vitest@4.1.11 devDep). `getTrainingCenterScores()` in `src/server/analytics.ts` (flat 5-query + in-memory, same pattern as getMonthlyOutcomes); wired into `analytics/government` response as `trainingCenters` sorted by overallScore.
+- **Pending after T2**: admin analytics page leaderboard UI; then T3/T4/T5/T6/T7/T8.
+- **DB access**: pure Prisma ORM (`src/server/db.ts`, single client, pooled `DATABASE_URL` 6543). No raw SQL, no `db-direct.ts`. `DIRECT_URL` (pooler :5432) unreachable from Node — do not use. Pooler is FLAKY on cold connect (first request after idle may 500 with "Can't reach database server :6543" — retry succeeds; treat transient, don't "fix").
+- **Dev server quirk**: start with `(npm run dev > /tmp/next-dev.log 2>&1 &) ; sleep 28; curl health` in ONE command (generous timeout) — timed-out commands kill detached processes; `(cmd &)` only survives if outer command exits cleanly. Health endpoint itself hits DB (may 500 transiently on pooler cold start).
 - **Path alias**: `~/*` → `./src/*` only (NOT `@/*`).
-- **Pending**: endpoint loop-testing after refactor; external WhatsApp testing needs ngrok/production URL.
+- **Bot integration**: Kapso via `https://api.kapso.ai/meta/whatsapp/v24.0`, webhook `/api/webhook` (zod + idempotent by message id), consent-first conversation (in-memory), `startConversation` fires post-login. Consent recorded via WhatsApp (source of truth).
+- **Analytics**: no API-key gate on analytics routes (middleware protects `/admin` by session role); list endpoints paginated.
+- **Email**: Resend free tier only sends to `test.user+resend@gmail.com`; magic link logged on send failure (`[MAGIC-LINK] Magic link for...` in dev log); graceful 200.
+- **Test user**: `+0000000000` (Test User, `test.user@gmail.com`, publicId `TRN-MUCLQDDW-T2A5`), consent given.
+- **Env**: `INTERNAL_API_KEY="sk_live_REDACTED"`, `KAPSO_API_KEY`, `KAPSO_PHONE_NUMBER_ID=1364763996715263`, `RESEND_API_KEY`, `APP_BASE_URL=http://localhost:3000`. NOTE: `/bot-service/` is gitignored (legacy, contains hardcoded key — push protection blocks it); never `git add -A` blindly.
+- **Lint**: 0 errors across repo (fixed: kapso.ts types, webhook zod, ConversationData typing, `??` operators, optional chains).
+- **Prior decisions**: don't change `.env` URLs; keep API routes thin (user asked for server actions but API routes kept); trainee detail timeline exists at `/trainees/[public_id]`; `/cohorts` page never existed (only `/cohorts/[id]` + API).
 
 ## Overview
 OutcomeTrack is a longitudinal skilling-outcomes platform. It follows up with trainees via WhatsApp at 30/90/180/365 days post-certification, captures employment claims, enables employer verification, and surfaces cohort-level KPIs with evidence levels.
