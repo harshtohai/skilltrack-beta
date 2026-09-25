@@ -13,11 +13,19 @@ export default auth((req) => {
 
   const role = req.auth?.user?.role;
   const routeConfig = protectedRoutes.find((route) =>
-    req.nextUrl.pathname.startsWith(route.path)
+    req.nextUrl.pathname.startsWith(route.path),
   );
 
   if (!routeConfig) return NextResponse.next();
   if (role && routeConfig.roles.includes(role)) return NextResponse.next();
+
+  // API routes get JSON status codes, pages get a login redirect.
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.json(
+      { error: role ? "Forbidden" : "Unauthorized" },
+      { status: role ? 403 : 401 },
+    );
+  }
 
   const loginUrl = new URL("/login", req.nextUrl.origin);
   loginUrl.searchParams.set("redirect", pathname);
@@ -32,6 +40,12 @@ export const config = {
     "/employer/:path*",
     "/auth/trainee/:path*",
     "/trainees/:path*",
+    "/trainee/:path*",
     "/dashboard/:path*",
+    "/followups/:path*",
+    "/cohorts/:path*",
+    "/conflicts/:path*",
+    "/audit-logs/:path*",
+    "/api/v1/:path*",
   ],
 };
