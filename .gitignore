@@ -46,3 +46,7 @@ yarn-error.log*
 .idea
 # legacy standalone bot (now integrated in src/lib/bot)
 /bot-service/
+.env*
+
+# Sentry Config File
+.env.sentry-build-plugin
