@@ -1,0 +1,7 @@
+# Standalone services not part of the Next.js build
+bot-service
+
+# Local artifacts
+session-*.md
+.env
+.env.*
