@@ -50,7 +50,7 @@ const magicLinkEndpoint = "/api/v1/trainee/magic-link";
 
 const roleRedirects: Record<UserType, string> = {
   trainee: "/auth/trainee/sent",
-  employer: "/employer/analytics",
+  employer: "/employer/dashboard",
   institute: "/institute/analytics",
   admin: "/admin/analytics",
 };
