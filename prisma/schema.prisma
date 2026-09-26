@@ -151,6 +151,7 @@ model Trainee {
   consentGiven    Boolean   @default(false)
   consentGivenAt  DateTime?
   consentMethod   String?
+  conversationState Json?
   consentRevokedAt DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -361,13 +362,15 @@ model SurveyResponse {
   employerName         String?
   role                 String?
   salaryRange          String?
-  jobSatisfaction      String?
-  trainingRelevance    String?
+  jobSatisfaction     String?
+  trainingRelevance   String?
   skillGaps            String[]
   additionalTraining   String?
   careerGoals          String?
   challenges           String[]
   recommendations      String?
+  language             String?
+  supportNeeded        String?
   completedAt          DateTime @default(now())
   createdAt            DateTime @default(now())
 

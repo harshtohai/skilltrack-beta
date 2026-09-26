@@ -17,7 +17,7 @@ const patchSchema = z.object({
   fullName: z.string().min(2).max(100).optional(),
   email: z.string().email().max(200).nullable().optional(),
   district: z.string().max(60).optional(),
-  language: z.enum(["EN", "HI"]).optional(),
+  language: z.enum(["EN", "HI", "MR"]).optional(),
 });
 
 async function requireTrainee() {
@@ -119,7 +119,7 @@ export async function PATCH(request: NextRequest) {
       fullName?: string;
       email?: string | null;
       district?: string;
-      language?: "EN" | "HI";
+      language?: "EN" | "HI" | "MR";
     } = {};
     if (data.fullName !== undefined) update.fullName = data.fullName.trim();
     if (data.email !== undefined) update.email = data.email?.toLowerCase().trim() ?? null;

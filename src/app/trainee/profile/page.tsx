@@ -153,7 +153,9 @@ export default function TraineeProfilePage() {
               <p className="text-sm text-gray-500">{trainee.fullName}</p>
             </div>
           </div>
-          <Badge variant="secondary">{trainee.language === "HI" ? "हिंदी" : "English"}</Badge>
+          <Badge variant="secondary">
+            {trainee.language === "HI" ? "हिंदी" : trainee.language === "MR" ? "मराठी" : "English"}
+          </Badge>
         </div>
       </header>
 
@@ -224,6 +226,7 @@ export default function TraineeProfilePage() {
                   <SelectContent>
                     <SelectItem value="EN">English</SelectItem>
                     <SelectItem value="HI">हिंदी (Hindi)</SelectItem>
+                    <SelectItem value="MR">मराठी (Marathi)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

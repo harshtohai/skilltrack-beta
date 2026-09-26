@@ -1,4 +1,14 @@
+import { Prisma } from "@prisma/client";
 import { sendKapsoMessage } from "./kapso";
+import {
+  LANG_BUTTONS,
+  LANG_PROMPT,
+  T,
+  VALUES,
+  opts,
+  type Lang,
+  type Option,
+} from "./messages";
 import { db } from "~/server/db";
 
 export interface InboundMessage {
@@ -13,7 +23,9 @@ export interface InboundMessage {
 }
 
 interface ConversationData {
+  lang?: Lang;
   traineeId?: string | null;
+  traineeName?: string;
   programme?: string;
   cohort?: string;
   employmentStatus?: string;
@@ -21,6 +33,7 @@ interface ConversationData {
   role?: string;
   salaryRange?: string;
   jobSatisfaction?: string;
+  supportNeeded?: string;
   trainingRelevance?: string;
   skillGaps?: string[];
   additionalTraining?: string;
@@ -34,10 +47,16 @@ interface ConversationState {
   data: ConversationData;
 }
 
-const conversationStore = new Map<string, ConversationState>();
+interface Ctx {
+  state: ConversationState;
+  phone: string;
+  name: string | undefined;
+  text: string;
+  raw: string;
+}
 
 const STEPS = {
-  WELCOME: "welcome",
+  LANGUAGE: "language",
   CONSENT: "consent",
   IDENTITY_VERIFY: "identity_verify",
   EMPLOYMENT_STATUS: "employment_status",
@@ -45,6 +64,7 @@ const STEPS = {
   ROLE_DETAILS: "role_details",
   SALARY_RANGE: "salary_range",
   JOB_SATISFACTION: "job_satisfaction",
+  SUPPORT_NEEDS: "support_needs",
   TRAINING_RELEVANCE: "training_relevance",
   SKILL_GAPS: "skill_gaps",
   ADDITIONAL_TRAINING: "additional_training",
@@ -52,651 +72,586 @@ const STEPS = {
   CHALLENGES: "challenges",
   RECOMMENDATIONS: "recommendations",
   COMPLETE: "complete",
-};
+  DECLINED: "declined",
+} as const;
 
-const WELCOME_MESSAGE = `👋 *Hello {name}!*
+const MAX_MULTI_SELECT = 3;
+const PROCESSED_CAP = 1000;
 
-Welcome to *OutcomeTrack* – the official placement tracking & career guidance platform by the *Maharashtra State Skill Development Society (MSSDS)* under the *Pradhan Mantri Kaushal Vikas Yojana (PMKVY)*.
-
-We're here to understand your career journey after training so we can:
-✅ Improve training programs for future batches
-✅ Connect you with better job opportunities  
-✅ Provide personalized career guidance
-✅ Help policymakers make data-driven decisions
-
-*Your responses are confidential and used only for program improvement.*
-
-Shall we begin? It takes about 3-4 minutes.`;
-
-const CONSENT_MESSAGE = `📋 *Consent Required*
-
-Before we proceed, we need your consent to:
-1. Collect your employment & training feedback
-2. Store your responses securely (encrypted)
-3. Use anonymized data for program analytics
-4. Contact you for future opportunities (optional)
-
-*You can skip any question or withdraw anytime.*
-
-Do you consent to participate?`;
-
-const CONSENT_BUTTONS = [
-  { label: "✅ Yes, I consent", value: "consent_yes" },
-  { label: "❌ No, thank you", value: "consent_no" },
-];
-
-const IDENTITY_VERIFY_MESSAGE = `🔍 *Identity Verification*
-
-To link your responses to your training record, please confirm:
-
-*Name:* {name}
-*Phone:* {phone}
-*Training Program:* {programme}
-*Batch:* {cohort}
-
-Is this correct?`;
-
-const IDENTITY_BUTTONS = [
-  { label: "✅ Yes, that's me", value: "identity_yes" },
-  { label: "❌ No, wrong person", value: "identity_no" },
-];
-
-const EMPLOYMENT_STATUS_MESSAGE = `💼 *Current Employment Status*
-
-What best describes your current situation?`;
-
-const EMPLOYMENT_BUTTONS = [
-  { label: "1️⃣ Employed full-time", value: "employed_full" },
-  { label: "2️⃣ Employed part-time", value: "employed_part" },
-  { label: "3️⃣ Self-employed / Freelance", value: "self_employed" },
-  { label: "4️⃣ Apprentice / Intern", value: "apprentice" },
-  { label: "5️⃣ Looking for work", value: "looking" },
-  { label: "6️⃣ Not working / Studying", value: "not_working" },
-];
-
-const EMPLOYER_DETAILS_MESSAGE = `🏢 *Employer Details*
-
-What is the name of your current employer/organization?
-(If self-employed, type your business name)`;
-
-const ROLE_DETAILS_MESSAGE = `👔 *Your Role*
-
-What is your current job title/role?
-(e.g., "Software Developer", "Sales Executive", "Electrician", "Data Entry Operator")`;
-
-const SALARY_RANGE_MESSAGE = `💰 *Monthly Income Range*
-
-What is your approximate monthly income (including incentives)?`;
-
-const SALARY_BUTTONS = [
-  { label: "💵 Below ₹10,000", value: "salary_0_10k" },
-  { label: "💵 ₹10,000 - ₹15,000", value: "salary_10k_15k" },
-  { label: "💵 ₹15,000 - ₹25,000", value: "salary_15k_25k" },
-  { label: "💵 ₹25,000 - ₹40,000", value: "salary_25k_40k" },
-  { label: "💵 ₹40,000 - ₹60,000", value: "salary_40k_60k" },
-  { label: "💵 ₹60,000 - ₹1,00,000", value: "salary_60k_100k" },
-  { label: "💵 Above ₹1,00,000", value: "salary_100k_plus" },
-  { label: "🤐 Prefer not to say", value: "salary_prefer_not" },
-];
-
-const JOB_SATISFACTION_MESSAGE = `😊 *Job Satisfaction*
-
-How satisfied are you with your current role?`;
-
-const SATISFACTION_BUTTONS = [
-  { label: "⭐⭐⭐⭐⭐ Very Satisfied", value: "sat_5" },
-  { label: "⭐⭐⭐⭐ Satisfied", value: "sat_4" },
-  { label: "⭐⭐⭐ Neutral", value: "sat_3" },
-  { label: "⭐⭐ Dissatisfied", value: "sat_2" },
-  { label: "⭐ Very Dissatisfied", value: "sat_1" },
-];
-
-const TRAINING_RELEVANCE_MESSAGE = `🎓 *Training Relevance*
-
-How relevant was your PMKVY training to your current job?`;
-
-const RELEVANCE_BUTTONS = [
-  { label: "🎯 Directly relevant", value: "relevance_direct" },
-  { label: "🔗 Somewhat relevant", value: "relevance_partial" },
-  { label: "📚 Only basics useful", value: "relevance_basics" },
-  { label: "❌ Not relevant at all", value: "relevance_none" },
-];
-
-const SKILL_GAPS_MESSAGE = `📉 *Skill Gaps*
-
-What skills did you *lack* when starting this job that training didn't cover?
-(Select all that apply or type your own)`;
-
-const SKILL_GAP_OPTIONS = [
-  { label: "💻 Technical/Digital skills", value: "gap_technical", description: "Software, tools, equipment" },
-  { label: "🗣️ Communication/Soft skills", value: "gap_communication", description: "English, presentation, teamwork" },
-  { label: "📊 Data/Analytical skills", value: "gap_analytical", description: "Excel, reporting, analysis" },
-  { label: "🔧 Domain-specific skills", value: "gap_domain", description: "Industry-specific knowledge" },
-  { label: "👔 Professional etiquette", value: "gap_etiquette", description: "Workplace behavior, emails" },
-  { label: "💰 Financial literacy", value: "gap_financial", description: "Salary, taxes, savings" },
-  { label: "✅ No major gaps", value: "gap_none", description: "Training covered everything" },
-];
-
-const ADDITIONAL_TRAINING_MESSAGE = `📚 *Additional Training Needs*
-
-What training would help you grow in your current role or get a better job?`;
-
-const TRAINING_OPTIONS = [
-  { label: "🚀 Advanced technical skills", value: "train_adv_tech", description: "Next-level domain skills" },
-  { label: "🎯 Certification courses", value: "train_cert", description: "Industry-recognized certs" },
-  { label: "🗣️ English/Communication", value: "train_english", description: "Business communication" },
-  { label: "💼 Entrepreneurship", value: "train_entrepreneur", description: "Start your own business" },
-  { label: "📈 Leadership/Management", value: "train_leadership", description: "Team lead, supervisor skills" },
-  { label: "💻 Digital/Computer skills", value: "train_digital", description: "MS Office, coding, tools" },
-  { label: "🤝 Interview preparation", value: "train_interview", description: "Resume, mock interviews" },
-  { label: "✅ None needed", value: "train_none", description: "Happy with current skills" },
-];
-
-const CAREER_GOALS_MESSAGE = `🎯 *Career Goals (Next 2 Years)*
-
-What are you aiming for?`;
-
-const GOALS_OPTIONS = [
-  { label: "📈 Promotion in current role", value: "goal_promotion" },
-  { label: "🔄 Switch to better job", value: "goal_switch" },
-  { label: "🎓 Higher education/degree", value: "goal_education" },
-  { label: "🏢 Start own business", value: "goal_business" },
-  { label: "🌍 Work abroad", value: "goal_abroad" },
-  { label: "🏠 Stay in current role", value: "goal_stay" },
-  { label: "🤔 Not sure yet", value: "goal_unsure" },
-];
-
-const CHALLENGES_MESSAGE = `🚧 *Biggest Career Challenges*
-
-What's holding you back? (Select up to 3)`;
-
-const CHALLENGES_OPTIONS = [
-  { label: "💰 Low salary / No increments", value: "challenge_salary" },
-  { label: "📉 Limited growth opportunities", value: "challenge_growth" },
-  { label: "🎓 Skills don't match market needs", value: "challenge_skills" },
-  { label: "📍 Location / Commute issues", value: "challenge_location" },
-  { label: "⚖️ Work-life balance", value: "challenge_balance" },
-  { label: "🤝 Workplace culture", value: "challenge_culture" },
-  { label: "📋 No formal contract/benefits", value: "challenge_contract" },
-  { label: "👨‍👩‍👧‍👦 Family/personal constraints", value: "challenge_family" },
-  { label: "✅ No major challenges", value: "challenge_none" },
-];
-
-const RECOMMENDATIONS_MESSAGE = `💡 *Your Suggestions for PMKVY*
-
-How can we improve the training program for future students?`;
-
-const RECOMMENDATIONS_OPTIONS = [
-  { label: "🛠️ More practical/hands-on training", value: "rec_practical" },
-  { label: "🏭 Industry visits & internships", value: "rec_internship" },
-  { label: "💻 Latest tools & technologies", value: "rec_tools" },
-  { label: "🗣️ Soft skills & English focus", value: "rec_softskills" },
-  { label: "🤝 Better placement support", value: "rec_placement" },
-  { label: "📜 Recognized certifications", value: "rec_certs" },
-  { label: "💰 Financial literacy module", value: "rec_financial" },
-  { label: "👩‍🏫 Better trainer quality", value: "rec_trainers" },
-  { label: "✅ Program is good as-is", value: "rec_good" },
-];
-
-const COMPLETE_MESSAGE = `🎉 *Thank You, {name}!*
-
-Your responses have been recorded and will help improve skill training for thousands of students across Maharashtra.
-
-📊 *What happens next:*
-• Your feedback goes to MSSDS & NSDC for program improvements
-• You'll get personalized job alerts on OutcomeTrack
-• We may reach out for follow-up in 6 months
-
-🔗 *Stay Connected:*
-• Visit: https://outcometrack.vercel.app
-• Job alerts | Skill courses | Career guidance
-
-*Together, building a skilled Maharashtra! 🇮🇳*
-
-— Team OutcomeTrack (MSSDS / PMKVY)`;
-
+const memStore = new Map<string, ConversationState>();
 const processedMessageIds = new Set<string>();
 
-export async function processInboundMessage(msg: InboundMessage) {
-  const { fromPhone, contactName, text, kapsoMessageId } = msg;
-  const normalizedText = text.trim().toLowerCase();
+const RESTART_KEYWORDS = new Set([
+  "start",
+  "restart",
+  "begin",
+  "hello",
+  "hi",
+  "hey",
+  "namaste",
+  "नमस्ते",
+  "नमस्कार",
+  "शुरू",
+  "सुरू",
+]);
+const SKIP_KEYWORDS = new Set(["skip", "स्किप", "छोड़ें", "छोड़ो", "वगळा"]);
+const DONE_KEYWORDS = new Set(["done", "bas", "बस", "पूर्ण", "पूरे", "झाले", "finish", "complete"]);
+const CONSENT_YES = new Set([
+  "consent_yes",
+  "yes",
+  "y",
+  "हाँ",
+  "हां",
+  "हो",
+  "होय",
+  "haan",
+  "ha",
+]);
+const CONSENT_NO = new Set([
+  "consent_no",
+  "no",
+  "n",
+  "ना",
+  "नहीं",
+  "नाही",
+  "nahi",
+  "na",
+]);
+const IDENTITY_YES = new Set([
+  "identity_yes",
+  "yes",
+  "y",
+  "हाँ",
+  "हां",
+  "हो",
+  "होय",
+  "haan",
+  "ha",
+]);
+const IDENTITY_NO = new Set([
+  "identity_no",
+  "no",
+  "n",
+  "ना",
+  "नहीं",
+  "नाही",
+  "nahi",
+  "na",
+]);
+const LANG_KEYWORDS: Record<string, Lang> = {
+  english: "en",
+  en: "en",
+  angrezi: "en",
+  hindi: "hi",
+  hi: "hi",
+  "हिंदी": "hi",
+  marathi: "mr",
+  mr: "mr",
+  "मराठी": "mr",
+};
 
-  // Idempotency: Kapso retries webhooks while the server is slow to
-  // respond — never process the same message twice.
-  if (processedMessageIds.has(kapsoMessageId)) {
-    console.log("[BOT] Duplicate message ignored:", kapsoMessageId);
-    return;
-  }
-  processedMessageIds.add(kapsoMessageId);
+const EMPLOYED_STATUSES = new Set([
+  "employed_full",
+  "employed_part",
+  "self_employed",
+  "apprentice",
+]);
 
-  let state = conversationStore.get(fromPhone);
-
-  if (!state) {
-    state = { step: STEPS.WELCOME, data: {} };
-    conversationStore.set(fromPhone, state);
-  }
-
-  try {
-    await handleStep(state, fromPhone, contactName, normalizedText, msg);
-  } catch (err) {
-    console.error("[BOT] Error processing:", err);
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: "Sorry, something went wrong. Please type *START* to begin again.",
-    });
-    conversationStore.delete(fromPhone);
-  }
+function isEmployed(status: string | undefined) {
+  return !!status && EMPLOYED_STATUSES.has(status);
 }
 
-async function handleStep(
-  state: ConversationState,
-  fromPhone: string,
-  contactName: string,
+function matchOption(
   text: string,
-  msg: InboundMessage
-) {
-  switch (state.step) {
-    case STEPS.WELCOME:
-      await sendWelcome(state, fromPhone, contactName);
-      break;
+  options: Option[] | undefined,
+  allowDigits: boolean
+): string | undefined {
+  if (!options) return undefined;
+  const byValue = options.find((o) => o.value === text);
+  if (byValue) return byValue.value;
+  if (allowDigits) {
+    const digit = /^([0-9]+)$/.exec(text);
+    if (digit) {
+      const idx = parseInt(digit[1] ?? "", 10);
+      if (idx >= 1 && idx <= options.length) {
+        const opt = options[idx - 1];
+        if (opt) return opt.value;
+      }
+    }
+  }
+  return undefined;
+}
 
+function stepOptions(step: string, ctx: Ctx): Option[] | undefined {
+  const lang = ctx.state.data.lang ?? "en";
+  switch (step) {
+    case STEPS.LANGUAGE:
+      return LANG_BUTTONS;
     case STEPS.CONSENT:
-      await handleConsent(state, fromPhone, contactName, text);
-      break;
-
+      return opts(VALUES.consent, lang);
     case STEPS.IDENTITY_VERIFY:
-      await handleIdentityVerify(state, fromPhone, contactName, text);
-      break;
-
+      return opts(VALUES.identity, lang);
     case STEPS.EMPLOYMENT_STATUS:
-      await handleEmploymentStatus(state, fromPhone, contactName, text);
-      break;
-
-    case STEPS.EMPLOYER_DETAILS:
-      await handleEmployerDetails(state, fromPhone, contactName, text);
-      break;
-
-    case STEPS.ROLE_DETAILS:
-      await handleRoleDetails(state, fromPhone, contactName, text);
-      break;
-
+      return opts(VALUES.employment, lang);
     case STEPS.SALARY_RANGE:
-      await handleSalaryRange(state, fromPhone, contactName, text);
-      break;
-
+      return opts(VALUES.salary, lang);
     case STEPS.JOB_SATISFACTION:
-      await handleJobSatisfaction(state, fromPhone, contactName, text);
-      break;
-
+      return opts(VALUES.satisfaction, lang);
+    case STEPS.SUPPORT_NEEDS:
+      return opts(VALUES.support, lang);
     case STEPS.TRAINING_RELEVANCE:
-      await handleTrainingRelevance(state, fromPhone, contactName, text);
-      break;
-
-    case STEPS.SKILL_GAPS:
-      await handleSkillGaps(state, fromPhone, contactName, text);
-      break;
-
+      return opts(VALUES.relevance, lang);
+    case STEPS.SKILL_GAPS: {
+      const selected = ctx.state.data.skillGaps ?? [];
+      const all = opts(VALUES.gaps, lang);
+      return selected.length === 0 ? all : all.filter((o) => !selected.includes(o.value));
+    }
     case STEPS.ADDITIONAL_TRAINING:
-      await handleAdditionalTraining(state, fromPhone, contactName, text);
-      break;
-
+      return opts(VALUES.training, lang);
     case STEPS.CAREER_GOALS:
-      await handleCareerGoals(state, fromPhone, contactName, text);
-      break;
-
-    case STEPS.CHALLENGES:
-      await handleChallenges(state, fromPhone, contactName, text);
-      break;
-
+      return opts(VALUES.goals, lang);
+    case STEPS.CHALLENGES: {
+      const selected = ctx.state.data.challenges ?? [];
+      const all = opts(VALUES.challenges, lang);
+      return selected.length === 0 ? all : all.filter((o) => !selected.includes(o.value));
+    }
     case STEPS.RECOMMENDATIONS:
-      await handleRecommendations(state, fromPhone, contactName, text);
-      break;
-
-    case STEPS.COMPLETE:
-      await sendWelcome(state, fromPhone, contactName); // Restart
-      break;
-
+      return opts(VALUES.recommendations, lang);
     default:
-      await sendWelcome(state, fromPhone, contactName);
+      return undefined;
   }
 }
 
-async function sendWelcome(state: ConversationState, fromPhone: string, contactName: string) {
-  state.step = STEPS.CONSENT;
-  state.data = {};
-
+async function sendInvalid(ctx: Ctx, step: string) {
+  const t = T[ctx.state.data.lang ?? "en"];
   await sendKapsoMessage({
-    toPhoneE164: fromPhone,
-    text: WELCOME_MESSAGE.replace("{name}", contactName),
-  });
-
-  await sendKapsoMessage({
-    toPhoneE164: fromPhone,
-    text: CONSENT_MESSAGE,
-    options: CONSENT_BUTTONS,
+    toPhoneE164: ctx.phone,
+    text: t.invalidOption,
+    options: stepOptions(step, ctx),
   });
 }
 
-async function handleConsent(state: ConversationState, fromPhone: string, contactName: string, text: string) {
-  // Idempotency: consent already processed — never re-send the same step
-  if (state.step !== STEPS.CONSENT || state.data.traineeId) {
-    return;
-  }
+function freshState(): ConversationState {
+  return { step: STEPS.LANGUAGE, data: {} };
+}
 
-  if (text === "consent_no" || text.includes("no")) {
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: "No problem! Thank you for your time. You can type *START* anytime to participate later. 🙏",
+function parseState(raw: unknown): ConversationState | null {
+  if (!raw || typeof raw !== "object") return null;
+  const obj = raw as Record<string, unknown>;
+  if (typeof obj.step !== "string" || !obj.data || typeof obj.data !== "object") return null;
+  const lang = (obj.data as Record<string, unknown>).lang;
+  if (lang !== "en" && lang !== "hi" && lang !== "mr") return null;
+  const data = { ...(obj.data as ConversationData) };
+  if (Array.isArray(data.skillGaps)) data.skillGaps = [...data.skillGaps];
+  if (Array.isArray(data.challenges)) data.challenges = [...data.challenges];
+  return { step: obj.step, data };
+}
+
+async function loadState(phone: string): Promise<ConversationState> {
+  const mem = memStore.get(phone);
+  if (mem) return mem;
+  let parsed: ConversationState | null = null;
+  try {
+    const trainee = await db.trainee.findFirst({
+      where: { phoneE164: phone },
+      select: { conversationState: true },
     });
-    conversationStore.delete(fromPhone);
+    parsed = parseState(trainee?.conversationState);
+  } catch (err) {
+    console.error("[BOT] Failed to load state:", err);
+  }
+  const state = parsed ?? freshState();
+  memStore.set(phone, state);
+  return state;
+}
+
+async function persistState(phone: string, state: ConversationState) {
+  memStore.set(phone, state);
+  try {
+    await db.trainee.updateMany({
+      where: { phoneE164: phone },
+      data: { conversationState: state as unknown as Prisma.InputJsonValue },
+    });
+  } catch (err) {
+    console.error("[BOT] Failed to persist state:", err);
+  }
+}
+
+async function clearState(phone: string) {
+  memStore.delete(phone);
+  try {
+    await db.trainee.updateMany({
+      where: { phoneE164: phone },
+      data: { conversationState: Prisma.DbNull },
+    });
+  } catch (err) {
+    console.error("[BOT] Failed to clear state:", err);
+  }
+}
+
+async function askQuestion(step: string, ctx: Ctx) {
+  const lang = ctx.state.data.lang ?? "en";
+  const t = T[lang];
+  const options = stepOptions(step, ctx);
+  const d = ctx.state.data;
+  switch (step) {
+    case STEPS.LANGUAGE:
+      await sendKapsoMessage({ toPhoneE164: ctx.phone, text: LANG_PROMPT, options });
+      break;
+    case STEPS.CONSENT:
+      await sendKapsoMessage({ toPhoneE164: ctx.phone, text: t.consent, options });
+      break;
+    case STEPS.IDENTITY_VERIFY:
+      await sendKapsoMessage({
+        toPhoneE164: ctx.phone,
+        text: t.identity
+          .replace("{name}", d.traineeName ?? ctx.name ?? t.fallbackName)
+          .replace("{phone}", ctx.phone)
+          .replace("{programme}", d.programme ?? "—")
+          .replace("{cohort}", d.cohort ?? "—"),
+        options,
+      });
+      break;
+    case STEPS.EMPLOYMENT_STATUS:
+      await sendKapsoMessage({ toPhoneE164: ctx.phone, text: t.employment, options });
+      break;
+    case STEPS.EMPLOYER_DETAILS:
+      await sendKapsoMessage({ toPhoneE164: ctx.phone, text: t.employer });
+      break;
+    case STEPS.ROLE_DETAILS:
+      await sendKapsoMessage({ toPhoneE164: ctx.phone, text: t.role });
+      break;
+    case STEPS.SALARY_RANGE:
+      await sendKapsoMessage({ toPhoneE164: ctx.phone, text: t.salary, options });
+      break;
+    case STEPS.JOB_SATISFACTION:
+      await sendKapsoMessage({ toPhoneE164: ctx.phone, text: t.satisfaction, options });
+      break;
+    case STEPS.SUPPORT_NEEDS:
+      await sendKapsoMessage({ toPhoneE164: ctx.phone, text: t.supportNeeds, options });
+      break;
+    case STEPS.TRAINING_RELEVANCE:
+      await sendKapsoMessage({
+        toPhoneE164: ctx.phone,
+        text: isEmployed(d.employmentStatus) ? t.relevanceJob : t.relevanceSituation,
+        options,
+      });
+      break;
+    case STEPS.SKILL_GAPS: {
+      const selected = d.skillGaps ?? [];
+      const question = isEmployed(d.employmentStatus) ? t.skillGapsJob : t.skillGapsSituation;
+      const text =
+        selected.length === 0
+          ? `${question}\n\n${t.selectHint}`
+          : t.selectMore.replace("{count}", String(selected.length));
+      await sendKapsoMessage({ toPhoneE164: ctx.phone, text, options });
+      break;
+    }
+    case STEPS.ADDITIONAL_TRAINING:
+      await sendKapsoMessage({
+        toPhoneE164: ctx.phone,
+        text: isEmployed(d.employmentStatus) ? t.additionalJob : t.additionalSituation,
+        options,
+      });
+      break;
+    case STEPS.CAREER_GOALS:
+      await sendKapsoMessage({ toPhoneE164: ctx.phone, text: t.goals, options });
+      break;
+    case STEPS.CHALLENGES: {
+      const selected = d.challenges ?? [];
+      const text =
+        selected.length === 0
+          ? `${t.challenges}\n\n${t.selectHint}`
+          : t.selectMore.replace("{count}", String(selected.length));
+      await sendKapsoMessage({ toPhoneE164: ctx.phone, text, options });
+      break;
+    }
+    case STEPS.RECOMMENDATIONS:
+      await sendKapsoMessage({ toPhoneE164: ctx.phone, text: t.recommendations, options });
+      break;
+  }
+}
+
+async function handleStep(ctx: Ctx) {
+  switch (ctx.state.step) {
+    case STEPS.LANGUAGE:
+      return handleLanguage(ctx);
+    case STEPS.CONSENT:
+      return handleConsent(ctx);
+    case STEPS.IDENTITY_VERIFY:
+      return handleIdentityVerify(ctx);
+    case STEPS.EMPLOYMENT_STATUS:
+      return handleEmploymentStatus(ctx);
+    case STEPS.EMPLOYER_DETAILS:
+      return handleEmployerDetails(ctx);
+    case STEPS.ROLE_DETAILS:
+      return handleRoleDetails(ctx);
+    case STEPS.SALARY_RANGE:
+      return handleSalaryRange(ctx);
+    case STEPS.JOB_SATISFACTION:
+      return handleJobSatisfaction(ctx);
+    case STEPS.SUPPORT_NEEDS:
+      return handleSupportNeeds(ctx);
+    case STEPS.TRAINING_RELEVANCE:
+      return handleTrainingRelevance(ctx);
+    case STEPS.SKILL_GAPS:
+      return handleSkillGaps(ctx);
+    case STEPS.ADDITIONAL_TRAINING:
+      return handleAdditionalTraining(ctx);
+    case STEPS.CAREER_GOALS:
+      return handleCareerGoals(ctx);
+    case STEPS.CHALLENGES:
+      return handleChallenges(ctx);
+    case STEPS.RECOMMENDATIONS:
+      return handleRecommendations(ctx);
+    default:
+      ctx.state = freshState();
+      memStore.set(ctx.phone, ctx.state);
+      return askQuestion(STEPS.LANGUAGE, ctx);
+  }
+}
+
+async function handleLanguage(ctx: Ctx) {
+  const mapped =
+    matchOption(ctx.text, LANG_BUTTONS, true) ??
+    (LANG_KEYWORDS[ctx.text] ? `lang_${LANG_KEYWORDS[ctx.text]}` : undefined);
+  if (!mapped) return sendInvalid(ctx, STEPS.LANGUAGE);
+  const lang: Lang = mapped === "lang_en" ? "en" : mapped === "lang_hi" ? "hi" : "mr";
+  ctx.state.data.lang = lang;
+  ctx.state.step = STEPS.CONSENT;
+  try {
+    await db.trainee.updateMany({
+      where: { phoneE164: ctx.phone },
+      data: { language: lang.toUpperCase() },
+    });
+  } catch (err) {
+    console.error("[BOT] Failed to save language:", err);
+  }
+  const t = T[lang];
+  await sendKapsoMessage({
+    toPhoneE164: ctx.phone,
+    text: t.welcome.replace("{name}", ctx.name ?? t.fallbackName),
+  });
+  await askQuestion(STEPS.CONSENT, ctx);
+}
+
+async function handleConsent(ctx: Ctx) {
+  const t = T[ctx.state.data.lang ?? "en"];
+  if (CONSENT_NO.has(ctx.text)) {
+    ctx.state.step = STEPS.DECLINED;
+    await sendKapsoMessage({ toPhoneE164: ctx.phone, text: t.declined });
     return;
   }
-
-  state.step = STEPS.IDENTITY_VERIFY;
+  if (!CONSENT_YES.has(ctx.text)) return sendInvalid(ctx, STEPS.CONSENT);
 
   const trainee = await db.trainee.findFirst({
-    where: { phoneE164: fromPhone },
+    where: { phoneE164: ctx.phone },
     include: { enrolments: { include: { cohort: { include: { programme: true } } } } },
   });
 
   if (trainee) {
-    // Consent given via WhatsApp — record it (this is the source of truth)
     await db.trainee.update({
       where: { id: trainee.id },
       data: { consentGiven: true, consentGivenAt: new Date(), consentMethod: "WHATSAPP" },
     });
-
-    const enrolment = trainee.enrolments[0];
-    const programmeName = enrolment?.cohort?.programme?.name ?? "PMKVY Training";
-    const cohortName = enrolment?.cohort?.name ?? "Your Batch";
-    
-    state.data.traineeId = trainee.id;
-    state.data.programme = programmeName;
-    state.data.cohort = cohortName;
-
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: IDENTITY_VERIFY_MESSAGE
-        .replace("{name}", trainee.fullName)
-        .replace("{phone}", fromPhone)
-        .replace("{programme}", programmeName)
-        .replace("{cohort}", cohortName),
-      options: IDENTITY_BUTTONS,
-    });
+    ctx.state.data.traineeId = trainee.id;
+    ctx.state.data.traineeName = trainee.fullName;
+    ctx.state.data.programme = trainee.enrolments[0]?.cohort?.programme?.name ?? "PMKVY Training";
+    ctx.state.data.cohort = trainee.enrolments[0]?.cohort?.name ?? "Your Batch";
+    ctx.state.step = STEPS.IDENTITY_VERIFY;
+    await askQuestion(STEPS.IDENTITY_VERIFY, ctx);
   } else {
-    state.data.traineeId = null;
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: "We couldn't find your training record. Let's continue anyway! 📝\n\n" + EMPLOYMENT_STATUS_MESSAGE,
-      options: EMPLOYMENT_BUTTONS,
-    });
-    state.step = STEPS.EMPLOYMENT_STATUS;
+    ctx.state.data.traineeId = null;
+    ctx.state.step = STEPS.EMPLOYMENT_STATUS;
+    await sendKapsoMessage({ toPhoneE164: ctx.phone, text: t.notFound });
+    await askQuestion(STEPS.EMPLOYMENT_STATUS, ctx);
   }
 }
 
-async function handleIdentityVerify(state: ConversationState, fromPhone: string, contactName: string, text: string) {
-  if (text === "identity_no" || text.includes("no")) {
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: "No worries! Let's continue with the survey anyway. 📝\n\n" + EMPLOYMENT_STATUS_MESSAGE,
-      options: EMPLOYMENT_BUTTONS,
-    });
-    state.step = STEPS.EMPLOYMENT_STATUS;
-    state.data.traineeId = null;
+async function handleIdentityVerify(ctx: Ctx) {
+  const t = T[ctx.state.data.lang ?? "en"];
+  if (IDENTITY_NO.has(ctx.text)) {
+    ctx.state.data.traineeId = null;
+    ctx.state.step = STEPS.EMPLOYMENT_STATUS;
+    await sendKapsoMessage({ toPhoneE164: ctx.phone, text: t.wrongPerson });
+    await askQuestion(STEPS.EMPLOYMENT_STATUS, ctx);
     return;
   }
+  if (!IDENTITY_YES.has(ctx.text)) return sendInvalid(ctx, STEPS.IDENTITY_VERIFY);
+  ctx.state.step = STEPS.EMPLOYMENT_STATUS;
+  await askQuestion(STEPS.EMPLOYMENT_STATUS, ctx);
+}
 
-  state.step = STEPS.EMPLOYMENT_STATUS;
+async function handleEmploymentStatus(ctx: Ctx) {
+  const matched = matchOption(ctx.text, stepOptions(STEPS.EMPLOYMENT_STATUS, ctx), true);
+  if (!matched && !SKIP_KEYWORDS.has(ctx.text)) return sendInvalid(ctx, STEPS.EMPLOYMENT_STATUS);
+  const status = matched ?? "skipped";
+  ctx.state.data.employmentStatus = status;
+  const next = isEmployed(status) ? STEPS.EMPLOYER_DETAILS : STEPS.SUPPORT_NEEDS;
+  ctx.state.step = next;
+  await askQuestion(next, ctx);
+}
+
+async function handleEmployerDetails(ctx: Ctx) {
+  const t = T[ctx.state.data.lang ?? "en"];
+  if (SKIP_KEYWORDS.has(ctx.text)) {
+    ctx.state.data.employerName = undefined;
+    ctx.state.step = STEPS.ROLE_DETAILS;
+    return askQuestion(STEPS.ROLE_DETAILS, ctx);
+  }
+  if (ctx.raw.length < 2) {
+    await sendKapsoMessage({ toPhoneE164: ctx.phone, text: t.employerInvalid });
+    return;
+  }
+  ctx.state.data.employerName = ctx.raw;
+  ctx.state.step = STEPS.ROLE_DETAILS;
+  await askQuestion(STEPS.ROLE_DETAILS, ctx);
+}
+
+async function handleRoleDetails(ctx: Ctx) {
+  const t = T[ctx.state.data.lang ?? "en"];
+  if (SKIP_KEYWORDS.has(ctx.text)) {
+    ctx.state.data.role = undefined;
+    ctx.state.step = STEPS.SALARY_RANGE;
+    return askQuestion(STEPS.SALARY_RANGE, ctx);
+  }
+  if (ctx.raw.length < 2) {
+    await sendKapsoMessage({ toPhoneE164: ctx.phone, text: t.roleInvalid });
+    return;
+  }
+  ctx.state.data.role = ctx.raw;
+  ctx.state.step = STEPS.SALARY_RANGE;
+  await askQuestion(STEPS.SALARY_RANGE, ctx);
+}
+
+async function handleSalaryRange(ctx: Ctx) {
+  const matched = matchOption(ctx.text, stepOptions(STEPS.SALARY_RANGE, ctx), true);
+  if (!matched && !SKIP_KEYWORDS.has(ctx.text)) return sendInvalid(ctx, STEPS.SALARY_RANGE);
+  ctx.state.data.salaryRange = matched;
+  ctx.state.step = STEPS.JOB_SATISFACTION;
+  await askQuestion(STEPS.JOB_SATISFACTION, ctx);
+}
+
+async function handleJobSatisfaction(ctx: Ctx) {
+  const matched = matchOption(ctx.text, stepOptions(STEPS.JOB_SATISFACTION, ctx), true);
+  if (!matched && !SKIP_KEYWORDS.has(ctx.text)) return sendInvalid(ctx, STEPS.JOB_SATISFACTION);
+  ctx.state.data.jobSatisfaction = matched;
+  ctx.state.step = STEPS.TRAINING_RELEVANCE;
+  await askQuestion(STEPS.TRAINING_RELEVANCE, ctx);
+}
+
+async function handleSupportNeeds(ctx: Ctx) {
+  const matched = matchOption(ctx.text, stepOptions(STEPS.SUPPORT_NEEDS, ctx), true);
+  if (!matched && !SKIP_KEYWORDS.has(ctx.text)) return sendInvalid(ctx, STEPS.SUPPORT_NEEDS);
+  ctx.state.data.supportNeeded = matched;
+  ctx.state.step = STEPS.TRAINING_RELEVANCE;
+  await askQuestion(STEPS.TRAINING_RELEVANCE, ctx);
+}
+
+async function handleTrainingRelevance(ctx: Ctx) {
+  const matched = matchOption(ctx.text, stepOptions(STEPS.TRAINING_RELEVANCE, ctx), true);
+  if (!matched && !SKIP_KEYWORDS.has(ctx.text)) return sendInvalid(ctx, STEPS.TRAINING_RELEVANCE);
+  ctx.state.data.trainingRelevance = matched;
+  ctx.state.step = STEPS.SKILL_GAPS;
+  await askQuestion(STEPS.SKILL_GAPS, ctx);
+}
+
+async function handleSkillGaps(ctx: Ctx) {
+  const selected = ctx.state.data.skillGaps ?? [];
+
+  if (DONE_KEYWORDS.has(ctx.text)) {
+    if (selected.length === 0) return sendInvalid(ctx, STEPS.SKILL_GAPS);
+    ctx.state.step = STEPS.ADDITIONAL_TRAINING;
+    return askQuestion(STEPS.ADDITIONAL_TRAINING, ctx);
+  }
+  if (SKIP_KEYWORDS.has(ctx.text)) {
+    ctx.state.data.skillGaps = selected.length > 0 ? selected : ["skipped"];
+    ctx.state.step = STEPS.ADDITIONAL_TRAINING;
+    return askQuestion(STEPS.ADDITIONAL_TRAINING, ctx);
+  }
+
+  const matched = matchOption(ctx.text, stepOptions(STEPS.SKILL_GAPS, ctx), false);
+  if (!matched) return sendInvalid(ctx, STEPS.SKILL_GAPS);
+
+  if (matched === "gap_none") {
+    ctx.state.data.skillGaps = ["none"];
+  } else if (!selected.includes(matched)) {
+    ctx.state.data.skillGaps = [...selected, matched];
+  }
+
+  const now = ctx.state.data.skillGaps ?? [];
+  if (now.includes("none") || now.length >= MAX_MULTI_SELECT) {
+    ctx.state.step = STEPS.ADDITIONAL_TRAINING;
+    return askQuestion(STEPS.ADDITIONAL_TRAINING, ctx);
+  }
+  await askQuestion(STEPS.SKILL_GAPS, ctx);
+}
+
+async function handleAdditionalTraining(ctx: Ctx) {
+  const matched = matchOption(ctx.text, stepOptions(STEPS.ADDITIONAL_TRAINING, ctx), true);
+  if (!matched && !SKIP_KEYWORDS.has(ctx.text)) return sendInvalid(ctx, STEPS.ADDITIONAL_TRAINING);
+  ctx.state.data.additionalTraining = matched;
+  ctx.state.step = STEPS.CAREER_GOALS;
+  await askQuestion(STEPS.CAREER_GOALS, ctx);
+}
+
+async function handleCareerGoals(ctx: Ctx) {
+  const matched = matchOption(ctx.text, stepOptions(STEPS.CAREER_GOALS, ctx), true);
+  if (!matched && !SKIP_KEYWORDS.has(ctx.text)) return sendInvalid(ctx, STEPS.CAREER_GOALS);
+  ctx.state.data.careerGoals = matched;
+  ctx.state.step = STEPS.CHALLENGES;
+  await askQuestion(STEPS.CHALLENGES, ctx);
+}
+
+async function handleChallenges(ctx: Ctx) {
+  const selected = ctx.state.data.challenges ?? [];
+
+  if (DONE_KEYWORDS.has(ctx.text)) {
+    if (selected.length === 0) return sendInvalid(ctx, STEPS.CHALLENGES);
+    ctx.state.step = STEPS.RECOMMENDATIONS;
+    return askQuestion(STEPS.RECOMMENDATIONS, ctx);
+  }
+  if (SKIP_KEYWORDS.has(ctx.text)) {
+    ctx.state.data.challenges = selected.length > 0 ? selected : ["skipped"];
+    ctx.state.step = STEPS.RECOMMENDATIONS;
+    return askQuestion(STEPS.RECOMMENDATIONS, ctx);
+  }
+
+  const matched = matchOption(ctx.text, stepOptions(STEPS.CHALLENGES, ctx), false);
+  if (!matched) return sendInvalid(ctx, STEPS.CHALLENGES);
+
+  if (matched === "challenge_none") {
+    ctx.state.data.challenges = ["none"];
+  } else if (!selected.includes(matched)) {
+    ctx.state.data.challenges = [...selected, matched];
+  }
+
+  const now = ctx.state.data.challenges ?? [];
+  if (now.includes("none") || now.length >= MAX_MULTI_SELECT) {
+    ctx.state.step = STEPS.RECOMMENDATIONS;
+    return askQuestion(STEPS.RECOMMENDATIONS, ctx);
+  }
+  await askQuestion(STEPS.CHALLENGES, ctx);
+}
+
+async function handleRecommendations(ctx: Ctx) {
+  const matched = matchOption(ctx.text, stepOptions(STEPS.RECOMMENDATIONS, ctx), true);
+  if (!matched && !SKIP_KEYWORDS.has(ctx.text)) return sendInvalid(ctx, STEPS.RECOMMENDATIONS);
+  ctx.state.data.recommendations = matched;
+  await completeSurvey(ctx);
+}
+
+async function completeSurvey(ctx: Ctx) {
+  await saveSurveyResponse(ctx.phone, ctx.state.data);
+  ctx.state.step = STEPS.COMPLETE;
+  const lang = ctx.state.data.lang ?? "en";
+  const t = T[lang];
+  const name = ctx.state.data.traineeName ?? ctx.name ?? t.fallbackName;
   await sendKapsoMessage({
-    toPhoneE164: fromPhone,
-    text: EMPLOYMENT_STATUS_MESSAGE,
-    options: EMPLOYMENT_BUTTONS,
-  });
-}
-
-async function handleEmploymentStatus(state: ConversationState, fromPhone: string, contactName: string, text: string) {
-  const validOptions = EMPLOYMENT_BUTTONS.map(b => b.value);
-  if (!validOptions.includes(text) && !/^[1-6]$/.exec(text)) {
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: "Please select one of the options above 👆",
-      options: EMPLOYMENT_BUTTONS,
-    });
-    return;
-  }
-
-  const statusMap: Record<string, string> = {
-    "1": "employed_full", "employed_full": "employed_full",
-    "2": "employed_part", "employed_part": "employed_part",
-    "3": "self_employed", "self_employed": "self_employed",
-    "4": "apprentice", "apprentice": "apprentice",
-    "5": "looking", "looking": "looking",
-    "6": "not_working", "not_working": "not_working",
-  };
-  state.data.employmentStatus = statusMap[text] ?? text;
-
-  if (["looking", "not_working"].includes(state.data.employmentStatus)) {
-    state.step = STEPS.TRAINING_RELEVANCE;
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: TRAINING_RELEVANCE_MESSAGE,
-      options: RELEVANCE_BUTTONS,
-    });
-  } else {
-    state.step = STEPS.EMPLOYER_DETAILS;
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: EMPLOYER_DETAILS_MESSAGE,
-    });
-  }
-}
-
-async function handleEmployerDetails(state: ConversationState, fromPhone: string, contactName: string, text: string) {
-  if (text.length < 2) {
-    await sendKapsoMessage({ toPhoneE164: fromPhone, text: "Please enter a valid employer name." });
-    return;
-  }
-  state.data.employerName = text;
-  state.step = STEPS.ROLE_DETAILS;
-  await sendKapsoMessage({ toPhoneE164: fromPhone, text: ROLE_DETAILS_MESSAGE });
-}
-
-async function handleRoleDetails(state: ConversationState, fromPhone: string, contactName: string, text: string) {
-  if (text.length < 2) {
-    await sendKapsoMessage({ toPhoneE164: fromPhone, text: "Please enter a valid role/title." });
-    return;
-  }
-  state.data.role = text;
-  state.step = STEPS.SALARY_RANGE;
-  await sendKapsoMessage({
-    toPhoneE164: fromPhone,
-    text: SALARY_RANGE_MESSAGE,
-    options: SALARY_BUTTONS,
-  });
-}
-
-async function handleSalaryRange(state: ConversationState, fromPhone: string, contactName: string, text: string) {
-  const validOptions = SALARY_BUTTONS.map(b => b.value);
-  if (!validOptions.includes(text)) {
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: "Please select one of the options above 👆",
-      options: SALARY_BUTTONS,
-    });
-    return;
-  }
-  state.data.salaryRange = text;
-  state.step = STEPS.JOB_SATISFACTION;
-  await sendKapsoMessage({
-    toPhoneE164: fromPhone,
-    text: JOB_SATISFACTION_MESSAGE,
-    options: SATISFACTION_BUTTONS,
-  });
-}
-
-async function handleJobSatisfaction(state: ConversationState, fromPhone: string, contactName: string, text: string) {
-  const validOptions = SATISFACTION_BUTTONS.map(b => b.value);
-  if (!validOptions.includes(text)) {
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: "Please select one of the options above 👆",
-      options: SATISFACTION_BUTTONS,
-    });
-    return;
-  }
-  state.data.jobSatisfaction = text;
-  state.step = STEPS.TRAINING_RELEVANCE;
-  await sendKapsoMessage({
-    toPhoneE164: fromPhone,
-    text: TRAINING_RELEVANCE_MESSAGE,
-    options: RELEVANCE_BUTTONS,
-  });
-}
-
-async function handleTrainingRelevance(state: ConversationState, fromPhone: string, contactName: string, text: string) {
-  const validOptions = RELEVANCE_BUTTONS.map(b => b.value);
-  if (!validOptions.includes(text)) {
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: "Please select one of the options above 👆",
-      options: RELEVANCE_BUTTONS,
-    });
-    return;
-  }
-  state.data.trainingRelevance = text;
-  state.step = STEPS.SKILL_GAPS;
-  await sendKapsoMessage({
-    toPhoneE164: fromPhone,
-    text: SKILL_GAPS_MESSAGE,
-    options: SKILL_GAP_OPTIONS,
-  });
-}
-
-async function handleSkillGaps(state: ConversationState, fromPhone: string, contactName: string, text: string) {
-  const validOptions = SKILL_GAP_OPTIONS.map(b => b.value);
-  if (!validOptions.includes(text) && text !== "gap_none") {
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: "Please select from the options above 👆",
-      options: SKILL_GAP_OPTIONS,
-    });
-    return;
-  }
-  state.data.skillGaps ??= [];
-  if (text === "gap_none") {
-    state.data.skillGaps = ["none"];
-  } else if (!state.data.skillGaps.includes(text)) {
-    state.data.skillGaps.push(text);
-  }
-
-  if (state.data.skillGaps.includes("none") || state.data.skillGaps.length >= 3) {
-    state.step = STEPS.ADDITIONAL_TRAINING;
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: ADDITIONAL_TRAINING_MESSAGE,
-      options: TRAINING_OPTIONS,
-    });
-  } else {
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: `Got it! (${state.data.skillGaps.length}/3) Select more or type *DONE* to continue.`,
-        options: SKILL_GAP_OPTIONS.filter(o => !(state.data.skillGaps ?? []).includes(o.value)),
-    });
-  }
-}
-
-async function handleAdditionalTraining(state: ConversationState, fromPhone: string, contactName: string, text: string) {
-  const validOptions = TRAINING_OPTIONS.map(b => b.value);
-  if (!validOptions.includes(text)) {
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: "Please select one of the options above 👆",
-      options: TRAINING_OPTIONS,
-    });
-    return;
-  }
-  state.data.additionalTraining = text;
-  state.step = STEPS.CAREER_GOALS;
-  await sendKapsoMessage({
-    toPhoneE164: fromPhone,
-    text: CAREER_GOALS_MESSAGE,
-    options: GOALS_OPTIONS,
-  });
-}
-
-async function handleCareerGoals(state: ConversationState, fromPhone: string, contactName: string, text: string) {
-  const validOptions = GOALS_OPTIONS.map(b => b.value);
-  if (!validOptions.includes(text)) {
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: "Please select one of the options above 👆",
-      options: GOALS_OPTIONS,
-    });
-    return;
-  }
-  state.data.careerGoals = text;
-  state.step = STEPS.CHALLENGES;
-  await sendKapsoMessage({
-    toPhoneE164: fromPhone,
-    text: CHALLENGES_MESSAGE,
-    options: CHALLENGES_OPTIONS,
-  });
-}
-
-async function handleChallenges(state: ConversationState, fromPhone: string, contactName: string, text: string) {
-  const validOptions = CHALLENGES_OPTIONS.map(b => b.value);
-  if (!validOptions.includes(text) && text !== "challenge_none") {
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: "Please select from the options above 👆",
-      options: CHALLENGES_OPTIONS,
-    });
-    return;
-  }
-  state.data.challenges ??= [];
-  if (text === "challenge_none") {
-    state.data.challenges = ["none"];
-  } else if (!state.data.challenges.includes(text)) {
-    state.data.challenges.push(text);
-  }
-
-  if (state.data.challenges.includes("none") || state.data.challenges.length >= 3) {
-    state.step = STEPS.RECOMMENDATIONS;
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: RECOMMENDATIONS_MESSAGE,
-      options: RECOMMENDATIONS_OPTIONS,
-    });
-  } else {
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: `Got it! (${state.data.challenges.length}/3) Select more or type *DONE* to continue.`,
-        options: CHALLENGES_OPTIONS.filter(o => !(state.data.challenges ?? []).includes(o.value)),
-    });
-  }
-}
-
-async function handleRecommendations(state: ConversationState, fromPhone: string, contactName: string, text: string) {
-  const validOptions = RECOMMENDATIONS_OPTIONS.map(b => b.value);
-  if (!validOptions.includes(text)) {
-    await sendKapsoMessage({
-      toPhoneE164: fromPhone,
-      text: "Please select one of the options above 👆",
-      options: RECOMMENDATIONS_OPTIONS,
-    });
-    return;
-  }
-  state.data.recommendations = text;
-
-  await saveSurveyResponse(fromPhone, state.data);
-  state.step = STEPS.COMPLETE;
-  await sendKapsoMessage({
-    toPhoneE164: fromPhone,
-    text: COMPLETE_MESSAGE.replace("{name}", contactName),
+    toPhoneE164: ctx.phone,
+    text: t.complete.replace("{name}", name),
     addCareerGuidance: false,
   });
-
-  conversationStore.delete(fromPhone);
 }
 
 async function saveSurveyResponse(phone: string, data: ConversationData) {
@@ -710,12 +665,14 @@ async function saveSurveyResponse(phone: string, data: ConversationData) {
         role: data.role,
         salaryRange: data.salaryRange,
         jobSatisfaction: data.jobSatisfaction,
+        supportNeeded: data.supportNeeded,
         trainingRelevance: data.trainingRelevance,
-        skillGaps: data.skillGaps,
+        skillGaps: data.skillGaps ?? [],
         additionalTraining: data.additionalTraining,
         careerGoals: data.careerGoals,
-        challenges: data.challenges,
+        challenges: data.challenges ?? [],
         recommendations: data.recommendations,
+        language: data.lang ? data.lang.toUpperCase() : undefined,
         completedAt: new Date(),
       },
     });
@@ -725,35 +682,84 @@ async function saveSurveyResponse(phone: string, data: ConversationData) {
   }
 }
 
-export function getConversationState(phone: string): ConversationState | undefined {
-  return conversationStore.get(phone);
-}
+export async function processInboundMessage(msg: InboundMessage) {
+  const { fromPhone, contactName, text, kapsoMessageId } = msg;
+  const normalizedText = text.trim().toLowerCase();
 
-export function resetConversation(phone: string) {
-  conversationStore.delete(phone);
-}
+  if (processedMessageIds.has(kapsoMessageId)) {
+    console.log("[BOT] Duplicate message ignored:", kapsoMessageId);
+    return;
+  }
+  processedMessageIds.add(kapsoMessageId);
+  if (processedMessageIds.size > PROCESSED_CAP) {
+    let toDrop = processedMessageIds.size - PROCESSED_CAP;
+    for (const id of processedMessageIds) {
+      processedMessageIds.delete(id);
+      if (--toDrop === 0) break;
+    }
+  }
 
-/**
- * Triggers the welcome + consent WhatsApp flow for a phone number.
- * Called after a trainee logs in (magic link verified) — consent is
- * then captured by the conversation itself and recorded in the DB.
- */
-export async function startConversation(fromPhoneE164: string, contactName: string) {
-  const state: ConversationState = { step: STEPS.CONSENT, data: {} };
-  conversationStore.set(fromPhoneE164, state);
+  const state = await loadState(fromPhone);
+  const ctx: Ctx = {
+    state,
+    phone: fromPhone,
+      name: contactName || undefined,
+    text: normalizedText,
+    raw: text.trim(),
+  };
 
   try {
-    await sendKapsoMessage({
-      toPhoneE164: fromPhoneE164,
-      text: WELCOME_MESSAGE.replace("{name}", contactName),
+    if (state.step !== STEPS.LANGUAGE && RESTART_KEYWORDS.has(normalizedText)) {
+      ctx.state = freshState();
+      memStore.set(fromPhone, ctx.state);
+      await askQuestion(STEPS.LANGUAGE, ctx);
+    } else {
+      await handleStep(ctx);
+    }
+    if (ctx.state.step === STEPS.COMPLETE || ctx.state.step === STEPS.DECLINED) {
+      await clearState(fromPhone);
+    } else {
+      await persistState(fromPhone, ctx.state);
+    }
+  } catch (err) {
+    console.error("[BOT] Error processing:", err);
+    const t = T[ctx.state.data.lang ?? "en"];
+    await sendKapsoMessage({ toPhoneE164: fromPhone, text: t.error }).catch(() => undefined);
+    await clearState(fromPhone);
+  }
+}
+
+export async function getConversationState(phone: string): Promise<ConversationState | undefined> {
+  const mem = memStore.get(phone);
+  if (mem) return mem;
+  try {
+    const trainee = await db.trainee.findFirst({
+      where: { phoneE164: phone },
+      select: { conversationState: true },
     });
-    await sendKapsoMessage({
-      toPhoneE164: fromPhoneE164,
-      text: CONSENT_MESSAGE,
-      options: CONSENT_BUTTONS,
+    return parseState(trainee?.conversationState) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function resetConversation(phone: string) {
+  await clearState(phone);
+}
+
+export async function startConversation(fromPhoneE164: string, contactName: string) {
+  const state = freshState();
+  memStore.set(fromPhoneE164, state);
+  try {
+    await askQuestion(STEPS.LANGUAGE, {
+      state,
+      phone: fromPhoneE164,
+    name: contactName || undefined,
+      text: "",
+      raw: "",
     });
   } catch (err) {
     console.error("[BOT] Failed to start conversation:", err);
-    conversationStore.delete(fromPhoneE164);
+    memStore.delete(fromPhoneE164);
   }
 }
