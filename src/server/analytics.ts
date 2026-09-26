@@ -482,12 +482,14 @@ export async function getGroupedRates(): Promise<{ byCenter: GroupRates[]; byCoh
 }
 
 /** Peer benchmark stats (avg + top quartile) across center/cohort groups. */
-export async function getPeerBenchmarks(): Promise<{
+export async function getPeerBenchmarks(precomputed?: {
+  byCenter: GroupRates[];
+}): Promise<{
   avg: CategoryRates;
   topQuartile: CategoryRates;
   centerCount: number;
 }> {
-  const { byCenter } = await getGroupedRates();
+  const { byCenter } = precomputed ?? (await getGroupedRates());
   const stats = computePeerStats(
     byCenter.map((c) => ({
       placementRate: c.placementRate,

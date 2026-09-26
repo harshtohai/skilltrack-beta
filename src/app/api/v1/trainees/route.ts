@@ -17,7 +17,7 @@ const traineeCreateSchema = z.object({
 
 const traineeListQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(20),
+  limit: z.coerce.number().int().positive().max(500).default(20),
   cohortId: z.string().uuid().optional(),
   district: z.string().optional(),
   search: z.string().optional(),

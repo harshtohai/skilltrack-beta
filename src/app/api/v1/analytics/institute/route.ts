@@ -36,7 +36,8 @@ export async function GET(request: NextRequest) {
     });
 
     const latest = monthlyData[monthlyData.length - 1];
-    const [grouped, peer] = await Promise.all([getGroupedRates(), getPeerBenchmarks()]);
+    const grouped = await getGroupedRates();
+    const peer = await getPeerBenchmarks({ byCenter: grouped.byCenter });
     const cohortRates = new Map(grouped.byCohort.map((c) => [c.key, c]));
     const totalCertificates = await db.certificate.count({
       where: { trainee: { enrolments: { some: enrolmentWhere } } },
