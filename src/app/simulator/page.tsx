@@ -91,19 +91,20 @@ export default function SimulatorPage() {
     }
   };
 
-  const handleSend = async () => {
+  const handleSend = async (overrideText?: string) => {
+    const text = overrideText ?? input;
     const phone = activePhone || trainees.find((t) => t.id === selectedTraineeId)?.phoneE164;
-    if (!input.trim() || !phone || loading) return;
+    if (!text.trim() || !phone || loading) return;
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: "user",
-      content: input,
+      content: text,
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    const currentInput = input;
+    const currentInput = text;
     setInput("");
     setLoading(true);
 
@@ -413,7 +414,7 @@ export default function SimulatorPage() {
                         size="sm"
                         onClick={() => {
                           setInput(opt.value);
-                          handleSend();
+                          void handleSend(opt.value);
                         }}
                       >
                         {opt.label}
@@ -432,7 +433,7 @@ export default function SimulatorPage() {
                   disabled={loading || !sessionActive || messages.length === 0}
                   className="flex-1"
                 />
-                <Button onClick={handleSend} disabled={loading || !input.trim()} size="lg">
+                <Button onClick={() => void handleSend()} disabled={loading || !input.trim()} size="lg">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 </Button>
               </div>
