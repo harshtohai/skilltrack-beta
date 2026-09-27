@@ -172,6 +172,18 @@ function getConsentQuestion(language: string): { text: string; options: Array<{ 
   };
 }
 
+function matchMappedOption(
+  map: Record<string, string>,
+  values: readonly string[],
+  text: string
+): string | undefined {
+  const trimmed = text.trim();
+  if (map[trimmed]) return map[trimmed];
+  const upper = trimmed.toUpperCase();
+  if (values.includes(upper)) return upper;
+  return undefined;
+}
+
 async function findOrCreateBotSession(traineeId: string, followupEventId: string, checkpointDays: number) {
   const existing = await db.botSession.findFirst({
     where: { traineeId, followupEventId, state: { not: "DONE" } },
@@ -229,7 +241,7 @@ async function processStateMachine(session: any, text: string, trainee: any, fol
         "1": "CONSENT_GIVEN",
         "2": "CONSENT_DENIED",
       };
-      const consent = consentMap[text.trim()];
+      const consent = matchMappedOption(consentMap, ["CONSENT_GIVEN", "CONSENT_DENIED"], text);
       if (!consent) {
         reply = getConsentQuestion(lang);
         reply.text = (lang === "HI" ? "अमान्य विकल्प। " : "Invalid option. ") + reply.text;
@@ -272,7 +284,11 @@ async function processStateMachine(session: any, text: string, trainee: any, fol
         "4": "LOOKING",
         "5": "NOT_WORKING",
       };
-      const status = statusMap[text.trim()];
+      const status = matchMappedOption(
+        statusMap,
+        ["EMPLOYED", "SELF_EMPLOYED", "APPRENTICE", "LOOKING", "NOT_WORKING"],
+        text
+      );
       if (!status) {
         reply = getStatusQuestion(lang);
         reply.text = (lang === "HI" ? "अमान्य विकल्प। " : "Invalid option. ") + reply.text;
@@ -324,7 +340,7 @@ async function processStateMachine(session: any, text: string, trainee: any, fol
         "4": "B_35_50K",
         "5": "GT_50K",
       };
-      const salaryBand = bandMap[text.trim()];
+      const salaryBand = matchMappedOption(bandMap, ["LT_10K", "B_10_20K", "B_20_35K", "B_35_50K", "GT_50K"], text);
       if (!salaryBand) {
         reply = getSalaryBandQuestion(lang);
         reply.text = (lang === "HI" ? "अमान्य विकल्प। " : "Invalid option. ") + reply.text;
@@ -346,7 +362,7 @@ async function processStateMachine(session: any, text: string, trainee: any, fol
         "4": "HEALTH",
         "5": "OTHER",
       };
-      const reason = reasonMap[text.trim()];
+      const reason = matchMappedOption(reasonMap, ["NO_JOBS", "SKILLS_MISMATCH", "FAMILY", "HEALTH", "OTHER"], text);
       if (!reason) {
         reply = getNonPlacementReasonQuestion(lang);
         reply.text = (lang === "HI" ? "अमान्य विकल्प। " : "Invalid option. ") + reply.text;
@@ -367,7 +383,11 @@ async function processStateMachine(session: any, text: string, trainee: any, fol
         "2": "CHANGED_EMPLOYER",
         "3": "NOT_WORKING",
       };
-      const retentionStatus = retentionMap[text.trim()];
+      const retentionStatus = matchMappedOption(
+        retentionMap,
+        ["SAME_EMPLOYER", "CHANGED_EMPLOYER", "NOT_WORKING"],
+        text
+      );
       if (!retentionStatus) {
         reply = getRetentionStatusQuestion(lang);
         reply.text = (lang === "HI" ? "अमान्य विकल्प। " : "Invalid option. ") + reply.text;
@@ -393,7 +413,7 @@ async function processStateMachine(session: any, text: string, trainee: any, fol
         "4": "B_35_50K",
         "5": "GT_50K",
       };
-      const salaryBand = bandMap[text.trim()];
+      const salaryBand = matchMappedOption(bandMap, ["LT_10K", "B_10_20K", "B_20_35K", "B_35_50K", "GT_50K"], text);
       if (!salaryBand) {
         reply = getRetentionSalaryBandQuestion(lang);
         reply.text = (lang === "HI" ? "अमान्य विकल्प। " : "Invalid option. ") + reply.text;
