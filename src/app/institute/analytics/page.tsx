@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { GraduationCap, Users, TrendingUp, Target, Award, Download } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -82,31 +82,34 @@ const TIME_WINDOWS = [
 export default function InstituteAnalyticsDashboard() {
   const [data, setData] = useState<InstituteAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [timeWindow, setTimeWindow] = useState("12m");
   const [programmeId, setProgrammeId] = useState("");
   const [cohortId, setCohortId] = useState("");
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
+    setError("");
     try {
       const params = new URLSearchParams({ timeWindow });
       if (programmeId) params.append("programmeId", programmeId);
       if (cohortId) params.append("cohortId", cohortId);
 
-      const res = await fetch(`/api/v1/analytics/institute?${params.toString()}`);
+      const res = await fetch(`/api/v1/outcomes/institute?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch analytics");
       const json = (await res.json()) as InstituteAnalyticsData;
       setData(json);
     } catch (err) {
       console.error("Failed to fetch institute analytics:", err);
+      setError("Failed to load analytics. If you use an ad blocker, please allow this site and retry.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeWindow, programmeId, cohortId]);
 
   useEffect(() => {
     void fetchData();
-  }, [timeWindow, programmeId, cohortId, fetchData]);
+  }, [fetchData]);
 
   if (loading) {
     return (
@@ -124,7 +127,9 @@ export default function InstituteAnalyticsDashboard() {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-8 text-center">
-          <p className="text-red-500">Failed to load analytics data</p>
+          <p className="text-red-500">{error || "Failed to load analytics data"}</p>
+          <p className="mt-2 text-sm text-gray-500">If you use an ad blocker, please allow this site and retry.</p>
+          <Button className="mt-4" onClick={() => void fetchData()}>Retry</Button>
         </div>
       </div>
     );

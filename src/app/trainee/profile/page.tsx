@@ -10,11 +10,8 @@ import { Label } from "~/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Badge } from "~/components/ui/badge";
 import { Alert, AlertDescription } from "~/components/ui/alert";
+import { BackLink } from "~/components/back-link";
 import { formatDate } from "~/lib/utils";
-
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 
 interface TraineeProfile {
   id: string;
@@ -153,9 +150,12 @@ export default function TraineeProfilePage() {
               <p className="text-sm text-gray-500">{trainee.fullName}</p>
             </div>
           </div>
-          <Badge variant="secondary">
-            {trainee.language === "HI" ? "हिंदी" : trainee.language === "MR" ? "मराठी" : "English"}
-          </Badge>
+          <div className="flex items-center gap-4">
+            <BackLink href="/dashboard" label="Dashboard" />
+            <Badge variant="secondary">
+              {trainee.language === "HI" ? "हिंदी" : trainee.language === "MR" ? "मराठी" : "English"}
+            </Badge>
+          </div>
         </div>
       </header>
 

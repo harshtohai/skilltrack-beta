@@ -7,6 +7,9 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.init({
   dsn: "https://50c768d09a9c763d491a507860d837ed@o4512145686659072.ingest.de.sentry.io/4512145697538128",
 
+  // Capture every console.error (page fetch catch blocks) as a Sentry error event.
+  integrations: [Sentry.captureConsoleIntegration({ levels: ["error"] })],
+
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
   tracesSampleRate: 1,
 

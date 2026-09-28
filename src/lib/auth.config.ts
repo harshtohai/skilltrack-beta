@@ -17,8 +17,8 @@ export const protectedRoutes: { path: string; roles: UserRole[] }[] = [
   { path: "/audit-logs", roles: ["admin", "institute"] },
   // API — server-side data endpoints. Client pages fetch these with the
   // session cookie, so edge pre-checks don't break them.
-  { path: "/api/v1/analytics/government", roles: ["admin"] },
-  { path: "/api/v1/analytics/institute", roles: ["institute", "admin"] },
+  { path: "/api/v1/outcomes/government", roles: ["admin"] },
+  { path: "/api/v1/outcomes/institute", roles: ["institute", "admin"] },
   { path: "/api/v1/kpis/overview", roles: ["admin", "institute", "trainee"] },
   { path: "/api/v1/followups", roles: ["admin", "institute"] },
   { path: "/api/v1/conflicts", roles: ["admin", "institute"] },

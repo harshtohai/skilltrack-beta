@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     if (error instanceof z.ZodError) return handleZodError(error);
-    console.error("GET /api/v1/analytics/government error:", error);
+    console.error("GET /api/v1/outcomes/government error:", error);
     return createErrorResponse("INTERNAL_ERROR", "Failed to fetch government analytics", 500);
   }
 }

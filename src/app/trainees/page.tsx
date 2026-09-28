@@ -6,6 +6,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { CopyButton } from "~/components/copy-button";
+import { BackLink } from "~/components/back-link";
 
 export const dynamic = "force-dynamic";
 
@@ -46,13 +47,14 @@ export default async function TraineesListPage({
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <Users className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Trainees</h1>
-              <p className="text-sm text-gray-500">{total.toLocaleString()} total — lookup by Trainee ID or name</p>
+            <div className="flex items-center gap-3">
+              <Users className="h-8 w-8 text-primary" />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Trainees</h1>
+                <p className="text-sm text-gray-500">{total.toLocaleString()} total — lookup by Trainee ID or name</p>
+              </div>
+              <BackLink href="/dashboard" className="ml-auto" label="Dashboard" />
             </div>
-          </div>
         </div>
       </header>
 

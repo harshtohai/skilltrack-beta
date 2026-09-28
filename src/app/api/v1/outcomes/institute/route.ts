@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     if (error instanceof z.ZodError) return handleZodError(error);
-    console.error("GET /api/v1/analytics/institute error:", error);
+    console.error("GET /api/v1/outcomes/institute error:", error);
     return createErrorResponse("INTERNAL_ERROR", "Failed to fetch institute analytics", 500);
   }
 }

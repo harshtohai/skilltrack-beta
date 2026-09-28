@@ -6,6 +6,7 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { BackLink } from "~/components/back-link";
 import { Input } from "~/components/ui/input";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "~/components/ui/table";
 import { ScrollArea } from "~/components/ui/scroll-area";
@@ -106,6 +107,7 @@ export default function AuditLogsPage() {
     <div className="container py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
+          <BackLink href="/dashboard" className="mb-2" />
           <h1 className="text-3xl font-bold">Audit Log Viewer</h1>
           <p className="text-muted-foreground">
             Immutable log of all state changes in the system
