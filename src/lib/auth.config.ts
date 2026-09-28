@@ -12,9 +12,11 @@ export const publicRoutes = [
   "/terms",
   "/privacy",
   "/employer/login",
+  "/employer/register", // unlisted employer signup (F25) — direct URL only, never linked
   "/simulator",
   "/api/v1/health",
   "/api/v1/auth", // legacy role logins + trainee magic-link verify (token = credential)
+  "/api/v1/employer/register", // unlisted employer signup (F25) — credential = submitted form
   "/api/v1/trainee/magic-link", // issues the one-time token
   "/api/v1/bot", // X-API-Key gated in-route
   "/api/v1/verification", // employer claim verification (token = credential)
