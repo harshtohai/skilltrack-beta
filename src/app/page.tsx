@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { GraduationCap, Building2, Users, Shield, TrendingUp, Target, ArrowRight, Phone } from "lucide-react";
+import { auth } from "~/lib/auth";
+import { roleHomeRoutes } from "~/lib/protected-routes";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const session = await auth();
+  const role = session?.user?.role;
+  const dashboardHref = role ? roleHomeRoutes[role] : "/dashboard";
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
@@ -17,12 +22,21 @@ export default function LandingPage() {
             <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               How It Works
             </Link>
-            <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Sign In
-            </Link>
-            <Link href="/signup" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-              Get Started
-            </Link>
+            {role ? (
+              <Link href={dashboardHref} className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+                Dashboard
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                  Sign In
+                </Link>
+                <Link href="/signup" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+                  Get Started
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       </header>
@@ -46,10 +60,10 @@ export default function LandingPage() {
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link
-                  href="/signup"
+                  href={role ? dashboardHref : "/signup"}
                   className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-6 py-3 text-base font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
-                  Start Tracking Outcomes
+                  {role ? "Go to Dashboard" : "Start Tracking Outcomes"}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
@@ -148,10 +162,10 @@ export default function LandingPage() {
               Join training providers, government agencies, and employers using OutcomeTrack to measure what matters.
             </p>
             <Link
-              href="/signup"
+              href={role ? dashboardHref : "/signup"}
               className="inline-flex items-center justify-center gap-2 rounded-md bg-primary-foreground px-6 py-3 text-base font-medium text-primary hover:bg-primary-foreground/90 transition-colors"
             >
-              Get Started Free
+              {role ? "Go to Dashboard" : "Get Started Free"}
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>

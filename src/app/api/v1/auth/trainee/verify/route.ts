@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import { encode } from "next-auth/jwt";
 import { db } from "~/server/db";
@@ -68,7 +69,9 @@ export async function POST(request: NextRequest) {
 
     // Mint a NextAuth (Auth.js v5) session so /auth/trainee/* pages are
     // protected by the middleware with role "trainee".
-    const secure = process.env.NODE_ENV === "production" && process.env.APP_BASE_URL?.startsWith("https");
+    // Vercel production is always HTTPS, so mirror NextAuth's useSecureCookies
+    // directly instead of depending on an APP_BASE_URL env being set correctly.
+    const secure = process.env.NODE_ENV === "production";
     const cookieName = secure ? "__Secure-authjs.session-token" : "authjs.session-token";
     const sessionJwt = await encode({
       secret: process.env.AUTH_SECRET ?? "",

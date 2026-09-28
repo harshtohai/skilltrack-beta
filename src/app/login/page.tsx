@@ -10,12 +10,9 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { isPathAllowedForRole } from "~/lib/protected-routes";
 import { Separator } from "~/components/ui/separator";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 
 type UserType = "trainee" | "employer" | "institute" | "admin";
 
@@ -108,7 +105,13 @@ function LoginPageContent() {
               : "Login failed"
           );
         }
-        const targetUrl = redirect || roleRedirects[selectedType];
+        // Only honor the redirect param if the logged-in role may access it —
+        // otherwise a stale ?redirect=/trainee/profile bounces non-trainee
+        // roles back to /login forever (login lockout loop).
+        const targetUrl =
+          redirect && isPathAllowedForRole(redirect, selectedType)
+            ? redirect
+            : roleRedirects[selectedType];
         router.push(targetUrl);
         router.refresh();
       }
