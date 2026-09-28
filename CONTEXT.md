@@ -2,7 +2,7 @@
 
 ## Implementation State (as of Sep 2026)
 - **Git remote**: `origin` → https://github.com/harshtohai/skilltrack-beta (changed from skilltrack; push there only)
-- **Spec/tickets**: parent spec #23; tickets #24 (T1 centers+courses) ✅, #25 (T2 scoring+gov leaderboard) 🔄 in progress, #26 (T3 institute gaps), #27 (T4 recommendations), #28 (T5 simulator direct-run), #29 (T6 trainee profile+session), #30 (T7 ID visibility), #31 (T8 employer dashboard). Order: T1→T2→{T3,T4,T8}; T5,T6,T7 independent.
+- **Spec/tickets**: parent spec #23; tickets #24 (T1 centers+courses) ✅, #25 (T2 scoring+gov leaderboard) ✅, #26 (T3 institute gaps), #27 (T4 recommendations), #28 (T5 simulator direct-run), #29 (T6 trainee profile+session), #30 (T7 ID visibility), #31 (T8 employer dashboard) ✅. Order: T1→T2→{T3,T4,T8}; T5,T6,T7 independent. **Spec #32: Job Board (F25)** — verified recruiters, trainee applications, hire→outcomes pipeline, demand-gap signals. Vertical tickets (contract-first): #33 JOB-01 schema+DDL ✅, #44 JOB-02 API contracts, #45 JOB-03 employer track, #46 JOB-04 trainee track, #47 JOB-05 gov track, #48 JOB-06 hire→pipeline verification. Order: 01→02→{03,04,05 in parallel}→06.
 - **T1 DONE**: `TrainingCenter` model (+`trainingCenterId` on Cohort), `Course` model; 10 centers seeded, 15 cohorts round-robin assigned, 20 PMKVY-style courses; demo certificates (359) + survey responses (300) seeded via idempotent `prisma/backfill-centers.ts` (upserts only, creates certs/surveys if count 0). seed.ts also creates centers/courses on fresh seeds.
 - **T2**: pure scoring engine `src/server/scoring.ts` (`computeCenterScores` — placement verified-weighted (confirmed 1.0/self 0.5)/academic (60% relevance + 40% certs vs benchmark 2)/volume (relative to max)/overall 50-30-20; `computeEmployerRetention` — confirmed claims with later-checkpoint sustained employment, null when insufficient; `normalizeEmployerName`) — 15 vitest unit tests green (`npx vitest run src/server/scoring.test.ts`, vitest@4.1.11 devDep). `getTrainingCenterScores()` in `src/server/analytics.ts` (flat 5-query + in-memory, same pattern as getMonthlyOutcomes); wired into `analytics/government` response as `trainingCenters` sorted by overallScore.
 - **Pending after T2**: admin analytics page leaderboard UI; then T3/T4/T5/T6/T7/T8.
@@ -80,6 +80,33 @@ OutcomeTrack is a longitudinal skilling-outcomes platform. It follows up with tr
 - **Identity**: `id` (uuid), `entity_type`, `entity_id`, `action`, `actor_type` (`ADMIN` | `TRAINEE` | `EMPLOYER` | `SYSTEM`), `actor_id` (nullable), `metadata` (JSONB)
 - **Purpose**: Immutable log of every state change
 
+### Employers (F25 Job Board)
+- **Identity**: `id` (uuid), `company_name`, `contact_email` (unique, login identity), `sector` (industry), `district`, `registration_no` (GSTIN/CIN — collected for verification)
+- **Verification Status**: `PENDING` → `VERIFIED` | `REJECTED`; `SUSPENDED` for repeat offenders
+- **Rule**: Only `VERIFIED` employers can post jobs. Recruiter signup is an **unlisted** page — never linked from landing/login/signup, reached by direct URL only.
+- **Retention accountability**: per-employer retention is computed from the follow-up checkpoints (30/90/180/365d); chronically poor retention → flagged on gov analytics → admin may SUSPEND (jobs hidden from trainees).
+
+### JobPosting
+- **Identity**: `id` (uuid), `employer_id` (FK), `title`, `description`, `employment_type` (`FULL_TIME` | `PART_TIME` | `INTERNSHIP` | `CONTRACT` | `FREELANCE`), `work_mode` (`ONSITE` | `REMOTE` | `HYBRID`), `salary_band` (reuses existing enum), `district` (job location), `skills_required`, `openings` (count), `application_deadline`, `status` (`OPEN` | `CLOSED`)
+- **Lifecycle**: Open jobs visible to trainees; `CLOSED` or deadline-passed vanish from the trainee view; employer may re-open.
+
+### JobApplication
+- **Identity**: `id` (uuid), `job_posting_id` (FK), `trainee_id` (FK), `status`
+- **State Machine**: `APPLIED` → `SHORTLISTED` → `HIRED` | `REJECTED` (employer moves it); `WITHDRAWN` (trainee action, any pre-hire state)
+- **Invariant**: Unique `(job_posting_id, trainee_id)` — one application per trainee per job
+- **Hire Effect**: `HIRED` creates the trainee's `employmentHistory` entry + an `outcomeEvent` with `EMPLOYER_CONFIRMED` (evidence level 3, source EMPLOYER) — feeds placement/verified-employment metrics automatically
+- **Auto-Close**: When `HIRED` count reaches the job's `openings`, the posting auto-closes (`CLOSED`)
+- **Contact Reveal (symmetric)**: Once `SHORTLISTED`, the employer sees the trainee's phone/email AND the trainee sees the employer's contact email (two-way, zero chat infrastructure)
+
+### Trainee Job Hunt View
+- **Jobs section**: open jobs sorted most-relevant → least (same district first), filters (district/work mode/type) as client-side convenience
+- **My Applications**: trainee's own applications with live status + employer contact once shortlisted + Withdraw
+- **"Can't find a job?" button**: end of the jobs section — reason dialog (reuses `non_placement_reason` enum) → records a `JobSeekSignal` with district
+
+### JobSeekSignal ("Can't find a job?" signal)
+- **Identity**: `id`, `trainee_id` (FK), `reason` (reuses `non_placement_reason` enum), `district`
+- **Purpose**: Demand-gap signal — gov analytics shows how many trainees per district report "no jobs nearby" / "skills mismatch" etc.
+
 ## Enums (Exact Values)
 
 | Enum | Values |
@@ -91,6 +118,11 @@ OutcomeTrack is a longitudinal skilling-outcomes platform. It follows up with tr
 | `followup_status` | `SCHEDULED`, `SENT`, `RESPONDED`, `FAILED`, `EXPIRED` |
 | `channel` | `WHATSAPP`, `SMS`, `EMAIL` |
 | `bot_session_state` | `AWAITING_STATUS`, `AWAITING_EMPLOYER_NAME`, `AWAITING_ROLE`, `AWAITING_SALARY_BAND`, `AWAITING_NON_PLACEMENT_REASON`, `DONE` |
+| `employment_type` | `FULL_TIME`, `PART_TIME`, `INTERNSHIP`, `CONTRACT`, `FREELANCE` |
+| `work_mode` | `ONSITE`, `REMOTE`, `HYBRID` |
+| `employer_verification_status` | `PENDING`, `VERIFIED`, `REJECTED`, `SUSPENDED` |
+| `job_posting_status` | `OPEN`, `CLOSED` |
+| `job_application_status` | `APPLIED`, `SHORTLISTED`, `HIRED`, `REJECTED`, `WITHDRAWN` |
 
 ## Verification Ladder (Evidence Model)
 `0 UNKNOWN` → `1 SELF_REPORTED` → `2 PROVIDER_CONFIRMED` → `3 EMPLOYER_CONFIRMED` → `4 DOCUMENT_VERIFIED` → `5 SYSTEM_VERIFIED`; plus `CONFLICT` when sources disagree.
@@ -142,13 +174,22 @@ Trainee (WhatsApp) ⇄ [Bot Service] ── POST /api/v1/bot/inbound ──▶ [
 
 ## Feature Tiers (Cut-Line Plan)
 - **Tier 0 (Must Have)**: F01–F08 — Complete demo loop
-- **Tier 1 (Important)**: F09–F12 — Retention, conflicts, audit, operations
-- **Tier 2 (Optional)**: F13–F19 — Consent, adaptive flows, i18n, demo clock, export
+- **Tier 1 (Important)**: F09–F12 — Retention at 90d, conflicts queue, audit log viewer, export
+- **Tier 2 (Optional)**: F13–F19 — Consent, i18n, simulator, trainee profile
 - **Tier 3 (Stretch)**: F20–F24 — LLM insights, SIDH adapter, deduplication, employer edit, email
+- **F25 Job Board (Current Sprint)**: Verified-recruiter job postings → trainee apply → hire feeds outcomes pipeline
+
+## Idea Bag (omitted right now — revisit later)
+- **In-app message thread per application** (employer↔trainee chat): parked — feasible later via a simple polling-based thread; contact reveal on shortlist covers the immediate need.
+- **WhatsApp bot apply flow**: trainees apply via web only; bot job prompts/apply deferred.
+- **Bot notifications for new jobs**: WhatsApp nudge when a job matching the trainee's district/skills posts — stretch.
+- **"Viewed" application state** (employer saw the application): parked; minimal state machine preferred.
+- **Interview scheduling** (employer↔trainee slot booking): parked.
+- **Max open jobs per employer** (spam control): parked until real usage demands it.
+- **Employer profile pages as a metric**: company profiles (sector, size, hiring history) surfaced as their own analytics section — near-future.
 
 ## Non-Goals (Hackathon)
 - Not a replacement for SIDH/NCS/LMS/HRMS
-- Not a job portal
 - No scraping, no real PII, no LLM decisions
 - No multi-tenant / gov admin dashboard
 - No phone encryption at rest (mask in UI only)
