@@ -1,137 +1,180 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-@theme {
-  /* Fonts */
-  --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-mono: "Space Grotesk", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+@custom-variant dark (&:is(.dark *));
 
-  /* Colors - shadcn/ui mappings. Values are complete hsl() colors so
-     Tailwind v4 utilities (bg-popover, bg-accent, bg-primary, …) compile to
-     valid CSS — raw "H S% L%" triples here produced invalid values, which
-     left every dropdown/dialog transparent over the content behind it. */
-  --color-background: hsl(0 0% 100%);
-  --color-foreground: hsl(210 7% 11%);
-  --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(210 7% 11%);
-  --color-primary: hsl(210 7% 11%);
-  --color-primary-foreground: hsl(0 0% 100%);
-  --color-secondary: hsl(210 5% 45%);
-  --color-secondary-foreground: hsl(0 0% 100%);
-  --color-accent: hsl(210 5% 96%);
-  --color-accent-foreground: hsl(210 7% 11%);
-  --color-destructive: hsl(8 60% 45%);
-  --color-destructive-foreground: hsl(0 0% 100%);
-  --color-muted: hsl(210 5% 96%);
-  --color-muted-foreground: hsl(210 5% 45%);
-  --color-border: hsl(210 5% 85%);
-  --color-input: hsl(210 5% 85%);
-  --color-ring: hsl(210 7% 11%);
+:root {
+  --radius: 0.5rem;                              /* 8px base; sm=4 md=6 lg=8 xl=12 */
 
-  /* Radius */
-  --radius: 8px;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  /* surfaces */
+  --background: #F7F7F7;
+  --foreground: #171717;
+  --card: #FFFFFF;
+  --card-foreground: #171717;
+  --popover: #FFFFFF;
+  --popover-foreground: #171717;
+  --muted: #F3F3F3;
+  --muted-foreground: #6B6B72;
+  --accent: #EFEFEF;
+  --accent-foreground: #171717;
+  --secondary: #F3F3F3;
+  --secondary-foreground: #171717;
 
-  /* Spacing */
-  --spacing-base: 16px;
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 32px;
-  --spacing-xl: 64px;
-  --spacing-gutter: 24px;
-  --spacing-margin: 32px;
+  /* brand */
+  --primary: #F26A0F;
+  --primary-foreground: #FFFFFF;
+  --primary-strong: #CC4A08;                     /* AA text-on-light. See D-01/D-02 */
+  --primary-soft: #FFEDD9;                       /* tinted chip bg */
 
-  /* Typography */
-  --text-h1: 48px;
-  --text-h1-weight: 600;
-  --text-h1-line-height: 1.1;
-  --text-h1-letter-spacing: -0.02em;
+  /* lines and focus */
+  --border: #EAEAEA;
+  --input: #E4E4E7;
+  --ring: #F26A0F;
 
-  --text-body-md: 16px;
-  --text-body-md-weight: 400;
-  --text-body-md-line-height: 1.6;
+  /* status: base (dot/icon/fill), soft (badge bg), text (badge text) */
+  --success: #16A34A;  --success-soft: #E6F6EC;  --success-text: #15803D;
+  --warning: #F59E0B;  --warning-soft: #FFF4DC;  --warning-text: #B45309;
+  --danger:  #DC2626;  --danger-soft:  #FEECEC;  --danger-text:  #B91C1C;
+  --info:    #2F4FE0;  --info-soft:    #EAEEFF;  --info-text:    #2440C2;
+  --destructive: var(--danger);
+  --destructive-foreground: #FFFFFF;
 
-  --text-label-caps: 12px;
-  --text-label-caps-weight: 500;
-  --text-label-caps-line-height: 1;
-  --text-label-caps-letter-spacing: 0.1em;
+  /* charts */
+  --chart-1: #F26A0F; --chart-2: #8B3DFF; --chart-3: #2F4FE0; --chart-4: #16A34A; --chart-5: #FACC15;
+  --chip-purple: #F3E8FF; --chip-purple-fg: #8B3DFF;
+  --chip-blue: #E4EAFF;   --chip-blue-fg: #2F4FE0;
+  --dot-above: #22C55E; --dot-track: #F97316; --dot-below: #FACC15; --dot-empty: #E5E5E5;
+
+  /* sidebar */
+  --sidebar: #F3F3F3;
+  --sidebar-foreground: #171717;
+  --sidebar-primary: #F26A0F;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #E9E9E9;
+  --sidebar-accent-foreground: #171717;
+  --sidebar-border: #E4E4E4;
+  --sidebar-ring: #F26A0F;
 }
 
-/* Base styles */
-* {
-  box-sizing: border-box;
+.dark {                                          /* [inferred] entire block */
+  --background: #0E0E10;
+  --foreground: #F2F2F3;
+  --card: #17171A;
+  --card-foreground: #F2F2F3;
+  --popover: #1E1E22;
+  --popover-foreground: #F2F2F3;
+  --muted: #1E1E22;
+  --muted-foreground: #A1A1AA;
+  --accent: #26262B;
+  --accent-foreground: #F2F2F3;
+  --secondary: #1E1E22;
+  --secondary-foreground: #F2F2F3;
+
+  --primary: #FF7A26;
+  --primary-foreground: #1A0A00;                 /* dark text on bright orange, ~7.5:1 */
+  --primary-strong: #FF9A5C;                     /* orange text on dark surfaces */
+  --primary-soft: rgba(255, 122, 38, 0.14);
+
+  --border: #2A2A2F;
+  --input: #34343A;
+  --ring: #FF7A26;
+
+  --success: #4ADE80;  --success-soft: rgba(74,222,128,0.14);  --success-text: #86EFAC;
+  --warning: #FBBF24;  --warning-soft: rgba(251,191,36,0.14);  --warning-text: #FCD34D;
+  --danger:  #F87171;  --danger-soft:  rgba(248,113,113,0.14); --danger-text:  #FCA5A5;
+  --info:    #7C93FF;  --info-soft:    rgba(124,147,255,0.14); --info-text:    #A5B4FF;
+  --destructive: var(--danger);
+  --destructive-foreground: #1A0505;
+
+  --chart-1: #FF7A26; --chart-2: #A970FF; --chart-3: #6C86FF; --chart-4: #4ADE80; --chart-5: #FDE047;
+  --chip-purple: rgba(169,112,255,0.16); --chip-purple-fg: #C4A0FF;
+  --chip-blue: rgba(108,134,255,0.16);   --chip-blue-fg: #A5B4FF;
+  --dot-above: #4ADE80; --dot-track: #FB923C; --dot-below: #FACC15; --dot-empty: #2E2E33;
+
+  --sidebar: #131315;
+  --sidebar-foreground: #F2F2F3;
+  --sidebar-primary: #FF7A26;
+  --sidebar-primary-foreground: #1A0A00;
+  --sidebar-accent: #1E1E22;
+  --sidebar-accent-foreground: #F2F2F3;
+  --sidebar-border: #26262B;
+  --sidebar-ring: #FF7A26;
 }
 
-body {
-  font-family: var(--font-sans);
-  font-size: var(--text-body-md);
-  line-height: var(--text-body-md-line-height);
-  color: var(--color-foreground);
-  background-color: var(--color-background);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@theme inline {
+  --font-sans: var(--font-plus-jakarta), "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  --color-background: var(--background);   --color-foreground: var(--foreground);
+  --color-card: var(--card);               --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);         --color-popover-foreground: var(--popover-foreground);
+  --color-muted: var(--muted);             --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);           --color-accent-foreground: var(--accent-foreground);
+  --color-secondary: var(--secondary);     --color-secondary-foreground: var(--secondary-foreground);
+  --color-primary: var(--primary);         --color-primary-foreground: var(--primary-foreground);
+  --color-primary-strong: var(--primary-strong);  --color-primary-soft: var(--primary-soft);
+  --color-border: var(--border);           --color-input: var(--input);  --color-ring: var(--ring);
+  --color-destructive: var(--destructive); --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-success: var(--success); --color-success-soft: var(--success-soft); --color-success-text: var(--success-text);
+  --color-warning: var(--warning); --color-warning-soft: var(--warning-soft); --color-warning-text: var(--warning-text);
+  --color-danger: var(--danger);   --color-danger-soft: var(--danger-soft);   --color-danger-text: var(--danger-text);
+  --color-info: var(--info);       --color-info-soft: var(--info-soft);       --color-info-text: var(--info-text);
+
+  --color-chart-1: var(--chart-1); --color-chart-2: var(--chart-2); --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4); --color-chart-5: var(--chart-5);
+  --color-chip-purple: var(--chip-purple); --color-chip-purple-fg: var(--chip-purple-fg);
+  --color-chip-blue: var(--chip-blue);     --color-chip-blue-fg: var(--chip-blue-fg);
+  --color-dot-above: var(--dot-above); --color-dot-track: var(--dot-track);
+  --color-dot-below: var(--dot-below); --color-dot-empty: var(--dot-empty);
+
+  --color-sidebar: var(--sidebar);                         --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);         --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);           --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);           --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) - 4px);   /* 4  */
+  --radius-md: calc(var(--radius) - 2px);   /* 6  */
+  --radius-lg: var(--radius);               /* 8  */
+  --radius-xl: calc(var(--radius) + 4px);   /* 12 */
+
+  /* custom type scale -> utilities text-caption, text-body-sm, text-body, text-title, text-h2, text-h1, text-stat */
+  --text-caption: 0.75rem;    --text-caption--line-height: 1rem;
+  --text-body-sm: 0.8125rem;  --text-body-sm--line-height: 1.125rem;
+  --text-body: 0.875rem;      --text-body--line-height: 1.25rem;
+  --text-title: 1rem;         --text-title--line-height: 1.5rem;
+  --text-h2: 1.25rem;         --text-h2--line-height: 1.75rem;
+  --text-h1: 1.75rem;         --text-h1--line-height: 2.25rem;
+  --text-stat: 2rem;          --text-stat--line-height: 2.5rem;
+  --text-display: 3.5rem;     --text-display--line-height: 1.05;
+
+  /* motion */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
 }
 
-h1 {
-  font-family: var(--font-sans);
-  font-size: var(--text-h1);
-  font-weight: var(--text-h1-weight);
-  line-height: var(--text-h1-line-height);
-  letter-spacing: var(--text-h1-letter-spacing);
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground font-sans antialiased; font-feature-settings: "tnum" 0; }
+  .tabular { font-variant-numeric: tabular-nums; }
 }
 
-.label-caps {
-  font-family: var(--font-mono);
-  font-size: var(--text-label-caps);
-  font-weight: var(--text-label-caps-weight);
-  line-height: var(--text-label-caps-line-height);
-  letter-spacing: var(--text-label-caps-letter-spacing);
-  text-transform: uppercase;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 
-/* Focus styles */
-:focus-visible {
-  outline: 2px solid var(--color-ring);
-  outline-offset: 2px;
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--color-muted);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-muted-foreground);
-}
-
-/* Utility classes */
-.container {
-  width: 100%;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 var(--spacing-md);
-}
-
-@media (min-width: 768px) {
+/* ── RESKIN COMPAT SHIM — removed in UI-16 final sweep ──────────────────────
+   Pages not yet re-skinned use a custom `.container` class. Tailwind v4's
+   built-in `container` utility has no padding, so keep the old behavior for
+   un-migrated pages. Delete this block once every page is migrated. */
+@layer components {
   .container {
-    padding: 0 var(--spacing-gutter);
+    width: 100%;
+    max-width: 1280px;
+    margin-inline: auto;
+    padding-inline: 1rem;
   }
-}
-
-@media (min-width: 1024px) {
-  .container {
-    padding: 0 var(--spacing-margin);
-  }
+  @media (min-width: 768px) { .container { padding-inline: 1.5rem; } }
+  @media (min-width: 1024px) { .container { padding-inline: 2rem; } }
 }
