@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "~/components/ui/dialog";
 import { Toaster } from "~/components/ui/toaster";
+import { LogoutButton } from "~/components/logout-button";
 import { toast } from "~/hooks/use-toast";
 import { formatDate, formatDateTime } from "~/lib/utils";
 import { matchesFilters, type JobFilter } from "~/server/job-relevance";
@@ -870,11 +871,12 @@ function DashboardContent({ isTrainee = false }: { isTrainee?: boolean }) {
     <div className="container py-8">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <span className="flex items-center gap-1">
             <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
             Live
           </span>
+          <LogoutButton />
         </div>
       </div>
 

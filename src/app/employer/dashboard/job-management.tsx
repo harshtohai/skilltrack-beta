@@ -1,15 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { AlertCircle, BadgeCheck, Loader2, Plus, Users } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
-import { Textarea } from "~/components/ui/textarea";
 import type {
   Applicant,
   EmployerJobsResponse,
@@ -38,29 +35,6 @@ const SALARY_BAND_LABELS: Record<string, string> = {
   GT_50K: "> ₹50K",
 };
 
-const DISTRICTS = [
-  "Mumbai", "Pune", "Nagpur", "Nashik", "Aurangabad",
-  "Solapur", "Amravati", "Kolhapur", "Sangli", "Satara",
-  "Ahmednagar", "Jalgaon", "Latur", "Dhule", "Akola",
-  "Wardha", "Chandrapur", "Yavatmal", "Buldhana", "Hingoli",
-];
-
-const EMPLOYMENT_TYPES = Object.keys(EMPLOYMENT_TYPE_LABELS);
-const WORK_MODES = Object.keys(WORK_MODE_LABELS);
-const SALARY_BANDS = Object.keys(SALARY_BAND_LABELS);
-
-const emptyForm = {
-  title: "",
-  description: "",
-  employmentType: "FULL_TIME",
-  workMode: "ONSITE",
-  salaryBand: "",
-  district: "",
-  skills: "",
-  openings: "1",
-  applicationDeadline: "",
-};
-
 interface FeedbackState {
   jobId: string;
   message: string;
@@ -69,17 +43,15 @@ interface FeedbackState {
 
 /**
  * Employer job management (F25): verification banner, job list with
- * applicant panels, create form and the shortlist/hire/reject pipeline.
- * PENDING/SUSPENDED/REJECTED employers see the banner only — no job UI.
+ * applicant panels and the shortlist/hire/reject pipeline. Posting happens
+ * on the dedicated /employer/dashboard/post-job page — this section keeps
+ * a single "Post Job" button that navigates there. PENDING/SUSPENDED/
+ * REJECTED employers see the banner only — no job UI.
  */
 export function JobManagement() {
   const [data, setData] = useState<EmployerJobsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  // Create-job form
-  const [form, setForm] = useState(emptyForm);
-  const [creating, setCreating] = useState(false);
 
   // Applicants panels + pipeline actions
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
@@ -143,42 +115,6 @@ export function JobManagement() {
     }
     setExpandedJobId(jobId);
     if (!applicants[jobId]) void loadApplicants(jobId);
-  };
-
-  const handleCreate = async () => {
-    if (creating) return;
-    setCreating(true);
-    setError("");
-    try {
-      const res = await fetch("/api/v1/employer/jobs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: form.title.trim(),
-          description: form.description.trim(),
-          employmentType: form.employmentType,
-          workMode: form.workMode,
-          ...(form.salaryBand ? { salaryBand: form.salaryBand } : {}),
-          district: form.district,
-          skillsRequired: form.skills.split(",").map((s) => s.trim()).filter(Boolean),
-          openings: form.openings,
-          ...(form.applicationDeadline
-            ? { applicationDeadline: new Date(form.applicationDeadline).toISOString() }
-            : {}),
-        }),
-      });
-      if (!res.ok) {
-        const json = (await res.json()) as { error?: { message?: string } };
-        throw new Error(json.error?.message ?? "Failed to create job posting");
-      }
-      setForm(emptyForm);
-      setFeedback({ jobId: "*", message: "Job posted", ok: true });
-      await loadJobs();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create job posting");
-    } finally {
-      setCreating(false);
-    }
   };
 
   const setStatus = async (jobId: string, status: "OPEN" | "CLOSED") => {
@@ -319,16 +255,25 @@ export function JobManagement() {
 
       {/* Job postings list */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Job Postings</CardTitle>
-          <Badge variant="success" className="gap-1">
-            <BadgeCheck className="h-3 w-3" /> Verified
-          </Badge>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <div className="flex items-center gap-3">
+            <CardTitle>Job Postings</CardTitle>
+            <Badge variant="success" className="gap-1">
+              <BadgeCheck className="h-3 w-3" /> Verified
+            </Badge>
+          </div>
+          <Button asChild className="gap-2">
+            <Link href="/employer/dashboard/post-job">
+              <Plus className="h-4 w-4" />
+              Post Job
+            </Link>
+          </Button>
         </CardHeader>
         <CardContent className="space-y-3">
           {jobs.length === 0 ? (
             <p className="text-sm text-gray-500">
-              No jobs posted yet — use the form below to post your first job.
+              No jobs posted yet — click <span className="font-medium">Post Job</span> above to post
+              your first job.
             </p>
           ) : (
             jobs.map((job) => (
@@ -508,142 +453,6 @@ export function JobManagement() {
               </div>
             ))
           )}
-        </CardContent>
-      </Card>
-
-      {/* Create job form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Post a Job</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="job-title">Job Title</Label>
-              <Input
-                id="job-title"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="e.g. CNC Machine Operator"
-                maxLength={120}
-                disabled={creating}
-              />
-            </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="job-description">Description</Label>
-              <Textarea
-                id="job-description"
-                rows={3}
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Role, responsibilities, requirements…"
-                maxLength={5000}
-                disabled={creating}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Employment Type</Label>
-              <Select value={form.employmentType} onValueChange={(v) => setForm({ ...form, employmentType: v })}>
-                <SelectTrigger className="w-full" disabled={creating}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {EMPLOYMENT_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>{EMPLOYMENT_TYPE_LABELS[t] ?? t}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Work Mode</Label>
-              <Select value={form.workMode} onValueChange={(v) => setForm({ ...form, workMode: v })}>
-                <SelectTrigger className="w-full" disabled={creating}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {WORK_MODES.map((m) => (
-                    <SelectItem key={m} value={m}>{WORK_MODE_LABELS[m] ?? m}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Salary Band</Label>
-              <Select
-                value={form.salaryBand || "none"}
-                onValueChange={(v) => setForm({ ...form, salaryBand: v === "none" ? "" : v })}
-              >
-                <SelectTrigger className="w-full" disabled={creating}>
-                  <SelectValue placeholder="Not specified" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Not specified</SelectItem>
-                  {SALARY_BANDS.map((b) => (
-                    <SelectItem key={b} value={b}>{SALARY_BAND_LABELS[b] ?? b}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>District</Label>
-              <Select value={form.district} onValueChange={(v) => setForm({ ...form, district: v })}>
-                <SelectTrigger className="w-full" disabled={creating}>
-                  <SelectValue placeholder="Select district" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DISTRICTS.map((d) => (
-                    <SelectItem key={d} value={d}>{d}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="job-skills">Skills Required</Label>
-              <Input
-                id="job-skills"
-                value={form.skills}
-                onChange={(e) => setForm({ ...form, skills: e.target.value })}
-                placeholder="Comma-separated, e.g. Welding, CNC, Safety"
-                disabled={creating}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="job-openings">Openings</Label>
-              <Input
-                id="job-openings"
-                type="number"
-                min={1}
-                max={100}
-                value={form.openings}
-                onChange={(e) => setForm({ ...form, openings: e.target.value })}
-                disabled={creating}
-              />
-            </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="job-deadline">Application Deadline (optional)</Label>
-              <Input
-                id="job-deadline"
-                type="date"
-                value={form.applicationDeadline}
-                onChange={(e) => setForm({ ...form, applicationDeadline: e.target.value })}
-                disabled={creating}
-              />
-            </div>
-          </div>
-          <Button
-            className="gap-2"
-            onClick={() => void handleCreate()}
-            disabled={
-              creating ||
-              form.title.trim().length < 3 ||
-              form.description.trim().length < 10 ||
-              !form.district ||
-              form.skills.split(",").filter((s) => s.trim()).length === 0
-            }
-          >
-            {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            {creating ? "Posting…" : "Post Job"}
-          </Button>
         </CardContent>
       </Card>
     </div>

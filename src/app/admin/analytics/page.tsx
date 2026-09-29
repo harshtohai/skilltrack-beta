@@ -11,6 +11,7 @@ import { ComparisonChart } from "~/components/charts/ComparisonChart";
 import { MetricCard } from "~/components/charts/MetricCard";
 import { VerificationQueue } from "~/components/admin/verification-queue";
 import { JobMarketplacePanel } from "~/components/admin/job-marketplace-panel";
+import { LogoutButton } from "~/components/logout-button";
 import type { JobMarketplace } from "~/lib/job-board-contracts";
 
 interface TrainingCenterScore {
@@ -217,6 +218,7 @@ export default function GovernmentAnalyticsDashboard() {
                 <Download className="h-4 w-4" />
                 Export CSV
               </Button>
+              <LogoutButton />
             </div>
           </div>
         </div>

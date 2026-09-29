@@ -9,6 +9,7 @@ import { LineChart } from "~/components/charts/LineChart";
 import { ComparisonChart } from "~/components/charts/ComparisonChart";
 import { PeerComparisonChart } from "~/components/charts/PeerComparisonChart";
 import { MetricCard } from "~/components/charts/MetricCard";
+import { LogoutButton } from "~/components/logout-button";
 
 interface InstituteAnalyticsData {
   timeWindow: string;
@@ -192,6 +193,7 @@ export default function InstituteAnalyticsDashboard() {
                 <Download className="h-4 w-4" />
                 Export Report
               </Button>
+              <LogoutButton />
             </div>
           </div>
         </div>

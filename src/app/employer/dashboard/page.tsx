@@ -11,6 +11,7 @@ import { LineChart } from "~/components/charts/LineChart";
 import { ComparisonChart } from "~/components/charts/ComparisonChart";
 import { PeerComparisonChart } from "~/components/charts/PeerComparisonChart";
 import { JobManagement } from "./job-management";
+import { LogoutButton } from "~/components/logout-button";
 import { formatDateTime } from "~/lib/utils";
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -119,7 +120,10 @@ export default function EmployerDashboardPage() {
                 <p className="text-sm text-gray-500">{data.employer.name}</p>
               </div>
             </div>
-            {data.employer.isDemo && <Badge variant="secondary">Demo View</Badge>}
+            <div className="flex items-center gap-3">
+              {data.employer.isDemo && <Badge variant="secondary">Demo View</Badge>}
+              <LogoutButton />
+            </div>
           </div>
         </div>
       </header>
