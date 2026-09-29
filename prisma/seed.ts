@@ -103,6 +103,9 @@ async function main() {
   await prisma.certificate.deleteMany()
   await prisma.employmentHistory.deleteMany()
   await prisma.traineeLoginToken.deleteMany()
+  await prisma.jobSeekSignal.deleteMany()
+  await prisma.jobApplication.deleteMany()
+  await prisma.jobPosting.deleteMany()
   await prisma.trainee.deleteMany()
   await prisma.cohort.deleteMany()
   await prisma.programme.deleteMany()
@@ -450,6 +453,31 @@ async function main() {
     surveyCount++
   }
   console.log(`✅ Created ${surveyCount} survey responses`)
+
+  // F25 Job Board: demo employer (VERIFIED) — the login identity for the
+  // unlisted employer signup (/employer/register). passwordHash uses the
+  // scrypt:<saltHex>:<hashHex> format from ~/server/password-hash
+  // (canonical: the hex string is passed to scryptSync).
+  const saltHex = crypto.randomBytes(16).toString("hex")
+  const employerHash = crypto.scryptSync("employer123", saltHex, 64).toString("hex")
+  await prisma.employer.upsert({
+    where: { contactEmail: "hr@company.com" },
+    create: {
+      companyName: "TechCorp",
+      contactEmail: "hr@company.com",
+      passwordHash: `scrypt:${saltHex}:${employerHash}`,
+      sector: "IT",
+      district: "Chandrapur",
+      registrationNo: "27AAPTU1234A1Z5",
+      hiringNeeds: "Full-stack developers, Data analysts",
+      employeeCount: 50,
+      verificationStatus: "VERIFIED",
+    },
+    update: {
+      verificationStatus: "VERIFIED",
+    },
+  })
+  console.log('✅ Created demo employer TechCorp (VERIFIED, hr@company.com)')
 
   console.log('🎉 Seed completed successfully!')
 }

@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
     // Board hires = confirmed claims; retention per employer uses the same
     // computeEmployerRetention the employer track uses.
     const companyNameById = new Map(allEmployers.map((e) => [e.id, e.companyName]));
+    const verificationByEmployer = new Map(allEmployers.map((e) => [e.id, e.verificationStatus]));
     const claimsByEmployer = new Map<
       string,
       { employerName: string; confirmed: boolean; sustainedEmployment: boolean | null }[]
@@ -82,7 +83,10 @@ export async function GET(request: NextRequest) {
       const claims = claimsByEmployer.get(employerId) ?? [];
       claims.push({
         employerName: companyNameById.get(employerId) ?? "Unknown",
-        confirmed: true,
+        // Only a currently-VERIFIED employer's hires count as confirmed
+        // retention evidence — suspended/rejected employers stop feeding
+        // the reliability score (spec: the board self-cleans).
+        confirmed: verificationByEmployer.get(employerId) === "VERIFIED",
         sustainedEmployment: sustainedByTrainee.get(hire.traineeId) ?? null,
       });
       claimsByEmployer.set(employerId, claims);

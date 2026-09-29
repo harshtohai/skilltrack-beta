@@ -118,7 +118,7 @@ export async function POST(
         entityType: "JobApplication",
         entityId: application.id,
         action: "HIRE_APPLICANT",
-        actorType: "EMPLOYER",
+        actorType: session.user.role === "admin" ? "ADMIN" : "EMPLOYER",
         actorId,
         metadata: { jobId: job.id, traineeId: application.traineeId, jobClosed: result.jobClosed },
       },

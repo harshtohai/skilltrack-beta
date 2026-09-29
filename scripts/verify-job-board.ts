@@ -80,8 +80,14 @@ async function call(method: string, path: string, cookie: string, body?: unknown
 
 const body = () => lastBody as Record<string, unknown>;
 
-/** Real credentials login (tests the scrypt rewrite in authorize()). */
-async function credsLogin(email: string, password: string, role: string): Promise<boolean> {
+/** Real credentials login (tests the scrypt rewrite in authorize()).
+ * Returns the session's user id so employer cookies carry the REAL
+ * Employers row id — no hardcoded uuids (survives reseeds). */
+async function credsLogin(
+  email: string,
+  password: string,
+  role: string,
+): Promise<{ ok: boolean; id: string | null }> {
   const csrfRes = await fetch(`${BASE}/api/auth/csrf`);
   const { csrfToken } = (await csrfRes.json()) as { csrfToken: string };
   const csrfCookie = csrfRes.headers.get("set-cookie") ?? "";
@@ -111,13 +117,16 @@ async function credsLogin(email: string, password: string, role: string): Promis
     headers: { Cookie: sessionCookie },
   });
   const text = await sessionRes.text();
-  let session: { user?: { email?: string | null } } | null = null;
+  let session: { user?: { id?: string; email?: string | null } } | null = null;
   try {
     session = JSON.parse(text) as { user?: { email?: string | null } } | null;
   } catch {
     session = null;
   }
-  return session?.user?.email?.trim().toLowerCase() === email.trim().toLowerCase();
+  return {
+    ok: session?.user?.email?.trim().toLowerCase() === email.trim().toLowerCase(),
+    id: session?.user?.id ?? null,
+  };
 }
 
 async function main() {
@@ -155,19 +164,23 @@ async function main() {
 
   // ── Credentials logins (scrypt rewrite) ─────────────────────────────
   console.log("\n== Credentials logins ==");
-  (await credsLogin("admin@maharashtra.gov.in", "admin123", "admin"))
-    ? ok("admin login") : bad("admin login");
-  (await credsLogin("hr@company.com", "employer123", "employer"))
-    ? ok("demo employer login (TechCorp, scrypt)") : bad("demo employer login (TechCorp, scrypt)");
-  (await credsLogin(smokeEmail, "smokepass123", "employer"))
-    ? ok("PENDING employer can log in") : bad("PENDING employer can log in");
+  const adminLogin = await credsLogin("admin@maharashtra.gov.in", "admin123", "admin");
+  adminLogin.ok ? ok("admin login") : bad("admin login");
+  const demoLogin = await credsLogin("hr@company.com", "employer123", "employer");
+  demoLogin.ok ? ok("demo employer login (TechCorp, scrypt)") : bad("demo employer login (TechCorp, scrypt)");
+  const newLogin = await credsLogin(smokeEmail, "smokepass123", "employer");
+  newLogin.ok ? ok("PENDING employer can log in") : bad("PENDING employer can log in");
 
   const adminC = await mint("admin-001", "admin", "admin@maharashtra.gov.in");
   // Employer cookies must carry the REAL Employers row id — the routes
   // resolve db.employer.findUnique({ where: { id: session.user.id } }).
-  const TECHCORP_ID = "b69dd1d4-d722-4519-92e7-a4524c9a5c14"; // seeded demo employer
+  // The id comes from the credentials-login session (survives reseeds).
+  const TECHCORP_ID = demoLogin.id ?? "";
   const demoC = await mint(TECHCORP_ID, "employer", "hr@company.com");
   const newC = await mint(newEmpId, "employer", smokeEmail);
+  // The trainee logs in via magic link (no credentials flow to probe), so
+  // its row id stays pinned here — prisma/seed.ts recreates trainees with
+  // fresh uuids, so re-seeding requires updating this constant.
   const trainC = await mint(TRAINEE_ID, "trainee");
 
   // Resolve the real employer ids for scoped calls (admin queue is the

@@ -111,11 +111,16 @@ export async function GET(request: NextRequest) {
           (e) => e.checkpointDays > 0
         );
         const known = followups.filter((e) => e.outcomeStatus !== "UNKNOWN");
+        // Latest known post-placement checkpoint wins — mirrors
+        // /api/v1/outcomes/government so job cards and gov analytics agree.
+        const latest =
+          known.length > 0
+            ? known.reduce((a, b) => (b.checkpointDays >= a.checkpointDays ? b : a))
+            : null;
         return {
           employerName: companyName,
           confirmed: verificationStatus === "VERIFIED",
-          sustainedEmployment:
-            known.length === 0 ? null : known.some((e) => isEmployed(e.outcomeStatus)),
+          sustainedEmployment: latest ? isEmployed(latest.outcomeStatus) : null,
         };
       });
       retentionByEmployer.set(employerId, {
