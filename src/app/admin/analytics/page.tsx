@@ -1,14 +1,17 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { GraduationCap, Building2, Users, TrendingUp, Target, Download, Filter, Calendar } from "lucide-react";
+import { GraduationCap, Building2, Users, TrendingUp, Target, Download } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { LineChart } from "~/components/charts/LineChart";
 import { ComparisonChart } from "~/components/charts/ComparisonChart";
 import { MetricCard } from "~/components/charts/MetricCard";
-import { format } from "date-fns";
+import { VerificationQueue } from "~/components/admin/verification-queue";
+import { JobMarketplacePanel } from "~/components/admin/job-marketplace-panel";
+import type { JobMarketplace } from "~/lib/job-board-contracts";
 
 interface TrainingCenterScore {
   centerId: string;
@@ -38,6 +41,7 @@ interface GovernmentAnalyticsData {
     totalVerified: number;
   };
   trainingCenters: TrainingCenterScore[];
+  jobMarketplace?: JobMarketplace | null;
   targets: {
     placementRate: number;
     retentionRate: number;
@@ -219,6 +223,14 @@ export default function GovernmentAnalyticsDashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        <Tabs defaultValue="outcomes">
+          <TabsList className="mb-6">
+            <TabsTrigger value="outcomes">Outcomes</TabsTrigger>
+            <TabsTrigger value="verification">Verification Queue</TabsTrigger>
+            <TabsTrigger value="marketplace">Job Marketplace</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="outcomes">
         <div className="grid gap-6 mb-8 sm:grid-cols-2 lg:grid-cols-4">
           <MetricCard
             title="Total Certified"
@@ -497,6 +509,19 @@ export default function GovernmentAnalyticsDashboard() {
             </div>
           </CardContent>
         </Card>
+          </TabsContent>
+
+          <TabsContent value="verification">
+            <VerificationQueue onChanged={() => void fetchData()} />
+          </TabsContent>
+
+          <TabsContent value="marketplace">
+            <JobMarketplacePanel
+              marketplace={data.jobMarketplace ?? null}
+              onRefresh={() => void fetchData()}
+            />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
