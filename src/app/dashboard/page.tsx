@@ -10,7 +10,6 @@ import { Button } from "~/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "~/components/ui/dialog";
-import { Toaster } from "~/components/ui/toaster";
 import { LogoutButton } from "~/components/logout-button";
 import { toast } from "~/hooks/use-toast";
 import { formatDate, formatDateTime } from "~/lib/utils";
@@ -960,7 +959,6 @@ export default function DashboardPage() {
   return (
     <>
       <DashboardContent isTrainee={isTrainee} />
-      <Toaster />
     </>
   );
 }
