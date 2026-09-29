@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { describe, expect, it } from "vitest";
 import { hashPassword, verifyPassword } from "./password-hash";
 
@@ -18,6 +19,19 @@ describe("hashPassword", () => {
 describe("verifyPassword", () => {
   it("round-trips a hashed password", () => {
     expect(verifyPassword("employer123", hashPassword("employer123"))).toBe(true);
+  });
+
+  it("verifies the seeded demo-employer format (salt passed to scryptSync as the hex string)", () => {
+    const saltHex = "0123456789abcdef0123456789abcdef";
+    const hash = crypto.scryptSync("employer123", saltHex, 64).toString("hex");
+    expect(verifyPassword("employer123", `scrypt:${saltHex}:${hash}`)).toBe(true);
+    expect(verifyPassword("wrong-password", `scrypt:${saltHex}:${hash}`)).toBe(false);
+  });
+
+  it("tolerates the hex-decoded salt bytes interpretation", () => {
+    const salt = crypto.randomBytes(16);
+    const hash = crypto.scryptSync("employer123", salt, 64).toString("hex");
+    expect(verifyPassword("employer123", `scrypt:${salt.toString("hex")}:${hash}`)).toBe(true);
   });
 
   it("rejects a wrong password", () => {
