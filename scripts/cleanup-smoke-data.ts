@@ -28,13 +28,26 @@ async function main() {
   });
   const smokeEmployerIds = smokeEmployers.map((e) => e.id);
 
+  // TechCorp (the seeded legit employer) also carries harness-created
+  // postings — they only exist from smoke runs. Remove this clause if
+  // TechCorp ever starts posting for real.
+  const techcorp = await db.employer.findUnique({
+    where: { contactEmail: "hr@company.com" },
+    select: { id: true },
+  });
+  const harnessEmployerIds = techcorp ? [...smokeEmployerIds, techcorp.id] : smokeEmployerIds;
+
+  // Every application by the pinned test trainee is smoke-created.
   const appsDeleted = await db.jobApplication.deleteMany({
-    where: smokeEmployerIds.length > 0
-      ? { OR: [{ jobPosting: { employerId: { in: smokeEmployerIds } } }, { traineeId: TRAINEE_ID, jobPosting: { employerId: { in: smokeEmployerIds } } }] }
-      : { traineeId: TRAINEE_ID, jobPosting: { employerId: { in: [] } } },
+    where: {
+      OR: [
+        { jobPosting: { employerId: { in: harnessEmployerIds } } },
+        { traineeId: TRAINEE_ID },
+      ],
+    },
   });
   const postingsDeleted = await db.jobPosting.deleteMany({
-    where: { employerId: { in: smokeEmployerIds } },
+    where: { employerId: { in: harnessEmployerIds } },
   });
   const employersDeleted = await db.employer.deleteMany({
     where: { id: { in: smokeEmployerIds } },
