@@ -10,6 +10,7 @@ import { MetricCard } from "~/components/charts/MetricCard";
 import { LineChart } from "~/components/charts/LineChart";
 import { ComparisonChart } from "~/components/charts/ComparisonChart";
 import { PeerComparisonChart } from "~/components/charts/PeerComparisonChart";
+import { JobManagement } from "./job-management";
 import { formatDateTime } from "~/lib/utils";
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -129,6 +130,10 @@ export default function EmployerDashboardPage() {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
+
+        {/* F25 job management — verification banner drives the section:
+            PENDING/SUSPENDED see the banner only, VERIFIED the full UI. */}
+        <JobManagement />
 
         {/* Metrics */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">

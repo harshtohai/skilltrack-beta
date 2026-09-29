@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { db } from "~/server/db";
+import { verifyPassword } from "~/server/password-hash";
 import { authConfig, type UserRole } from "~/lib/auth.config";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@maharashtra.gov.in";
@@ -8,7 +9,6 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "admin123";
 const INSTITUTE_EMAIL = process.env.INSTITUTE_EMAIL ?? "institute@pmkvy.gov.in";
 const INSTITUTE_PASSWORD = process.env.INSTITUTE_PASSWORD ?? "institute123";
 const EMPLOYER_EMAIL = process.env.EMPLOYER_EMAIL ?? "hr@company.com";
-const EMPLOYER_PASSWORD = process.env.EMPLOYER_PASSWORD ?? "employer123";
 
 interface LoginFields {
   email?: unknown;
@@ -38,33 +38,18 @@ async function authorize(fields: LoginFields) {
   }
 
   if (role === "employer" || (!role && email === EMPLOYER_EMAIL.toLowerCase())) {
-    if (email === EMPLOYER_EMAIL.toLowerCase()) {
-      if (password !== EMPLOYER_PASSWORD) return null;
-      return {
-        id: "employer-demo",
-        email: EMPLOYER_EMAIL,
-        name: "Demo Employer",
-        role: "employer" as UserRole,
-        employerId: "employer-demo",
-      };
-    }
-
-    // Real employers: match a pending verification request by email local-part
-    const verificationRequest = await db.verificationRequest.findFirst({
-      where: {
-        employmentClaim: {
-          employerName: { contains: email.split("@")[0], mode: "insensitive" },
-        },
-      },
-      include: { employmentClaim: true },
-    });
-    if (!verificationRequest?.employmentClaim) return null;
+    // Employer Track (F25): resolve via the Employers table — contactEmail is
+    // the login identity, passwordHash uses the scrypt:<saltHex>:<hashHex>
+    // format produced by hashPassword (~/server/password-hash).
+    const employer = await db.employer.findUnique({ where: { contactEmail: email } });
+    if (!employer) return null;
+    if (!verifyPassword(password, employer.passwordHash)) return null;
     return {
-      id: `employer-${verificationRequest.employmentClaimId}`,
-      email: email,
-      name: verificationRequest.employmentClaim.employerName ?? "Employer",
+      id: employer.id,
+      email: employer.contactEmail,
+      name: employer.companyName,
       role: "employer" as UserRole,
-      employerId: verificationRequest.employmentClaimId,
+      employerId: employer.id,
     };
   }
 

@@ -50,18 +50,43 @@ export async function GET(_request: NextRequest) {
       },
     })) as ClaimRow[];
 
-    // Resolve employer identity
-    const isDemo = session.user.id === "employer-demo";
+    // Resolve employer identity. F25 Employer Track: real employers resolve
+    // via the Employers row (session.user.id = employer uuid) and analytics
+    // scope to claims whose normalized employer name matches the normalized
+    // company name. Legacy sessions (pre-job-board "employer-demo",
+    // claim-based "employer-<claimId>") and employer rows with zero claims
+    // keep the aggregate "All Employers (Demo View)" fallback so the T8
+    // demo dashboard does not regress.
+    let isDemo = false;
     let employerName: string | null = null;
-    if (!isDemo && session.user.id.startsWith("employer-")) {
-      const ownClaimId = session.user.id.slice("employer-".length);
-      const ownClaim = allClaims.find((c) => c.id === ownClaimId);
-      employerName = ownClaim?.employerName ? normalizeEmployerName(ownClaim.employerName) : null;
-    }
+    let scoped = allClaims;
 
-    const scoped = isDemo
-      ? allClaims
-      : allClaims.filter((c) => c.employerName && normalizeEmployerName(c.employerName) === employerName);
+    const employerRow = await db.employer.findUnique({ where: { id: session.user.id } });
+    if (employerRow) {
+      const normalizedName = normalizeEmployerName(employerRow.companyName);
+      const ownClaims = allClaims.filter(
+        (c) => c.employerName && normalizeEmployerName(c.employerName) === normalizedName
+      );
+      if (ownClaims.length > 0) {
+        employerName = employerRow.companyName;
+        scoped = ownClaims;
+      } else {
+        // Zero claims → aggregate fallback, labeled as the existing demo view.
+        isDemo = true;
+      }
+    } else {
+      const isLegacyDemo = session.user.id === "employer-demo";
+      if (isLegacyDemo) {
+        isDemo = true;
+      } else if (session.user.id.startsWith("employer-")) {
+        const ownClaimId = session.user.id.slice("employer-".length);
+        const ownClaim = allClaims.find((c) => c.id === ownClaimId);
+        employerName = ownClaim?.employerName ? normalizeEmployerName(ownClaim.employerName) : null;
+      }
+      scoped = isLegacyDemo
+        ? allClaims
+        : allClaims.filter((c) => c.employerName && normalizeEmployerName(c.employerName) === employerName);
+    }
 
     const allOutcomes = await db.outcomeEvent.findMany({
       select: {
