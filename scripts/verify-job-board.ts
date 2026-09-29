@@ -46,15 +46,19 @@ function check(desc: string, actual: unknown, expected: unknown) {
   else bad(`${desc} — got: ${JSON.stringify(actual)}, want: ${JSON.stringify(expected)}`);
 }
 
-/** Session cookie for a role, minted directly (mirrors trainee verify route). */
+/** Session cookie for a role, minted directly (mirrors trainee verify route).
+ * The cookie name (and JWT salt) follows NextAuth's secure-cookie rule:
+ * HTTPS targets use __Secure-authjs.session-token. */
 async function mint(sub: string, role: string, email: string | null = null) {
+  const secure = BASE.startsWith("https://");
+  const cookieName = secure ? "__Secure-authjs.session-token" : "authjs.session-token";
   const token = await encode({
     secret: process.env.AUTH_SECRET!,
-    salt: "authjs.session-token",
+    salt: cookieName,
     maxAge: 60 * 60 * 24 * 30,
     token: { sub, role, email, name: "" },
   });
-  return `authjs.session-token=${token}`;
+  return `${cookieName}=${token}`;
 }
 
 let lastCode = 0;
@@ -81,13 +85,14 @@ async function call(method: string, path: string, cookie: string, body?: unknown
 const body = () => lastBody as Record<string, unknown>;
 
 /** Real credentials login (tests the scrypt rewrite in authorize()).
- * Returns the session's user id so employer cookies carry the REAL
- * Employers row id — no hardcoded uuids (survives reseeds). */
+ * Returns the REAL session cookie (robust on any environment — no secret
+ * dependency) plus the session's user id so employer cookies carry the
+ * actual Employers row id — no hardcoded uuids (survives reseeds). */
 async function credsLogin(
   email: string,
   password: string,
   role: string,
-): Promise<{ ok: boolean; id: string | null }> {
+): Promise<{ ok: boolean; id: string | null; cookie: string }> {
   const csrfRes = await fetch(`${BASE}/api/auth/csrf`);
   const { csrfToken } = (await csrfRes.json()) as { csrfToken: string };
   const csrfCookie = csrfRes.headers.get("set-cookie") ?? "";
@@ -126,6 +131,7 @@ async function credsLogin(
   return {
     ok: session?.user?.email?.trim().toLowerCase() === email.trim().toLowerCase(),
     id: session?.user?.id ?? null,
+    cookie: sessionCookie,
   };
 }
 
@@ -171,16 +177,16 @@ async function main() {
   const newLogin = await credsLogin(smokeEmail, "smokepass123", "employer");
   newLogin.ok ? ok("PENDING employer can log in") : bad("PENDING employer can log in");
 
-  const adminC = await mint("admin-001", "admin", "admin@maharashtra.gov.in");
-  // Employer cookies must carry the REAL Employers row id — the routes
-  // resolve db.employer.findUnique({ where: { id: session.user.id } }).
-  // The id comes from the credentials-login session (survives reseeds).
-  const TECHCORP_ID = demoLogin.id ?? "";
-  const demoC = await mint(TECHCORP_ID, "employer", "hr@company.com");
-  const newC = await mint(newEmpId, "employer", smokeEmail);
+  // Real session cookies from the credentials flow — robust on any
+  // environment (no AUTH_SECRET dependency; right cookie name and JWT salt;
+  // the sub already carries the real employer/admin identity).
+  const adminC = adminLogin.cookie;
+  const demoC = demoLogin.cookie;
+  const newC = newLogin.cookie;
   // The trainee logs in via magic link (no credentials flow to probe), so
-  // its row id stays pinned here — prisma/seed.ts recreates trainees with
-  // fresh uuids, so re-seeding requires updating this constant.
+  // its session is minted directly; its row id stays pinned here —
+  // prisma/seed.ts recreates trainees with fresh uuids, so re-seeding
+  // requires updating this constant.
   const trainC = await mint(TRAINEE_ID, "trainee");
 
   // Resolve the real employer ids for scoped calls (admin queue is the
