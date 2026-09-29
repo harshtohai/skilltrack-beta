@@ -179,7 +179,26 @@ Trainee (WhatsApp) ⇄ [Bot Service] ── POST /api/v1/bot/inbound ──▶ [
 - **Tier 3 (Stretch)**: F20–F24 — LLM insights, SIDH adapter, deduplication, employer edit, email
 - **F25 Job Board (Current Sprint)**: Verified-recruiter job postings → trainee apply → hire feeds outcomes pipeline
 
-## Idea Bag (omitted right now — revisit later)
+## Idea Bag — UI Reskin decisions awaiting confirmation (Sep 30 morning)
+Context: Merivo UI reskin running on branch `ui-overhaul` (spec #49, tickets #50–#65). Decisions I made autonomously — confirm or override:
+1. **DotMap deferred**: design §4.14 wants a dot-map for geo, but our data is Maharashtra *districts*, not countries. Deferred; district distribution renders as a horizontal bar chart (§4.11-compliant). Options: India dot-map / world map / keep bar chart.
+2. **Font**: design says `next/font` Plus Jakarta Sans (build-time Google fetch, self-hosted). If the build environment can't reach Google Fonts, fallback is `@fontsource/plus-jakarta-sans`. Space Grotesk (currently the "mono" font) dropped for ui-monospace per design §2.1.
+3. **Command palette (⌘K)**: included in the app sidebar (design-sanctioned §15.5). Say the word if you don't want it.
+4. **dnd-kit NOT installed**: no drag use case exists in OutcomeTrack (no kanban). Design allowlists it but YAGNI.
+5. **Dead footer links**: landing links to /privacy, /terms, /consent, /data-retention, /accessibility — none exist as pages. Options: create minimal pages / remove links. Currently: links kept, unresolved.
+6. **CSV export**: dead Export buttons (no backend route) replaced with client-side CSV generation from table data. Confirm OK.
+7. **Employer verify redirect**: success on `/employer/verify/[token]` sends the (likely logged-out) verifier to `/dashboard` — existing behavior kept. Confirm intended.
+8. **Dark mode**: implemented fully (design `[inferred]`; site had none) — next-themes, toggle in user menu. Confirm wanted.
+9. **Sonner replaces Radix toast** (design §4.9 literal); Toaster mounted globally (fixes silent toasts on employer/verify).
+10. **Non-functional controls**: decorative search/filter on cohort detail removed (design: no decorative controls); "Add Employment"/"Upload Certificate" on trainee portal removed or disabled-with-tooltip.
+11. **Rebrand scope**: product name stays "OutcomeTrack"; "Merivo" is the design system name only. Logo = GraduationCap in orange chip treatment.
+12. **Landing content**: same content structure (features/how-it-works/audiences), new Merivo visuals.
+13. **Route groups**: authenticated pages move into `(app)/` route group for the shared S1 shell — URLs unchanged, middleware untouched.
+14. **Recruiter register stays unlisted**: gets S5 auth shell, never linked from landing/login/signup (F25 rule).
+15. **Simulator kept as dev tool** with a simple centered shell.
+16. **a11y verification is manual** (keyboard walkthrough + focus inspection) — no axe runner installed; say the word if you want @axe-core/react added.
+
+## Idea Bag (older items)
 - **In-app message thread per application** (employer↔trainee chat): parked — feasible later via a simple polling-based thread; contact reveal on shortlist covers the immediate need.
 - **WhatsApp bot apply flow**: trainees apply via web only; bot job prompts/apply deferred.
 - **Bot notifications for new jobs**: WhatsApp nudge when a job matching the trainee's district/skills posts — stretch.
