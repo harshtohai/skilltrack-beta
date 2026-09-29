@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { z } from "zod";
 import { processInboundMessage } from "~/lib/bot/conversation";
@@ -60,7 +60,8 @@ export async function POST(req: NextRequest) {
     for (const item of items) {
       const parsed = kapsoWebhookPayloadSchema.safeParse(item);
       if (!parsed.success) {
-        console.error("[WEBHOOK] Invalid payload:", parsed.error.message);
+        // Expected rejection (scanner/bot probes) — warn only, never a Sentry error
+        console.warn("[WEBHOOK] Invalid payload:", parsed.error.message);
         continue;
       }
       await processInboundMessage(toInboundMessage(parsed.data));
