@@ -5,6 +5,7 @@
 
 :root {
   --radius: 0.5rem;                              /* 8px base; sm=4 md=6 lg=8 xl=12 */
+  --font-plus-jakarta: "Plus Jakarta Sans";      /* @fontsource self-hosted (Idea Bag #2) */
 
   /* surfaces */
   --background: #F7F7F7;

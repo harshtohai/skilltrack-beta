@@ -1,14 +1,14 @@
 import "~/styles/globals.css";
-import { Plus_Jakarta_Sans } from "next/font/google";
+// Fontsource fallback per Idea Bag #2: the build environment cannot reach
+// fonts.gstatic.com, so next/font/google fails `next build`. Self-hosted
+// woff2 via @fontsource keeps the build offline-safe.
+import "@fontsource/plus-jakarta-sans/400.css";
+import "@fontsource/plus-jakarta-sans/500.css";
+import "@fontsource/plus-jakarta-sans/600.css";
+import "@fontsource/plus-jakarta-sans/700.css";
 import { Providers } from "~/components/providers";
 
 import { type Metadata } from "next";
-
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-plus-jakarta",
-  weight: ["400", "500", "600", "700"],
-});
 
 export const metadata: Metadata = {
   title: "OutcomeTrack — Skilling Outcomes Platform",
@@ -20,7 +20,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={jakarta.variable} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
         <Providers>{children}</Providers>
       </body>
