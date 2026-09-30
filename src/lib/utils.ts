@@ -1,5 +1,29 @@
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+
+/**
+ * tailwind-merge taught the Merivo type scale (§2.1). Without this, custom
+ * text sizes (text-caption, text-body-sm, …) are unknown to tailwind-merge,
+ * fall into its text-color group, and get DROPPED when merged with any
+ * text-color class — e.g. cn("text-caption text-muted-foreground") kept only
+ * "text-muted-foreground", rendering descriptions at inherited 16px.
+ */
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": [
+        "text-caption",
+        "text-body-sm",
+        "text-body",
+        "text-title",
+        "text-h2",
+        "text-h1",
+        "text-stat",
+        "text-display",
+      ],
+    },
+  },
+});
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
