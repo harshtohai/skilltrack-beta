@@ -3,107 +3,81 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { GraduationCap, AlertCircle, CheckCircle } from "lucide-react";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { Separator } from "~/components/ui/separator";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { CheckCircle } from "lucide-react";
+
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { Button } from "~/components/ui/button";
+import { Checkbox } from "~/components/ui/checkbox";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "~/components/ui/form";
+import { Input } from "~/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import { DotSparkline } from "~/components/viz/dot-sparkline";
+
+/**
+ * Signup per design §9.3 — Shell S5 (split): left form column max-w-sm,
+ * right bg-muted brand panel with dot-matrix art + one testimonial.
+ * Trainees have no password (magic-link auth) — the form collects exactly
+ * what the API stores: name, email, phone, district, consent.
+ */
+
+const signupSchema = z.object({
+  fullName: z
+    .string()
+    .min(1, "Full name is required")
+    .min(2, "Name must be at least 2 characters"),
+  email: z.string().min(1, "Email is required").email("Enter a valid email"),
+  phone: z.string().regex(/^\d{10}$/, "Enter a valid 10-digit Indian mobile number"),
+  district: z.string().min(1, "Please select your district"),
+  consent: z.literal(true, {
+    errorMap: () => ({
+      message: "You must agree to the terms and consent to data processing",
+    }),
+  }),
+});
+
+type SignupValues = z.infer<typeof signupSchema>;
+
+const DISTRICTS = [
+  "Mumbai", "Pune", "Nagpur", "Nashik", "Aurangabad",
+  "Solapur", "Amravati", "Kolhapur", "Sangli", "Satara",
+  "Ahmednagar", "Jalgaon", "Latur", "Dhule", "Akola",
+  "Wardha", "Chandrapur", "Yavatmal", "Buldhana", "Hingoli",
+];
+
+const BRAND_SPARK = Array.from({ length: 48 }, (_, i) =>
+  Math.round(6 + 30 * (i / 47) + (i % 5 === 0 ? 8 : 0)),
+);
 
 export default function SignupPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    district: "",
-    password: "",
-    confirmPassword: "",
-    consent: false,
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  const DISTRICTS = [
-    "Mumbai", "Pune", "Nagpur", "Nashik", "Aurangabad",
-    "Solapur", "Amravati", "Kolhapur", "Sangli", "Satara",
-    "Ahmednagar", "Jalgaon", "Latur", "Dhule", "Akola",
-    "Wardha", "Chandrapur", "Yavatmal", "Buldhana", "Hingoli",
-  ];
+  const form = useForm<SignupValues>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: { fullName: "", email: "", phone: "", district: "", consent: false as unknown as true },
+  });
 
-  const validateField = (name: string, value: string) => {
-    switch (name) {
-      case "fullName":
-        if (!value.trim()) return "Full name is required";
-        if (value.trim().length < 2) return "Name must be at least 2 characters";
-        break;
-      case "email":
-        if (!value) return "Email is required";
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Invalid email format";
-        break;
-      case "phone":
-        if (!value) return "Phone number is required";
-        const cleaned = value.replace(/\D/g, "");
-        if (cleaned.length !== 10) return "Enter a valid 10-digit Indian mobile number";
-        break;
-      case "district":
-        if (!value) return "Please select your district";
-        break;
-      case "password":
-        if (!value) return "Password is required";
-        if (value.length < 8) return "Password must be at least 8 characters";
-        if (!/[A-Z]/.test(value)) return "Password must contain at least one uppercase letter";
-        if (!/[a-z]/.test(value)) return "Password must contain at least one lowercase letter";
-        if (!/[0-9]/.test(value)) return "Password must contain at least one number";
-        break;
-      case "confirmPassword":
-        if (value !== formData.password) return "Passwords do not match";
-        break;
-    }
-    return "";
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    const error = validateField(name, value);
-    setErrors((prev) => ({ ...prev, [name]: error }));
-  };
-
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    const error = validateField(name, value);
-    setErrors((prev) => ({ ...prev, [name]: error }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = form.handleSubmit(async (data) => {
     setSubmitError("");
-
-    const newErrors: Record<string, string> = {};
-    (Object.keys(formData) as Array<keyof typeof formData>).forEach((key) => {
-      if (key !== "consent") {
-        const value = formData[key];
-        if (typeof value === "string") {
-          const error = validateField(key, value);
-          if (error) newErrors[key] = error;
-        }
-      }
-    });
-
-    if (!formData.consent) {
-      newErrors.consent = "You must agree to the terms and consent to data processing";
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -111,260 +85,263 @@ export default function SignupPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fullName: formData.fullName,
-          email: formData.email,
-          phoneE164: `+91${formData.phone.replace(/\D/g, "")}`,
-          district: formData.district,
+          fullName: data.fullName,
+          email: data.email,
+          phoneE164: `+91${data.phone.replace(/\D/g, "")}`,
+          district: data.district,
           language: "EN",
         }),
       });
 
       if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        throw new Error(data.error ?? "Registration failed");
+        const json = (await res.json()) as { error?: string };
+        throw new Error(json.error ?? "Registration failed");
       }
 
       setSuccess(true);
       setTimeout(() => router.push("/login?registered=true"), 2000);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Registration failed. Please try again.");
-    } finally {
       setLoading(false);
     }
-  };
+  });
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center py-12 px-4">
-        <Card className="w-full max-w-md text-center">
-          <CardContent className="py-12">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
-            <h2 className="mb-2 text-2xl font-bold">Account Created!</h2>
-            <p className="text-muted-foreground">Redirecting to login...</p>
-          </CardContent>
-        </Card>
+      <div className="grid min-h-svh place-items-center bg-background p-4">
+        <div className="w-full max-w-sm rounded-2xl border bg-card p-8 text-center">
+          <span className="mx-auto grid size-10 place-items-center rounded-full bg-success-soft text-success-text [&_svg]:size-5">
+            <CheckCircle aria-hidden />
+          </span>
+          <h2 className="mt-3 text-h2 font-semibold">Account created</h2>
+          <p className="mt-1 text-body-sm text-muted-foreground">
+            Redirecting to login...
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-2xl">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <GraduationCap className="h-10 w-10 text-primary" />
-            <span className="text-2xl font-bold text-primary-foreground">OutcomeTrack</span>
-          </Link>
-          <h1 className="text-3xl font-bold tracking-tight">Create Trainee Account</h1>
-          <p className="mt-2 text-muted-foreground">
-            Register to track your employment outcomes, upload certificates, and manage your skill profile.
-          </p>
-        </div>
+    <div className="grid min-h-svh lg:grid-cols-2">
+      {/* Left: form column (§9.3) */}
+      <div className="flex items-center justify-center p-6 md:p-10">
+        <div className="w-full max-w-sm">
+          <div className="mb-8">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+            >
+              <span className="grid size-7 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden>
+                  <path d="M22 10L12 5 2 10l10 5 10-5Z" />
+                  <path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5" />
+                </svg>
+              </span>
+              <span className="text-title font-semibold text-foreground">
+                OutcomeTrack
+              </span>
+            </Link>
+            <div className="mt-6 space-y-1">
+              <h2 className="text-h1 font-medium tracking-tight">
+                Create your account
+              </h2>
+              <p className="text-body-sm text-muted-foreground">
+                Track your employment outcomes with a consent-based trainee
+                record — no password needed.
+              </p>
+            </div>
+          </div>
 
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle>Trainee Registration</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {submitError && (
-              <Alert className="mb-4" variant="destructive">
-                <AlertDescription>{submitError}</AlertDescription>
-              </Alert>
-            )}
+          {submitError ? (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{submitError}</AlertDescription>
+            </Alert>
+          ) : null}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  name="fullName"
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  disabled={loading}
-                  aria-invalid={!!errors.fullName}
-                  aria-describedby={errors.fullName ? "fullName-error" : undefined}
-                />
-                {errors.fullName && (
-                  <p id="fullName-error" className="text-sm text-destructive flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {errors.fullName}
-                  </p>
+          <Form {...form}>
+            <form onSubmit={onSubmit} className="grid gap-4">
+              <FormField
+                control={form.control}
+                name="fullName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Full name <span className="text-danger-text">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter your full name"
+                        autoComplete="name"
+                        required
+                        disabled={loading}
+                        aria-required="true"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </div>
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  disabled={loading}
-                  aria-invalid={!!errors.email}
-                  aria-describedby={errors.email ? "email-error" : undefined}
-                />
-                {errors.email && (
-                  <p id="email-error" className="text-sm text-destructive flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {errors.email}
-                  </p>
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Email <span className="text-danger-text">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="your@email.com"
+                        autoComplete="email"
+                        required
+                        disabled={loading}
+                        aria-required="true"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      We will send a magic link to this email — no password needed.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </div>
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="phone">Mobile Number</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  placeholder="9876543210"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  disabled={loading}
-                  maxLength={10}
-                  aria-invalid={!!errors.phone}
-                  aria-describedby={errors.phone ? "phone-error" : undefined}
-                />
-                {errors.phone && (
-                  <p id="phone-error" className="text-sm text-destructive flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {errors.phone}
-                  </p>
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field, fieldState }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Mobile number <span className="text-danger-text">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="tel"
+                        inputMode="numeric"
+                        placeholder="9876543210"
+                        autoComplete="tel-national"
+                        maxLength={10}
+                        required
+                        disabled={loading}
+                        aria-required="true"
+                        {...field}
+                      />
+                    </FormControl>
+                    {fieldState.error ? null : (
+                      <FormDescription>
+                        10-digit Indian mobile number (without +91)
+                      </FormDescription>
+                    )}
+                    <FormMessage />
+                  </FormItem>
                 )}
-                <p className="text-xs text-muted-foreground">10-digit Indian mobile number (without +91)</p>
-              </div>
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="district">District</Label>
-                <Select
-                  value={formData.district}
-                  onValueChange={(value) => setFormData((prev) => ({ ...prev, district: value }))}
-                  disabled={loading}
-                >
-                  <SelectTrigger id="district" aria-invalid={!!errors.district} aria-describedby={errors.district ? "district-error" : undefined}>
-                    <SelectValue placeholder="Select your district" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DISTRICTS.map((d) => (
-                      <SelectItem key={d} value={d}>
-                        {d}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.district && (
-                  <p id="district-error" className="text-sm text-destructive flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {errors.district}
-                  </p>
+              <FormField
+                control={form.control}
+                name="district"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      District <span className="text-danger-text">*</span>
+                    </FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={loading}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select your district" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {DISTRICTS.map((d) => (
+                          <SelectItem key={d} value={d}>
+                            {d}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </div>
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="Create a strong password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  disabled={loading}
-                  aria-invalid={!!errors.password}
-                  aria-describedby={errors.password ? "password-error" : undefined}
-                />
-                {errors.password && (
-                  <p id="password-error" className="text-sm text-destructive flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {errors.password}
-                  </p>
+              <FormField
+                control={form.control}
+                name="consent"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-start gap-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="mt-0.5"
+                          disabled={loading}
+                        />
+                      </FormControl>
+                      <FormLabel className="cursor-pointer font-normal">
+                        I agree to the{" "}
+                        <Link href="/terms" className="text-primary hover:underline">
+                          Terms of Service
+                        </Link>{" "}
+                        and{" "}
+                        <Link href="/privacy" className="text-primary hover:underline">
+                          Privacy Policy
+                        </Link>
+                        . I consent to OutcomeTrack processing my personal data
+                        for employment outcome tracking as described in the{" "}
+                        <Link href="/consent" className="text-primary hover:underline">
+                          Consent Policy
+                        </Link>
+                        .
+                      </FormLabel>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
                 )}
-                <p className="text-xs text-muted-foreground">
-                  Min 8 chars, 1 uppercase, 1 lowercase, 1 number
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  placeholder="Confirm your password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  disabled={loading}
-                  aria-invalid={!!errors.confirmPassword}
-                  aria-describedby={errors.confirmPassword ? "confirmPassword-error" : undefined}
-                />
-                {errors.confirmPassword && (
-                  <p id="confirmPassword-error" className="text-sm text-destructive flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {errors.confirmPassword}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-start gap-2">
-                  <input
-                    type="checkbox"
-                    id="consent"
-                    name="consent"
-                    checked={formData.consent}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, consent: e.target.checked }))}
-                    className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                    disabled={loading}
-                    aria-invalid={!!errors.consent}
-                  />
-                  <Label htmlFor="consent" className="text-sm font-normal cursor-pointer">
-                    I agree to the{" "}
-                    <Link href="/terms" className="text-primary hover:underline">Terms of Service</Link>{" "}
-                    and{" "}
-                    <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>{" "}
-                    . I consent to OutcomeTrack processing my personal data for employment outcome tracking
-                    as described in the{" "}
-                    <Link href="/consent" className="text-primary hover:underline">Consent Policy</Link>
-                    .
-                  </Label>
-                </div>
-                {errors.consent && (
-                  <p className="text-sm text-destructive flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {errors.consent}
-                  </p>
-                )}
-              </div>
+              />
 
               <Button type="submit" className="w-full" size="lg" disabled={loading}>
-                {loading ? "Creating Account..." : "Create Account"}
+                {loading ? "Creating account..." : "Create account"}
               </Button>
             </form>
+          </Form>
 
-            <Separator className="my-6" />
-            <p className="text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <Link href="/login" className="text-primary hover:underline font-medium">
-                Sign in
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
-
-        <div className="mt-6 text-center text-sm text-muted-foreground">
-          <p>By creating an account, you agree to our <Link href="/terms" className="text-primary hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link></p>
+          <p className="mt-6 text-center text-caption text-muted-foreground">
+            Already have an account?{" "}
+            <Link href="/login" className="text-primary hover:underline">
+              Sign in
+            </Link>
+          </p>
         </div>
+      </div>
+
+      {/* Right: brand panel with dot-matrix art + testimonial (§9.3) */}
+      <div className="hidden lg:flex flex-col justify-center gap-10 bg-muted p-10">
+        <div className="flex items-center justify-center">
+          <DotSparkline
+            data={BRAND_SPARK}
+            color="var(--chart-1)"
+            ariaLabel="Decorative placement trend"
+          />
+        </div>
+        <figure className="mx-auto max-w-sm space-y-3">
+          <blockquote className="text-h2 font-semibold tracking-tight text-foreground">
+            &ldquo;OutcomeTrack showed me exactly which skills get placed — I
+            went from a six-month job hunt to an offer in three weeks.&rdquo;
+          </blockquote>
+          <figcaption className="text-caption text-muted-foreground">
+            Priya Sharma · PMKVY trainee · Pune
+          </figcaption>
+        </figure>
       </div>
     </div>
   );

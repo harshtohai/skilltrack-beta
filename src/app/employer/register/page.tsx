@@ -2,15 +2,71 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Building2, CheckCircle2, AlertCircle } from "lucide-react";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { Textarea } from "~/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { AlertCircle, CheckCircle } from "lucide-react";
+
 import { Alert, AlertDescription } from "~/components/ui/alert";
+import { Button } from "~/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "~/components/ui/form";
+import { Input } from "~/components/ui/input";
+import { PasswordInput } from "~/components/ui/password-input";
+import { Textarea } from "~/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import { DotSparkline } from "~/components/viz/dot-sparkline";
 import type { EmployerRegisterResponse } from "~/lib/job-board-contracts";
+
+/**
+ * Employer registration per design §9.3 — Shell S5 (split). The API contract
+ * requires 5 fields (company, email, password, sector, district); optional
+ * extras group in a bg-muted panel (§4.4 panel pattern).
+ */
+
+const employerRegisterSchema = z.object({
+  companyName: z
+    .string()
+    .min(1, "Company name is required")
+    .min(2, "Name must be at least 2 characters")
+    .max(120),
+  contactEmail: z
+    .string()
+    .min(1, "Work email is required")
+    .email("Enter a valid email")
+    .max(254),
+  password: z
+    .string()
+    .min(1, "Password is required")
+    .min(8, "Password must be at least 8 characters")
+    .max(72),
+  sector: z
+    .string()
+    .min(1, "Sector is required")
+    .min(2, "Sector must be at least 2 characters")
+    .max(80),
+  district: z.string().min(1, "Please select your district"),
+  registrationNo: z.string().max(40).optional(),
+  hiringNeeds: z.string().max(500).optional(),
+  employeeCount: z
+    .string()
+    .refine((v) => v === "" || /^\d+$/.test(v), "Enter a valid number")
+    .optional(),
+});
+
+type EmployerRegisterValues = z.infer<typeof employerRegisterSchema>;
 
 const DISTRICTS = [
   "Mumbai", "Pune", "Nagpur", "Nashik", "Aurangabad",
@@ -19,29 +75,31 @@ const DISTRICTS = [
   "Wardha", "Chandrapur", "Yavatmal", "Buldhana", "Hingoli",
 ];
 
-const initialForm = {
-  companyName: "",
-  contactEmail: "",
-  password: "",
-  sector: "",
-  district: "",
-  registrationNo: "",
-  hiringNeeds: "",
-  employeeCount: "",
-};
+const BRAND_SPARK = Array.from({ length: 48 }, (_, i) =>
+  Math.round(6 + 30 * (i / 47) + (i % 5 === 0 ? 8 : 0)),
+);
 
 export default function EmployerRegisterPage() {
-  const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [submitError, setSubmitError] = useState("");
   const [registered, setRegistered] = useState<EmployerRegisterResponse["employer"] | null>(null);
 
-  const update = (name: keyof typeof initialForm, value: string) =>
-    setForm((prev) => ({ ...prev, [name]: value }));
+  const form = useForm<EmployerRegisterValues>({
+    resolver: zodResolver(employerRegisterSchema),
+    defaultValues: {
+      companyName: "",
+      contactEmail: "",
+      password: "",
+      sector: "",
+      district: "",
+      registrationNo: "",
+      hiringNeeds: "",
+      employeeCount: "",
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
+  const onSubmit = form.handleSubmit(async (data) => {
+    setSubmitError("");
     setLoading(true);
 
     try {
@@ -49,14 +107,14 @@ export default function EmployerRegisterPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          companyName: form.companyName.trim(),
-          contactEmail: form.contactEmail.trim(),
-          password: form.password,
-          sector: form.sector.trim(),
-          district: form.district,
-          ...(form.registrationNo.trim() ? { registrationNo: form.registrationNo.trim() } : {}),
-          ...(form.hiringNeeds.trim() ? { hiringNeeds: form.hiringNeeds.trim() } : {}),
-          ...(form.employeeCount.trim() ? { employeeCount: form.employeeCount.trim() } : {}),
+          companyName: data.companyName.trim(),
+          contactEmail: data.contactEmail.trim(),
+          password: data.password,
+          sector: data.sector.trim(),
+          district: data.district,
+          ...(data.registrationNo?.trim() ? { registrationNo: data.registrationNo.trim() } : {}),
+          ...(data.hiringNeeds?.trim() ? { hiringNeeds: data.hiringNeeds.trim() } : {}),
+          ...(data.employeeCount?.trim() ? { employeeCount: data.employeeCount.trim() } : {}),
         }),
       });
       if (!res.ok) {
@@ -66,186 +124,301 @@ export default function EmployerRegisterPage() {
       const json = (await res.json()) as EmployerRegisterResponse;
       setRegistered(json.employer);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
+      setSubmitError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);
     }
-  };
+  });
 
   if (registered) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center py-12 px-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6 text-center space-y-4">
-            <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto" />
-            <div>
-              <h1 className="text-2xl font-bold">Registration received</h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {registered.companyName} is registered with{" "}
-                <span className="font-mono">{registered.contactEmail}</span>.
-              </p>
-            </div>
-            <Alert className="text-left">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Verification pending — you can log in now, and will be able to post jobs once an
-                admin verifies your account.
-              </AlertDescription>
-            </Alert>
-            <Button asChild className="w-full" size="lg">
-              <Link href="/employer/login">Go to Employer Login</Link>
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="grid min-h-svh place-items-center bg-background p-4">
+        <div className="w-full max-w-sm rounded-2xl border bg-card p-8 text-center">
+          <span className="mx-auto grid size-10 place-items-center rounded-full bg-success-soft text-success-text [&_svg]:size-5">
+            <CheckCircle aria-hidden />
+          </span>
+          <h2 className="mt-3 text-h2 font-semibold">Registration received</h2>
+          <p className="mt-1 text-body-sm text-muted-foreground">
+            {registered.companyName} is registered with{" "}
+            <span className="font-mono">{registered.contactEmail}</span>.
+          </p>
+          <Alert className="mt-4 text-left">
+            <AlertCircle className="size-4" />
+            <AlertDescription>
+              Verification pending — you can log in now, and will be able to
+              post jobs once an admin verifies your account.
+            </AlertDescription>
+          </Alert>
+          <Button asChild className="mt-4 w-full" size="lg">
+            <Link href="/employer/login">Go to Employer Login</Link>
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-lg">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <Building2 className="h-10 w-10 text-primary" />
-            <span className="text-2xl font-bold text-primary-foreground">OutcomeTrack</span>
-          </Link>
-          <h1 className="text-3xl font-bold tracking-tight">Employer Registration</h1>
-          <p className="mt-2 text-muted-foreground">
-            Register to hire skilled trainees — job posting unlocks once your account is verified
-          </p>
-        </div>
+    <div className="grid min-h-svh lg:grid-cols-2">
+      {/* Left: form column (§9.3) */}
+      <div className="flex items-center justify-center p-6 md:p-10">
+        <div className="w-full max-w-sm">
+          <div className="mb-8">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+            >
+              <span className="grid size-7 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden>
+                  <path d="M22 10L12 5 2 10l10 5 10-5Z" />
+                  <path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5" />
+                </svg>
+              </span>
+              <span className="text-title font-semibold text-foreground">
+                OutcomeTrack
+              </span>
+            </Link>
+            <div className="mt-6 space-y-1">
+              <h2 className="text-h1 font-medium tracking-tight">
+                Register to hire
+              </h2>
+              <p className="text-body-sm text-muted-foreground">
+                Job posting unlocks once an admin verifies your account.
+              </p>
+            </div>
+          </div>
 
-        <Card className="w-full">
-          <CardHeader className="text-center">
-            <CardTitle>Company Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {error && (
-              <Alert className="mb-4" variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+          {submitError ? (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{submitError}</AlertDescription>
+            </Alert>
+          ) : null}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="companyName">Company Name</Label>
-                <Input
-                  id="companyName"
-                  value={form.companyName}
-                  onChange={(e) => update("companyName", e.target.value)}
-                  placeholder="e.g. TechCorp Industries"
-                  maxLength={120}
-                  required
-                  minLength={2}
-                  disabled={loading}
+          <Form {...form}>
+            <form onSubmit={onSubmit} className="grid gap-4">
+              <FormField
+                control={form.control}
+                name="companyName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Company name <span className="text-danger-text">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g. TechCorp Industries"
+                        autoComplete="organization"
+                        maxLength={120}
+                        required
+                        disabled={loading}
+                        aria-required="true"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="contactEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Work email <span className="text-danger-text">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="hr@company.com"
+                          autoComplete="email"
+                          maxLength={254}
+                          required
+                          disabled={loading}
+                          aria-required="true"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="contactEmail">Work Email</Label>
-                  <Input
-                    id="contactEmail"
-                    type="email"
-                    value={form.contactEmail}
-                    onChange={(e) => update("contactEmail", e.target.value)}
-                    placeholder="hr@company.com"
-                    maxLength={254}
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={form.password}
-                    onChange={(e) => update("password", e.target.value)}
-                    placeholder="Min 8 characters"
-                    required
-                    minLength={8}
-                    maxLength={72}
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="sector">Sector</Label>
-                  <Input
-                    id="sector"
-                    value={form.sector}
-                    onChange={(e) => update("sector", e.target.value)}
-                    placeholder="e.g. Manufacturing"
-                    maxLength={80}
-                    required
-                    minLength={2}
-                    disabled={loading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>District</Label>
-                  <Select value={form.district} onValueChange={(v) => update("district", v)}>
-                    <SelectTrigger className="w-full" disabled={loading}>
-                      <SelectValue placeholder="Select district" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DISTRICTS.map((d) => (
-                        <SelectItem key={d} value={d}>{d}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="registrationNo">Registration No. (GSTIN/CIN, optional)</Label>
-                <Input
-                  id="registrationNo"
-                  value={form.registrationNo}
-                  onChange={(e) => update("registrationNo", e.target.value)}
-                  placeholder="e.g. 27AAPTU1234A1Z5"
-                  maxLength={40}
-                  disabled={loading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="hiringNeeds">Hiring Needs (optional)</Label>
-                <Textarea
-                  id="hiringNeeds"
-                  value={form.hiringNeeds}
-                  onChange={(e) => update("hiringNeeds", e.target.value)}
-                  placeholder="Roles you plan to hire for, volumes, timelines…"
-                  maxLength={500}
-                  disabled={loading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="employeeCount">Employee Count (optional)</Label>
-                <Input
-                  id="employeeCount"
-                  type="number"
-                  value={form.employeeCount}
-                  onChange={(e) => update("employeeCount", e.target.value)}
-                  placeholder="e.g. 50"
-                  min={1}
-                  max={100000}
-                  disabled={loading}
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Password <span className="text-danger-text">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <PasswordInput
+                          placeholder="Min 8 characters"
+                          autoComplete="new-password"
+                          maxLength={72}
+                          required
+                          disabled={loading}
+                          aria-required="true"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
 
-              <Button type="submit" className="w-full" size="lg" disabled={loading || !form.district}>
+              <div className="grid gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="sector"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Sector <span className="text-danger-text">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g. Manufacturing"
+                          maxLength={80}
+                          required
+                          disabled={loading}
+                          aria-required="true"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="district"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        District <span className="text-danger-text">*</span>
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        disabled={loading}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select district" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {DISTRICTS.map((d) => (
+                            <SelectItem key={d} value={d}>
+                              {d}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Optional extras — bg-muted panel (§4.4) */}
+              <div className="grid gap-4 rounded-lg bg-muted p-3">
+                <p className="text-caption font-medium text-muted-foreground">
+                  Optional details
+                </p>
+                <FormField
+                  control={form.control}
+                  name="registrationNo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Registration No. (GSTIN/CIN)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g. 27AAPTU1234A1Z5"
+                          maxLength={40}
+                          disabled={loading}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="hiringNeeds"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hiring needs</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Roles you plan to hire for, volumes, timelines…"
+                          maxLength={500}
+                          disabled={loading}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="employeeCount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Employee count</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="e.g. 50"
+                          min={1}
+                          max={100000}
+                          disabled={loading}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <Button type="submit" className="w-full" size="lg" disabled={loading}>
                 {loading ? "Registering..." : "Register"}
               </Button>
             </form>
+          </Form>
 
-            <p className="mt-6 text-center text-sm text-muted-foreground">
-              <Link href="/employer/login" className="text-primary hover:underline">
-                Already registered? Sign in
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
+          <p className="mt-6 text-center text-caption text-muted-foreground">
+            Already registered?{" "}
+            <Link href="/employer/login" className="text-primary hover:underline">
+              Sign in
+            </Link>
+          </p>
+        </div>
+      </div>
+
+      {/* Right: brand panel with dot-matrix art + testimonial (§9.3) */}
+      <div className="hidden lg:flex flex-col justify-center gap-10 bg-muted p-10">
+        <div className="flex items-center justify-center">
+          <DotSparkline
+            data={BRAND_SPARK}
+            color="var(--chart-1)"
+            ariaLabel="Decorative placement trend"
+          />
+        </div>
+        <figure className="mx-auto max-w-sm space-y-3">
+          <blockquote className="text-h2 font-semibold tracking-tight text-foreground">
+            &ldquo;Verification used to take weeks of phone calls — now it is
+            one link, one click, done.&rdquo;
+          </blockquote>
+          <figcaption className="text-caption text-muted-foreground">
+            HR Lead · Manufacturing employer · Nashik
+          </figcaption>
+        </figure>
       </div>
     </div>
   );
