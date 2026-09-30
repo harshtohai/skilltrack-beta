@@ -39,6 +39,16 @@ function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(true);
   const [openMobile, setOpenMobile] = React.useState(false);
 
+  // Cookie persistence (design §15.7 — remember expanded/collapsed state)
+  React.useEffect(() => {
+    const saved = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("sidebar:state="))
+      ?.split("=")[1];
+    if (saved === "collapsed") setOpen(false);
+    else if (saved === "expanded") setOpen(window.innerWidth >= 1024);
+  }, []);
+
   React.useEffect(() => {
     const mq = window.matchMedia("(max-width: 1023px)");
     const onChange = () => {
@@ -53,8 +63,14 @@ function SidebarProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleSidebar = React.useCallback(() => {
-    if (isMobile) setOpenMobile((v) => !v);
-    else setOpen((v) => !v);
+    if (isMobile) {
+      setOpenMobile((v) => !v);
+      return;
+    }
+    setOpen((v) => {
+      document.cookie = `sidebar:state=${!v ? "collapsed" : "expanded"}; path=/; max-age=${60 * 60 * 24 * 365}`;
+      return !v;
+    });
   }, [isMobile]);
 
   const contextValue = React.useMemo(
@@ -228,7 +244,7 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  "flex h-9 w-full items-center gap-3 overflow-hidden rounded-lg px-3 text-left text-body-sm outline-none transition-colors duration-150 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50 group-data-[state=collapsed]/sidebar-root:size-8 group-data-[state=collapsed]/sidebar-root:justify-center group-data-[state=collapsed]/sidebar-root:gap-0 group-data-[state=collapsed]/sidebar-root:px-0 [&_svg]:size-4 [&_svg]:shrink-0",
+  "flex h-9 w-full items-center gap-3 overflow-hidden rounded-lg px-3 text-left text-body-sm outline-none transition-colors duration-150 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50 group-data-[state=collapsed]/sidebar-root:mx-auto group-data-[state=collapsed]/sidebar-root:size-8 group-data-[state=collapsed]/sidebar-root:justify-center group-data-[state=collapsed]/sidebar-root:gap-0 group-data-[state=collapsed]/sidebar-root:px-0 group-data-[state=collapsed]/sidebar-root:[&>span]:hidden [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -245,11 +261,13 @@ const sidebarMenuButtonVariants = cva(
 function SidebarMenuButton({
   asChild = false,
   variant = "default",
+  isActive = false,
   className,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof sidebarMenuButtonVariants> & {
     asChild?: boolean;
+    isActive?: boolean;
   }) {
   const Comp = asChild ? Slot : "button";
   const { state, isMobile } = useSidebar();
@@ -257,7 +275,10 @@ function SidebarMenuButton({
     <Comp
       data-slot="sidebar-menu-button"
       data-sidebar="menu-button"
-      className={cn(sidebarMenuButtonVariants({ variant, className }))}
+      data-active={isActive ? "true" : undefined}
+      className={cn(
+        sidebarMenuButtonVariants({ variant: isActive ? "active" : variant, className }),
+      )}
       {...props}
     />
   );

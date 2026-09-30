@@ -164,6 +164,22 @@
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 
+/* Collapsible (Radix) height animation, design §8 — 200ms, standard ease */
+@keyframes collapsible-down {
+  from { height: 0; }
+  to { height: var(--radix-collapsible-content-height); }
+}
+@keyframes collapsible-up {
+  from { height: var(--radix-collapsible-content-height); }
+  to { height: 0; }
+}
+@utility animate-collapsible-down {
+  animation: collapsible-down 200ms var(--ease-standard);
+}
+@utility animate-collapsible-up {
+  animation: collapsible-up 200ms var(--ease-standard);
+}
+
 /* ── RESKIN COMPAT SHIM — removed in UI-16 final sweep ──────────────────────
    Pages not yet re-skinned use a custom `.container` class. Tailwind v4's
    built-in `container` utility has no padding, so keep the old behavior for

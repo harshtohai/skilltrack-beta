@@ -71,8 +71,7 @@ function DotSparkline({
                     cx={x}
                     cy={y}
                     r={DOT / 2}
-                    fill="var(--dot-empty)"
-                    opacity={0.5}
+                    style={{ fill: "var(--dot-empty)", opacity: 0.5 }}
                   />
                 );
               })}
@@ -85,7 +84,7 @@ function DotSparkline({
                     cx={x}
                     cy={y}
                     r={DOT / 2}
-                    fill={color}
+                    style={{ fill: color }}
                   />
                 );
               })}

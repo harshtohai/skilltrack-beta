@@ -114,7 +114,7 @@ function DotForecast({
                         cx={x}
                         cy={y}
                         r={DOT / 2}
-                        fill="var(--dot-empty)"
+                        style={{ fill: "var(--dot-empty)" }}
                       />
                     );
                   })}
@@ -127,7 +127,7 @@ function DotForecast({
                         cx={x}
                         cy={y}
                         r={DOT / 2}
-                        fill={isFuture ? "var(--dot-empty)" : BAND_COLOR[bands[i] ?? "track"]}
+                        style={{ fill: isFuture ? "var(--dot-empty)" : BAND_COLOR[bands[i] ?? "track"] }}
                       />
                     );
                   })}

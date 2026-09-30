@@ -7,6 +7,7 @@ import { useTheme } from "next-themes";
 import { signOut } from "next-auth/react";
 import {
   ChevronsUpDown,
+  ChevronDown,
   GraduationCap,
   LogOut,
   Search,
@@ -14,13 +15,13 @@ import {
 
 import { cn } from "~/lib/utils";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
+import { Collapsible, CollapsibleTrigger, CollapsibleContentIndented } from "~/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -131,29 +132,40 @@ function AppSidebar({ user }: { user: SidebarUser }) {
           </button>
         </div>
 
-        {/* Nav groups (role-aware, §15.7) */}
+        {/* Nav groups (role-aware, collapsible per shadcn docs / §15.7) */}
         <SidebarContent className="pt-3">
           {groups.map((group, gi) => (
-            <SidebarGroup key={group.label ?? gi}>
-              {group.label ? <SidebarGroupLabel>{group.label}</SidebarGroupLabel> : null}
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {group.items.map((item) => {
-                    const active = isNavActive(pathname, item.href);
-                    return (
-                      <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton asChild variant={active ? "active" : "default"} aria-label={item.label}>
-                          <Link href={item.href} aria-current={active ? "page" : undefined}>
-                            <item.icon />
-                            {item.label}
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+            <Collapsible key={group.label ?? gi} defaultOpen className={group.label ? "group/collapsible" : undefined}>
+              <SidebarGroup>
+                {group.label ? (
+                  <CollapsibleTrigger asChild>
+                    <div
+                      className="flex h-8 w-full cursor-pointer select-none items-center px-3 text-caption font-medium text-muted-foreground outline-none transition-colors duration-150 hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/40 group-data-[state=collapsed]/sidebar-root:hidden [&_svg]:size-3.5"
+                    >
+                      {group.label}
+                      <ChevronDown className="ml-auto shrink-0 transition-transform duration-200 group-data-expanded/collapsible:rotate-180" aria-hidden />
+                    </div>
+                  </CollapsibleTrigger>
+                ) : null}
+                <CollapsibleContentIndented>
+                  <SidebarMenu className="pt-0.5">
+                    {group.items.map((item) => {
+                      const active = isNavActive(pathname, item.href);
+                      return (
+                        <SidebarMenuItem key={item.href}>
+                          <SidebarMenuButton asChild isActive={active} aria-label={item.label}>
+                            <Link href={item.href} aria-current={active ? "page" : undefined}>
+                              <item.icon />
+                              <span>{item.label}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </CollapsibleContentIndented>
+              </SidebarGroup>
+            </Collapsible>
           ))}
           <SidebarSeparator />
         </SidebarContent>
@@ -165,7 +177,10 @@ function AppSidebar({ user }: { user: SidebarUser }) {
               <button
                 type="button"
                 aria-label="Open user menu"
-                className="flex w-full items-center gap-3 rounded-xl border bg-card p-2 text-left transition-colors duration-150 hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-xl border bg-card p-2 text-left transition-colors duration-150 hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40",
+                  collapsed && "justify-center px-0",
+                )}
               >
                 <Avatar className="size-8">
                   <AvatarFallback>{initials}</AvatarFallback>
@@ -180,7 +195,9 @@ function AppSidebar({ user }: { user: SidebarUser }) {
                     </span>
                   </span>
                 ) : null}
-                <ChevronsUpDown className="ml-auto size-4 shrink-0 text-muted-foreground" aria-hidden />
+                {!collapsed ? (
+                  <ChevronsUpDown className="ml-auto size-4 shrink-0 text-muted-foreground" aria-hidden />
+                ) : null}
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="top" align="start" className="min-w-56">
