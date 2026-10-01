@@ -197,6 +197,10 @@ Context: Merivo UI reskin running on branch `ui-overhaul` (spec #49, tickets #50
 14. **Recruiter register stays unlisted**: gets S5 auth shell, never linked from landing/login/signup (F25 rule).
 15. **Simulator kept as dev tool** with a simple centered shell.
 16. **a11y verification is manual** (keyboard walkthrough + focus inspection) — no axe runner installed; say the word if you want @axe-core/react added.
+17. **KPI deltas/sparklines omitted** (UI-08): design §9.1/§4.14 want delta chips + DotSparkline on KPI cards, but `/api/v1/kpis/overview` is point-in-time only — no history to compute deltas from. Faking it would be decorative. Needs a time-series endpoint (e.g. daily KPI snapshots table + rollup) before deltas can be honest.
+18. **Trainees no longer see org-wide KPIs** (UI-08): `/dashboard` previously rendered the admin KPI grid to trainees too; now trainees land on the jobs board only (their own stats come with the trainee portal, UI-15). Product call — confirm intended.
+19. **District endpoint added** (UI-08): new read-only `GET /api/v1/kpis/districts` (trainee.groupBy) powers the district-distribution card. Additive, mirrors kpis/overview; note the funnel data quirk (employed > certified counts) is existing kpis/overview behavior, untouched.
+20. **Dashboard layout adaptation** (UI-08): §9.1's table row is full-width; here the cohort table sits 8/12 beside a Recent activity card 4/12 (recentActivity is real data the template has no slot for). Rows keep the design's 8/12+4/12 rhythm.
 
 ## Idea Bag (older items)
 - **In-app message thread per application** (employer↔trainee chat): parked — feasible later via a simple polling-based thread; contact reveal on shortlist covers the immediate need.
