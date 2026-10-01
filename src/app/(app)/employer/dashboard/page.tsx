@@ -2,21 +2,21 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, TrendingUp, ShieldCheck, BarChart3, Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Building2, ShieldCheck, BarChart3, TrendingUp } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
-import { Alert, AlertDescription } from "~/components/ui/alert";
-import { MetricCard } from "~/components/charts/MetricCard";
 import { LineChart } from "~/components/charts/LineChart";
 import { ComparisonChart } from "~/components/charts/ComparisonChart";
 import { PeerComparisonChart } from "~/components/charts/PeerComparisonChart";
 import { JobManagement } from "./job-management";
-import { LogoutButton } from "~/components/logout-button";
-import { formatDateTime } from "~/lib/utils";
-
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+import { PageHeader } from "~/components/patterns/page-header";
+import { StatCard } from "~/components/patterns/stat-card";
+import { DataTable } from "~/components/patterns/data-table";
+import { EmptyState } from "~/components/patterns/empty-state";
+import { ErrorState } from "~/components/patterns/error-state";
+import { Skeleton } from "~/components/patterns/skeleton";
+import { number, datetime } from "~/lib/format";
 
 const SALARY_BAND_LABELS: Record<string, string> = {
   LT_10K: "< ₹10K",
@@ -58,6 +58,87 @@ interface EmployerAnalytics {
   }>;
 }
 
+interface ClaimRow {
+  id: string;
+  traineeId: string;
+  role: string | null;
+  salaryBand: string | null;
+  verificationStatus: string;
+  createdAt: string;
+}
+
+const claimColumns: ColumnDef<ClaimRow, unknown>[] = [
+  {
+    accessorKey: "traineeId",
+    header: "Trainee",
+    cell: ({ row }) => (
+      <span className="font-mono text-caption">{row.original.traineeId.slice(0, 8)}…</span>
+    ),
+  },
+  {
+    accessorKey: "role",
+    header: "Role",
+    cell: ({ row }) => row.original.role ?? <span className="text-muted-foreground">—</span>,
+  },
+  {
+    accessorKey: "salaryBand",
+    header: "Salary Band",
+    cell: ({ row }) =>
+      row.original.salaryBand ? (
+        <span className="tabular-nums">{SALARY_BAND_LABELS[row.original.salaryBand] ?? row.original.salaryBand}</span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      ),
+  },
+  {
+    accessorKey: "verificationStatus",
+    header: "Verification",
+    cell: ({ row }) => (
+      <Badge
+        variant={
+          row.original.verificationStatus === "EMPLOYER_CONFIRMED" ||
+          row.original.verificationStatus === "DOCUMENT_VERIFIED"
+            ? "success"
+            : "secondary"
+        }
+      >
+        {row.original.verificationStatus.replace(/_/g, " ").toLowerCase()}
+      </Badge>
+    ),
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Date",
+    cell: ({ row }) => <span className="whitespace-nowrap">{datetime(new Date(row.original.createdAt))}</span>,
+  },
+];
+
+function DashboardSkeleton() {
+  return (
+    <div>
+      <Skeleton className="mb-6 h-14 w-72" />
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }, (_, i) => (
+          <Skeleton key={i} className="h-32" />
+        ))}
+      </div>
+      <Skeleton className="mb-4 h-24 w-full" />
+      <div className="mb-4 grid gap-6 lg:grid-cols-2">
+        {Array.from({ length: 4 }, (_, i) => (
+          <Skeleton key={i} className="h-80" />
+        ))}
+      </div>
+      <Skeleton className="h-80 w-full" />
+    </div>
+  );
+}
+
+/**
+ * Employer dashboard per design §9.1 — Shell S1. The verification banner gate
+ * inside JobManagement drives the section: PENDING/SUSPENDED/REJECTED see the
+ * banner only, VERIFIED the full UI. KPI StatCards carry real vs-peer-avg
+ * deltas; charts are tokenized (§4.11); recent claims render as a DataTable.
+ */
 export default function EmployerDashboardPage() {
   const router = useRouter();
   const [data, setData] = useState<EmployerAnalytics | null>(null);
@@ -66,6 +147,7 @@ export default function EmployerDashboardPage() {
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
+    setError("");
     try {
       const res = await fetch("/api/v1/employer/me");
       if (res.status === 401) {
@@ -86,226 +168,170 @@ export default function EmployerDashboardPage() {
     void loadDashboard();
   }, [loadDashboard]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      </div>
-    );
+  if (loading && !data) {
+    return <DashboardSkeleton />;
   }
 
-  if (!data) {
+  if (error || !data) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-red-500">{error || "Failed to load"}</p>
-      </div>
+      <ErrorState
+        title="Couldn't load the dashboard"
+        description={error || "The data didn't arrive. Check your connection and retry."}
+        onRetry={() => void loadDashboard()}
+      />
     );
   }
 
   const retentionScore = data.retention.score;
-  const retentionDenominatorNote =
+  const peerAvg = data.ranking.peerAvg;
+  const retentionNote =
     data.retention.denominator > 0
-      ? `${data.retention.numerator} of ${data.retention.denominator} confirmed claims sustained`
-      : "Insufficient evidence — no confirmed claims with later checkpoint data";
+      ? `${data.retention.numerator} of ${data.retention.denominator} confirmed claims sustained at a later checkpoint.`
+      : "Insufficient evidence — no confirmed claims with later checkpoint data yet.";
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Building2 className="h-8 w-8 text-primary" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Employer Dashboard</h1>
-                <p className="text-sm text-gray-500">{data.employer.name}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              {data.employer.isDemo && <Badge variant="secondary">Demo View</Badge>}
-              <LogoutButton />
-            </div>
-          </div>
-        </div>
-      </header>
+    <div>
+      <PageHeader
+        title="Employer dashboard"
+        caption={data.employer.name}
+        actions={data.employer.isDemo ? <Badge variant="secondary">Demo View</Badge> : undefined}
+      />
 
-      <main className="container mx-auto px-4 py-8 space-y-6">
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* F25 job management — verification banner drives the section:
-            PENDING/SUSPENDED see the banner only, VERIFIED the full UI. */}
+      {/* F25 job management — verification banner gate drives the section */}
+      <div className="mb-6">
         <JobManagement />
+      </div>
 
-        {/* Metrics */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard
-            title="Retention Score"
-            value={retentionScore !== null ? `${retentionScore}` : "—"}
-            subtitle={retentionDenominatorNote}
-            icon={<TrendingUp className="h-6 w-6 text-purple-500" />}
-            variant={retentionScore !== null && retentionScore >= 50 ? "success" : "default"}
-          />
-          <MetricCard
-            title="Total Claims"
-            value={data.employer.totalClaims.toLocaleString()}
-            subtitle="Employment claims recorded"
-            icon={<Building2 className="h-6 w-6 text-blue-500" />}
-          />
-          <MetricCard
-            title="Verified Claims"
-            value={data.employer.verifiedClaims.toLocaleString()}
-            subtitle="Employer-confirmed or document-verified"
-            icon={<ShieldCheck className="h-6 w-6 text-green-500" />}
-          />
-          <MetricCard
-            title="Retention Rank"
-            value={data.ranking.rank !== null ? `#${data.ranking.rank}` : "—"}
-            subtitle={data.ranking.of > 0 ? `of ${data.ranking.of} employers` : "No scored peers yet"}
-            icon={<BarChart3 className="h-6 w-6 text-orange-500" />}
-          />
-        </div>
+      {/* KPI row (§9.1) — retention delta is vs peer avg (real value from the API) */}
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Retention score"
+          value={retentionScore ?? "—"}
+          delta={retentionScore !== null && peerAvg !== null ? retentionScore - peerAvg : undefined}
+          deltaLabel="vs peer avg"
+          icon={<TrendingUp />}
+          chip="purple"
+        />
+        <StatCard title="Total claims" value={number(data.employer.totalClaims)} icon={<Building2 />} chip="brand" />
+        <StatCard title="Verified claims" value={number(data.employer.verifiedClaims)} icon={<ShieldCheck />} chip="blue" />
+        <StatCard
+          title="Retention rank"
+          value={
+            <>
+              {data.ranking.rank !== null ? `#${data.ranking.rank}` : "—"}
+              {data.ranking.of > 0 && data.ranking.rank !== null ? (
+                <span className="text-body-sm font-normal text-muted-foreground"> of {number(data.ranking.of)}</span>
+              ) : null}
+            </>
+          }
+          icon={<BarChart3 />}
+          chip="brand"
+        />
+      </div>
 
-        {/* Graphs */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Claims Over Time</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {data.timeline.length === 0 ? (
-                <p className="text-sm text-gray-500">No claims yet.</p>
-              ) : (
-                <LineChart
-                  data={data.timeline.map((t) => ({ name: t.month, count: t.count }))}
-                  xKey="name"
-                  height={300}
-                  lines={[{ key: "count", label: "Claims", color: "#3b82f6" }]}
-                  yAxisLabel="Claims"
-                />
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Verification History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {data.verificationHistory.length === 0 ? (
-                <p className="text-sm text-gray-500">No verification data yet.</p>
-              ) : (
-                <ComparisonChart
-                  data={data.verificationHistory.map((v) => ({
-                    name: v.status.replace(/_/g, " ").toLowerCase(),
-                    actual: v.count,
-                    expected: v.count,
-                  }))}
-                  xKey="name"
-                  height={300}
-                  yAxisLabel="Claims"
-                  colors={{ actual: "#22c55e", expected: "#22c55e" }}
-                />
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Wage Band Distribution</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {data.wageBands.length === 0 ? (
-                <p className="text-sm text-gray-500">No salary data yet.</p>
-              ) : (
-                <ComparisonChart
-                  data={data.wageBands.map((w) => ({
-                    name: SALARY_BAND_LABELS[w.band] ?? w.band,
-                    actual: w.count,
-                    expected: w.count,
-                  }))}
-                  xKey="name"
-                  height={300}
-                  yAxisLabel="Claims"
-                  colors={{ actual: "#f97316", expected: "#f97316" }}
-                />
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Retention vs Peers</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {data.ranking.peerAvg === null ? (
-                <p className="text-sm text-gray-500">No scored peers yet.</p>
-              ) : (
-                <PeerComparisonChart
-                  data={[
-                    { name: "Your Company", value: retentionScore ?? 0, isCurrent: true },
-                    { name: "Peer Average", value: data.ranking.peerAvg, isCurrent: false },
-                    { name: "Top Quartile", value: data.ranking.peerTopQuartile ?? data.ranking.peerAvg, isCurrent: false },
-                  ]}
-                  xKey="name"
-                  height={300}
-                  yAxisLabel="Retention Score"
-                  color="#8b5cf6"
-                  showAverage={true}
-                  averageValue={data.ranking.peerAvg}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Recent claims table */}
+      {/* Charts (§4.11 — chart tokens, built-in legends; empty handled inside) */}
+      <div className="mb-6 grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Recent Claims</CardTitle>
+            <CardTitle>Claims over time</CardTitle>
+            <CardDescription>Employment claims recorded per month.</CardDescription>
           </CardHeader>
           <CardContent>
-            {data.recentClaims.length === 0 ? (
-              <p className="text-sm text-gray-500">No claims yet.</p>
+            <LineChart
+              data={data.timeline.map((t) => ({ name: t.month, count: t.count }))}
+              xKey="name"
+              height={300}
+              lines={[{ key: "count", label: "Claims" }]}
+              yAxisLabel="Claims"
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Verification history</CardTitle>
+            <CardDescription>Claims per verification status.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ComparisonChart
+              data={data.verificationHistory.map((v) => ({
+                name: v.status.replace(/_/g, " ").toLowerCase(),
+                actual: v.count,
+                expected: v.count,
+              }))}
+              xKey="name"
+              height={300}
+              showLegend={false}
+              yAxisLabel="Claims"
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Wage band distribution</CardTitle>
+            <CardDescription>Claims per salary band.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ComparisonChart
+              data={data.wageBands.map((w) => ({
+                name: SALARY_BAND_LABELS[w.band] ?? w.band,
+                actual: w.count,
+                expected: w.count,
+              }))}
+              xKey="name"
+              height={300}
+              showLegend={false}
+              yAxisLabel="Claims"
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Retention vs peers</CardTitle>
+            <CardDescription>{retentionNote}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {peerAvg === null ? (
+              <EmptyState
+                title="No scored peers yet"
+                description="Retention scoring needs confirmed claims with later checkpoint data."
+              />
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 text-left text-gray-500">
-                      <th className="pb-3 font-medium">Trainee</th>
-                      <th className="pb-3 font-medium">Role</th>
-                      <th className="pb-3 font-medium">Salary Band</th>
-                      <th className="pb-3 font-medium">Verification</th>
-                      <th className="pb-3 font-medium">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.recentClaims.map((claim) => (
-                      <tr key={claim.id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-3">
-                          <span className="font-mono text-xs text-primary">{claim.traineeId.slice(0, 8)}…</span>
-                        </td>
-                        <td className="py-3">{claim.role ?? "—"}</td>
-                        <td className="py-3">{claim.salaryBand ? SALARY_BAND_LABELS[claim.salaryBand] ?? claim.salaryBand : "—"}</td>
-                        <td className="py-3">
-                          <Badge
-                            variant={claim.verificationStatus === "EMPLOYER_CONFIRMED" || claim.verificationStatus === "DOCUMENT_VERIFIED" ? "success" : "secondary"}
-                          >
-                            {claim.verificationStatus.replace(/_/g, " ").toLowerCase()}
-                          </Badge>
-                        </td>
-                        <td className="py-3">{formatDateTime(new Date(claim.createdAt))}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <PeerComparisonChart
+                data={[
+                  { name: "Your Company", value: retentionScore ?? 0, isCurrent: true },
+                  {
+                    name: "Top Quartile",
+                    value: data.ranking.peerTopQuartile ?? peerAvg,
+                    isCurrent: false,
+                  },
+                ]}
+                xKey="name"
+                height={300}
+                yAxisLabel="Retention Score"
+                showAverage={true}
+                averageValue={peerAvg}
+              />
             )}
           </CardContent>
         </Card>
-      </main>
+      </div>
+
+      {/* Recent claims (§4.5 DataTable) */}
+      <DataTable
+        columns={claimColumns}
+        data={data.recentClaims}
+        title="Recent claims"
+        searchPlaceholder="Search claims…"
+        emptyState={
+          <EmptyState
+            title="No claims yet"
+            description="Employment claims recorded for your trainees appear here."
+          />
+        }
+      />
     </div>
   );
 }

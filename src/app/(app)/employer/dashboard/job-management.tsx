@@ -2,11 +2,22 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { AlertCircle, BadgeCheck, Loader2, Plus, Users } from "lucide-react";
+import { Briefcase, Plus, Users } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
-import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
+import { EmptyState } from "~/components/patterns/empty-state";
+import { ErrorState } from "~/components/patterns/error-state";
+import { Skeleton } from "~/components/patterns/skeleton";
+import { StatusBadge } from "~/components/patterns/status-badge";
 import type {
   Applicant,
   EmployerJobsResponse,
@@ -41,17 +52,26 @@ interface FeedbackState {
   ok: boolean;
 }
 
+interface RejectTarget {
+  jobId: string;
+  applicationId: string;
+  name: string;
+}
+
 /**
- * Employer job management (F25): verification banner, job list with
- * applicant panels and the shortlist/hire/reject pipeline. Posting happens
- * on the dedicated /employer/dashboard/post-job page — this section keeps
- * a single "Post Job" button that navigates there. PENDING/SUSPENDED/
- * REJECTED employers see the banner only — no job UI.
+ * Employer job management (F25) per design §4.9/§4.10: verification banner
+ * gate (PENDING/SUSPENDED/REJECTED see the banner only), job list with
+ * StatusBadges, applicant panels and the shortlist/hire/reject pipeline.
+ * Reject is destructive — confirmed with a dialog (CL-18); shortlist reveals
+ * the contact once granted. Posting happens on the dedicated
+ * /employer/dashboard/post-job page — this section keeps a single "Post Job"
+ * button that navigates there.
  */
 export function JobManagement() {
   const [data, setData] = useState<EmployerJobsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [unavailable, setUnavailable] = useState(false);
 
   // Applicants panels + pipeline actions
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
@@ -59,9 +79,11 @@ export function JobManagement() {
   const [applicantsLoading, setApplicantsLoading] = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<RejectTarget | null>(null);
 
   const loadJobs = useCallback(async () => {
     setLoading(true);
+    setUnavailable(false);
     try {
       const res = await fetch("/api/v1/employer/jobs");
       if (res.status === 401) {
@@ -71,6 +93,7 @@ export function JobManagement() {
       if (!res.ok) {
         // 404 = no employer profile linked to this session (e.g. legacy demo login)
         setData(null);
+        setUnavailable(res.status === 404);
         setError(
           res.status === 404
             ? "No employer profile is linked to this session — job posting is unavailable"
@@ -82,6 +105,7 @@ export function JobManagement() {
       setError("");
     } catch (err) {
       console.error("Employer jobs load error:", err);
+      setUnavailable(false);
       setError("Failed to load job postings");
     } finally {
       setLoading(false);
@@ -177,11 +201,26 @@ export function JobManagement() {
     }
   };
 
+  const confirmReject = async () => {
+    if (!rejectTarget) return;
+    await applyAction(rejectTarget.jobId, rejectTarget.applicationId, "reject");
+    setRejectTarget(null);
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Job postings</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {Array.from({ length: 3 }, (_, i) => (
+              <Skeleton key={i} className="h-24 w-full" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -189,11 +228,21 @@ export function JobManagement() {
     data?.employer.verificationStatus ?? null;
 
   if (!data || !verificationStatus) {
+    // 404 (no employer profile linked) is a session-shape fact, not a failure
+    // to retry — info banner. Everything else gets the retry pattern.
+    if (unavailable) {
+      return (
+        <Alert variant="info">
+          <AlertDescription>{error || "Job postings are unavailable for this session."}</AlertDescription>
+        </Alert>
+      );
+    }
     return (
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>{error || "Job postings are unavailable for this session."}</AlertDescription>
-      </Alert>
+      <ErrorState
+        title="Couldn't load job postings"
+        description={error || "The data didn't arrive. Check your connection and retry."}
+        onRetry={() => void loadJobs()}
+      />
     );
   }
 
@@ -201,8 +250,7 @@ export function JobManagement() {
   // REJECTED employers see no job management UI.
   if (verificationStatus === "PENDING") {
     return (
-      <Alert className="border-yellow-600 bg-yellow-50 [&>svg]:text-yellow-600">
-        <AlertCircle className="h-4 w-4" />
+      <Alert variant="warning">
         <AlertTitle>Verification pending</AlertTitle>
         <AlertDescription>
           Your registration is under review. You can log in, and will be able to post jobs once an
@@ -215,7 +263,6 @@ export function JobManagement() {
   if (verificationStatus === "SUSPENDED") {
     return (
       <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
         <AlertTitle>Account suspended</AlertTitle>
         <AlertDescription>
           Job posting is disabled. Contact the skill mission team to reinstate your account.
@@ -227,7 +274,6 @@ export function JobManagement() {
   if (verificationStatus === "REJECTED") {
     return (
       <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
         <AlertTitle>Registration rejected</AlertTitle>
         <AlertDescription>
           Your employer registration was not approved. Contact the skill mission team for details.
@@ -239,16 +285,14 @@ export function JobManagement() {
   const jobs = data.jobs;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {error && (
         <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
       {feedback && (
-        <Alert className={feedback.ok ? "border-green-600 bg-green-50 [&>svg]:text-green-600" : "border-destructive/50 text-destructive"}>
-          <AlertCircle className="h-4 w-4" />
+        <Alert variant={feedback.ok ? "success" : "destructive"}>
           <AlertDescription>{feedback.message}</AlertDescription>
         </Alert>
       )}
@@ -257,40 +301,39 @@ export function JobManagement() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <div className="flex items-center gap-3">
-            <CardTitle>Job Postings</CardTitle>
-            <Badge variant="success" className="gap-1">
-              <BadgeCheck className="h-3 w-3" /> Verified
-            </Badge>
+            <CardTitle>Job postings</CardTitle>
+            <StatusBadge status="VERIFIED" />
           </div>
           <Button asChild className="gap-2">
             <Link href="/employer/dashboard/post-job">
-              <Plus className="h-4 w-4" />
+              <Plus />
               Post Job
             </Link>
           </Button>
         </CardHeader>
         <CardContent className="space-y-3">
           {jobs.length === 0 ? (
-            <p className="text-sm text-gray-500">
-              No jobs posted yet — click <span className="font-medium">Post Job</span> above to post
-              your first job.
-            </p>
+            <EmptyState
+              icon={<Briefcase />}
+              title="No jobs posted yet"
+              description="Click Post Job above to post your first job — it goes live on the trainee job board."
+            />
           ) : (
             jobs.map((job) => (
               <div key={job.id} className="rounded-lg border p-4 space-y-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-gray-900">{job.title}</h3>
-                      <Badge variant={job.status === "OPEN" ? "success" : "secondary"}>{job.status}</Badge>
+                      <h3 className="font-medium">{job.title}</h3>
+                      <StatusBadge status={job.status} />
                     </div>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-body-sm text-muted-foreground">
                       {EMPLOYMENT_TYPE_LABELS[job.employmentType] ?? job.employmentType} ·{" "}
                       {WORK_MODE_LABELS[job.workMode] ?? job.workMode} · {job.district} ·{" "}
                       {job.openings} opening{job.openings === 1 ? "" : "s"}
                       {job.salaryBand ? ` · ${SALARY_BAND_LABELS[job.salaryBand] ?? job.salaryBand}` : ""}
                     </p>
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-caption text-muted-foreground">
                       {job.applicationCount} application{job.applicationCount === 1 ? "" : "s"} ·{" "}
                       {job.hireCount} hired
                       {job.applicationDeadline
@@ -305,7 +348,7 @@ export function JobManagement() {
                       className="gap-2"
                       onClick={() => toggleApplicants(job.id)}
                     >
-                      <Users className="h-4 w-4" />
+                      <Users />
                       Applicants ({job.applicationCount})
                     </Button>
                     {job.status === "OPEN" ? (
@@ -315,8 +358,8 @@ export function JobManagement() {
                         onClick={() => void setStatus(job.id, "CLOSED")}
                         disabled={actionBusy === `${job.id}:status`}
                       >
-                        {actionBusy === `${job.id}:status` && <Loader2 className="h-4 w-4 animate-spin" />}
-                        Close
+                        {actionBusy === `${job.id}:status` && "Closing…"}
+                        {actionBusy !== `${job.id}:status` && "Close"}
                       </Button>
                     ) : (
                       <Button
@@ -324,48 +367,40 @@ export function JobManagement() {
                         onClick={() => void setStatus(job.id, "OPEN")}
                         disabled={actionBusy === `${job.id}:status`}
                       >
-                        {actionBusy === `${job.id}:status` && <Loader2 className="h-4 w-4 animate-spin" />}
-                        Re-open
+                        {actionBusy === `${job.id}:status` && "Re-opening…"}
+                        {actionBusy !== `${job.id}:status` && "Re-open"}
                       </Button>
                     )}
                   </div>
                 </div>
-                <p className="text-sm text-gray-600">{job.description}</p>
+                <p className="text-body-sm text-muted-foreground">{job.description}</p>
 
                 {expandedJobId === job.id && (
                   <div className="border-t pt-3 space-y-2">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Applicants</p>
+                    <p className="text-caption font-medium uppercase tracking-wide text-muted-foreground">
+                      Applicants
+                    </p>
                     {applicantsLoading === job.id ? (
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Loading applicants…
+                      <div className="space-y-2">
+                        {Array.from({ length: 2 }, (_, i) => (
+                          <Skeleton key={i} className="h-16 w-full" />
+                        ))}
                       </div>
                     ) : (applicants[job.id]?.length ?? 0) === 0 ? (
-                      <p className="text-sm text-gray-500">No applications yet.</p>
+                      <p className="text-body-sm text-muted-foreground">No applications yet.</p>
                     ) : (
                       (applicants[job.id] ?? []).map((applicant) => (
                         <div key={applicant.applicationId} className="rounded-md bg-muted/50 p-3 space-y-2">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="min-w-0">
-                              <p className="text-sm font-medium">
+                              <p className="text-body-sm font-medium">
                                 {applicant.name}{" "}
-                                <span className="font-mono text-xs text-gray-500">{applicant.publicId}</span>
+                                <span className="font-mono text-caption text-muted-foreground">{applicant.publicId}</span>
                               </p>
-                              <p className="text-xs text-gray-500">{applicant.district}</p>
+                              <p className="text-caption text-muted-foreground">{applicant.district}</p>
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
-                              <Badge
-                                variant={
-                                  applicant.status === "HIRED"
-                                    ? "success"
-                                    : applicant.status === "SHORTLISTED"
-                                      ? "info"
-                                      : applicant.status === "APPLIED"
-                                        ? "default"
-                                        : "secondary"
-                                }
-                              >
-                                {applicant.status.replace(/_/g, " ").toLowerCase()}
-                              </Badge>
+                              <StatusBadge status={applicant.status} />
                               {applicant.status === "APPLIED" && (
                                 <>
                                   <Button
@@ -374,20 +409,22 @@ export function JobManagement() {
                                     onClick={() => void applyAction(job.id, applicant.applicationId, "shortlist")}
                                     disabled={actionBusy === `${applicant.applicationId}:shortlist`}
                                   >
-                                    {actionBusy === `${applicant.applicationId}:shortlist` && (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    )}
-                                    Shortlist
+                                    {actionBusy === `${applicant.applicationId}:shortlist` && "Shortlisting…"}
+                                    {actionBusy !== `${applicant.applicationId}:shortlist` && "Shortlist"}
                                   </Button>
                                   <Button
                                     size="sm"
-                                    variant="destructive"
-                                    onClick={() => void applyAction(job.id, applicant.applicationId, "reject")}
+                                    variant="outline"
+                                    className="border-destructive text-danger-text hover:bg-danger-soft"
+                                    onClick={() =>
+                                      setRejectTarget({
+                                        jobId: job.id,
+                                        applicationId: applicant.applicationId,
+                                        name: applicant.name,
+                                      })
+                                    }
                                     disabled={actionBusy === `${applicant.applicationId}:reject`}
                                   >
-                                    {actionBusy === `${applicant.applicationId}:reject` && (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    )}
                                     Reject
                                   </Button>
                                 </>
@@ -399,20 +436,22 @@ export function JobManagement() {
                                     onClick={() => void applyAction(job.id, applicant.applicationId, "hire")}
                                     disabled={actionBusy === `${applicant.applicationId}:hire`}
                                   >
-                                    {actionBusy === `${applicant.applicationId}:hire` && (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    )}
-                                    Hire
+                                    {actionBusy === `${applicant.applicationId}:hire` && "Hiring…"}
+                                    {actionBusy !== `${applicant.applicationId}:hire` && "Hire"}
                                   </Button>
                                   <Button
                                     size="sm"
-                                    variant="destructive"
-                                    onClick={() => void applyAction(job.id, applicant.applicationId, "reject")}
+                                    variant="outline"
+                                    className="border-destructive text-danger-text hover:bg-danger-soft"
+                                    onClick={() =>
+                                      setRejectTarget({
+                                        jobId: job.id,
+                                        applicationId: applicant.applicationId,
+                                        name: applicant.name,
+                                      })
+                                    }
                                     disabled={actionBusy === `${applicant.applicationId}:reject`}
                                   >
-                                    {actionBusy === `${applicant.applicationId}:reject` && (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    )}
                                     Reject
                                   </Button>
                                 </>
@@ -420,7 +459,7 @@ export function JobManagement() {
                             </div>
                           </div>
                           {(applicant.skills.length > 0 || applicant.certificates.length > 0) && (
-                            <div className="text-xs text-gray-600 space-y-1">
+                            <div className="text-caption text-muted-foreground space-y-1">
                               {applicant.skills.length > 0 && <p>Skills: {applicant.skills.join(", ")}</p>}
                               {applicant.certificates.length > 0 && (
                                 <p>
@@ -430,10 +469,10 @@ export function JobManagement() {
                               )}
                             </div>
                           )}
-                          <p className="text-xs text-gray-500">
+                          <p className="text-caption text-muted-foreground">
                             {applicant.phone ? (
                               <span>
-                                <span className="font-medium text-green-700">Contact:</span>{" "}
+                                <span className="font-medium text-success-text">Contact:</span>{" "}
                                 <span className="font-mono">{applicant.phone}</span>
                                 {applicant.email ? ` · ${applicant.email}` : ""}
                               </span>
@@ -455,6 +494,33 @@ export function JobManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Reject is destructive — confirmed with the object + consequence named (CL-18) */}
+      <Dialog open={rejectTarget !== null} onOpenChange={(open) => !open && setRejectTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject {rejectTarget?.name}?</DialogTitle>
+            <DialogDescription>
+              Their application will be marked rejected and they will no longer be considered for
+              this opening. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={rejectTarget !== null && actionBusy === `${rejectTarget.applicationId}:reject`}
+              onClick={() => void confirmReject()}
+            >
+              {rejectTarget !== null && actionBusy === `${rejectTarget.applicationId}:reject`
+                ? "Rejecting…"
+                : "Reject applicant"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
