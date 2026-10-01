@@ -34,6 +34,8 @@ interface ComparisonChartProps {
   yAxisLabel?: string;
   className?: string;
   colors?: { actual: string; expected: string };
+  /** Legend labels per series (e.g. { actual: "Signals", expected: "Open jobs" }). */
+  names?: { actual: string; expected: string };
 }
 
 export function ComparisonChart({
@@ -44,6 +46,7 @@ export function ComparisonChart({
   yAxisLabel,
   className,
   colors = { actual: "var(--chart-1)", expected: "var(--chart-2)" },
+  names = { actual: "Actual", expected: "Expected" },
 }: ComparisonChartProps) {
   if (!data.length) {
     return (
@@ -93,8 +96,8 @@ export function ComparisonChart({
               wrapperStyle={{ fontSize: 12, color: "var(--muted-foreground)", paddingBottom: 8 }}
             />
           )}
-          <Bar dataKey="actual" name="Actual" radius={[4, 4, 0, 0]} fill={colors.actual} />
-          <Bar dataKey="expected" name="Expected" radius={[4, 4, 0, 0]} fill={colors.expected} />
+          <Bar dataKey="actual" name={names.actual} radius={[4, 4, 0, 0]} fill={colors.actual} />
+          <Bar dataKey="expected" name={names.expected} radius={[4, 4, 0, 0]} fill={colors.expected} />
         </RechartsBarChart>
       </ResponsiveContainer>
     </div>

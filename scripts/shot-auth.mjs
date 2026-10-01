@@ -5,7 +5,7 @@
 // Requires the dev server on :3000. Chromium from /opt/google/chrome/chrome.
 import { chromium } from "playwright-core";
 
-const [, , urlPath = "/dashboard", themeArg = "light", widthArg = "1440", outArg] = process.argv;
+const [, , urlPath = "/dashboard", themeArg = "light", widthArg = "1440", outArg, clickTab] = process.argv;
 const width = parseInt(widthArg, 10);
 const out = outArg ?? `shots/auth_${urlPath.replace(/\//g, "_") || "root"}-${themeArg}-${width}.png`;
 
@@ -43,6 +43,12 @@ await page.goto(`http://localhost:3000${urlPath}`, { waitUntil: "networkidle", t
   await page.goto(`http://localhost:3000${urlPath}`, { waitUntil: "load", timeout: 30000 });
 });
 await page.waitForTimeout(1200);
+
+// Optional: open a tab (e.g. "Verification Queue") before the shot
+if (clickTab) {
+  await page.getByRole("tab", { name: clickTab }).click();
+  await page.waitForTimeout(3000);
+}
 
 await page.screenshot({ path: out, fullPage: process.env.FULL_PAGE === "1" });
 console.log(out);

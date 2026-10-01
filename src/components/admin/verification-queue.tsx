@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, RefreshCw, XCircle } from "lucide-react";
-import { format } from "date-fns";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +13,10 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
+import { EmptyState } from "~/components/patterns/empty-state";
+import { ErrorState } from "~/components/patterns/error-state";
+import { Skeleton } from "~/components/patterns/skeleton";
+import { date as fmtDate } from "~/lib/format";
 import type {
   PendingEmployer,
   PendingEmployersResponse,
@@ -82,35 +85,45 @@ export function VerificationQueue({ onChanged }: VerificationQueueProps) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex-row items-start justify-between space-y-0">
         <div>
           <CardTitle>Verification Queue</CardTitle>
-          <p className="text-sm text-gray-500">
+          <CardDescription>
             Recruiter signups awaiting a decision. Approve lets them post jobs immediately; Reject marks them rejected.
-          </p>
+          </CardDescription>
         </div>
-        <Button variant="outline" size="sm" className="gap-2" onClick={() => void fetchQueue()}>
-          <RefreshCw className="h-4 w-4" />
+        <Button variant="outline" size="sm" onClick={() => void fetchQueue()} disabled={loading}>
+          <RefreshCw className={loading ? "animate-spin" : ""} />
           Refresh
         </Button>
       </CardHeader>
       <CardContent>
-        {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
-        {loading ? (
-          <div className="flex items-center justify-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent" />
+        {error ? (
+          <ErrorState
+            title="Couldn't load the queue"
+            description={error}
+            onRetry={() => void fetchQueue()}
+            className="py-8"
+          />
+        ) : loading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 3 }, (_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
           </div>
         ) : employers.length === 0 ? (
-          <p className="py-8 text-center text-sm text-gray-500">No pending recruiters</p>
+          <EmptyState
+            icon={<CheckCircle2 />}
+            title="No pending recruiters"
+            description="New recruiter signups awaiting a decision show up here."
+          />
         ) : (
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 <TableHead>Recruiter</TableHead>
                 <TableHead>Contact Email</TableHead>
-                <TableHead>Sector</TableHead>
                 <TableHead>District</TableHead>
-                <TableHead>Registration No</TableHead>
                 <TableHead>Hiring Needs</TableHead>
                 <TableHead>Employees</TableHead>
                 <TableHead>Registered</TableHead>
@@ -121,23 +134,19 @@ export function VerificationQueue({ onChanged }: VerificationQueueProps) {
               {employers.map((employer) => (
                 <TableRow key={employer.id}>
                   <TableCell className="font-medium">{employer.companyName}</TableCell>
-                  <TableCell className="font-mono text-xs">{employer.contactEmail}</TableCell>
-                  <TableCell>{employer.sector}</TableCell>
+                  <TableCell className="font-mono text-caption">{employer.contactEmail}</TableCell>
                   <TableCell>{employer.district}</TableCell>
-                  <TableCell className="font-mono text-xs">{employer.registrationNo ?? "—"}</TableCell>
                   <TableCell className="max-w-[220px] truncate" title={employer.hiringNeeds ?? undefined}>
                     {employer.hiringNeeds ?? "—"}
                   </TableCell>
-                  <TableCell>{employer.employeeCount ?? "—"}</TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {format(new Date(employer.createdAt), "yyyy-MM-dd")}
-                  </TableCell>
+                  <TableCell className="tabular-nums">{employer.employeeCount ?? "—"}</TableCell>
+                  <TableCell className="whitespace-nowrap">{fmtDate(new Date(employer.createdAt))}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Button
                         size="sm"
                         variant="outline"
-                        className="gap-1 border-green-300 text-green-700 hover:bg-green-50"
+                        className="gap-1 border-success text-success-text hover:bg-success-soft"
                         disabled={submitting}
                         onClick={() => setAction({ employer, decision: "VERIFIED" })}
                       >
@@ -147,7 +156,7 @@ export function VerificationQueue({ onChanged }: VerificationQueueProps) {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="gap-1 border-red-300 text-red-700 hover:bg-red-50"
+                        className="gap-1 border-destructive text-danger-text hover:bg-danger-soft"
                         disabled={submitting}
                         onClick={() => setAction({ employer, decision: "REJECTED" })}
                       >
