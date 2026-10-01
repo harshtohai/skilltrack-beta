@@ -31,20 +31,41 @@ if (themeArg === "dark") {
 }
 
 // Log in as a demo user (creds shown on the login page itself). USER env var
-// selects the role: admin (default) | institute | employer.
+// selects the role: admin (default) | institute | employer | none (skip login —
+// for public/unauthenticated pages like the magic-link portal).
 const DEMO_USERS = {
   admin: { radio: "Government Admin", email: "admin@maharashtra.gov.in", password: "admin123" },
   institute: { radio: "Training Institute", email: "institute@pmkvy.gov.in", password: "institute123" },
   employer: { radio: "Employer", email: "hr@company.com", password: "employer123" },
 };
-const user = DEMO_USERS[process.env.USER in DEMO_USERS ? process.env.USER : "admin"];
-await page.goto("http://localhost:3000/login", { waitUntil: "networkidle", timeout: 30000 });
-await page.getByRole("radio", { name: user.radio }).click();
-await page.fill('input[name="email"]', user.email);
-await page.fill('input[name="password"]', user.password);
-await page.click('button[type="submit"]');
-await page.waitForURL("**/analytics", { timeout: 30000 }).catch(() => {});
-await page.waitForTimeout(1500);
+if (process.env.USER !== "none") {
+  const user = DEMO_USERS[process.env.USER in DEMO_USERS ? process.env.USER : "admin"];
+  await page.goto("http://localhost:3000/login", { waitUntil: "networkidle", timeout: 30000 });
+  await page.getByRole("radio", { name: user.radio }).click();
+  await page.fill('input[name="email"]', user.email);
+  await page.fill('input[name="password"]', user.password);
+  await page.click('button[type="submit"]');
+  await page.waitForURL("**/analytics", { timeout: 30000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+}
+
+// Optional: mint a trainee session first by consuming a magic-link token
+// (the verify POST sets the session cookie), then navigate to the target path.
+if (process.env.TRAINEE_TOKEN) {
+  await page
+    .goto(`http://localhost:3000/auth/trainee/${process.env.TRAINEE_TOKEN}`, {
+      waitUntil: "networkidle",
+      timeout: 30000,
+    })
+    .catch(() => {});
+  // Wait until verification actually completes: the "Edit profile" button
+  // only renders once the profile loaded (cookie is set by then).
+  await page
+    .getByRole("button", { name: "Edit profile" })
+    .waitFor({ timeout: 20000 })
+    .catch(() => {});
+  await page.waitForTimeout(1500);
+}
 
 // Navigate to the target path
 await page.goto(`http://localhost:3000${urlPath}`, { waitUntil: "networkidle", timeout: 30000 }).catch(async () => {
