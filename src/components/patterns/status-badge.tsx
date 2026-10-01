@@ -14,8 +14,8 @@ export type StatusKey =
   | "EMPLOYED" | "SELF_EMPLOYED" | "APPRENTICE" | "LOOKING" | "NOT_WORKING" | "UNKNOWN"
   // verification_status
   | "SELF_REPORTED" | "PROVIDER_CONFIRMED" | "EMPLOYER_CONFIRMED" | "DOCUMENT_VERIFIED" | "SYSTEM_VERIFIED" | "CONFLICT"
-  // followup_status
-  | "SCHEDULED" | "SENT" | "RESPONDED" | "FAILED" | "EXPIRED"
+  // followups
+  | "SCHEDULED" | "SENT" | "RESPONDED" | "FAILED" | "EXPIRED" | "NOT_TRIGGERED"
   // job_application_status
   | "APPLIED" | "SHORTLISTED" | "HIRED" | "REJECTED" | "WITHDRAWN"
   // job_posting_status
@@ -46,6 +46,7 @@ const STATUS_MAP: Record<StatusKey, { label: string; badge: "success" | "warning
   RESPONDED: { label: "Responded", badge: "success" },
   FAILED: { label: "Failed", badge: "danger" },
   EXPIRED: { label: "Expired", badge: "warning" },
+  NOT_TRIGGERED: { label: "Not triggered", badge: "neutral" },
   // applications
   APPLIED: { label: "Applied", badge: "neutral" },
   SHORTLISTED: { label: "Shortlisted", badge: "info" },

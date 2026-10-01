@@ -50,7 +50,7 @@ await page.waitForTimeout(1500);
 await page.goto(`http://localhost:3000${urlPath}`, { waitUntil: "networkidle", timeout: 30000 }).catch(async () => {
   await page.goto(`http://localhost:3000${urlPath}`, { waitUntil: "load", timeout: 30000 });
 });
-await page.waitForTimeout(6000);
+await page.waitForTimeout(parseInt(process.env.WAIT_MS ?? "6000", 10));
 
 // Optional: open a tab (e.g. "Verification Queue") before the shot
 if (clickTab) {

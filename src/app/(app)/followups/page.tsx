@@ -1,25 +1,33 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Filter, ChevronLeft, ChevronRight, X, RefreshCw, Send, Clock, CheckCircle, AlertTriangle, XCircle, FastForward } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { ChevronLeft, ChevronRight, RefreshCw, Send, FastForward } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "~/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
-import { BackLink } from "~/components/back-link";
+import { PageHeader } from "~/components/patterns/page-header";
+import { FilterBar } from "~/components/patterns/filter-bar";
+import { EmptyState } from "~/components/patterns/empty-state";
+import { ErrorState } from "~/components/patterns/error-state";
+import { Skeleton } from "~/components/patterns/skeleton";
+import { StatusBadge } from "~/components/patterns/status-badge";
 import { Input } from "~/components/ui/input";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "~/components/ui/table";
 import { ScrollArea } from "~/components/ui/scroll-area";
-import { format } from "date-fns";
-
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable @typescript-eslint/no-floating-promises */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react-hooks/exhaustive-deps */
+import { datetime } from "~/lib/format";
 
 interface FollowupEvent {
   id: string;
@@ -49,9 +57,33 @@ interface FollowupEvent {
   }>;
 }
 
+interface FollowupsResponse {
+  data?: FollowupEvent[];
+  pagination?: { page: number; limit: number; total: number; totalPages: number };
+}
+
+const EMPTY_PAGINATION = { page: 1, limit: 20, total: 0, totalPages: 0 };
+
+/** Bot session states are workflow steps, not domain statuses — neutral Badge. */
+function BotSessionBadge({ sessions }: { sessions: FollowupEvent["botSessions"] }) {
+  const state = sessions?.[0]?.state;
+  if (!state) return <span className="text-muted-foreground">—</span>;
+  return (
+    <Badge variant="secondary" className="gap-1">
+      {state.replace(/_/g, " ")}
+    </Badge>
+  );
+}
+
+/**
+ * Follow-up operations per design §9.4 — Shell S1. FilterBar (status /
+ * checkpoint / cohort / programme / search / date range), server-paginated
+ * table in a ScrollArea, statuses via StatusBadge (§4.10/CL-12).
+ */
 export default function FollowupsPage() {
   const [followups, setFollowups] = useState<FollowupEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [filters, setFilters] = useState({
     status: "",
     checkpointDays: "",
@@ -63,10 +95,13 @@ export default function FollowupsPage() {
   });
   const [cohorts, setCohorts] = useState<Array<{ id: string; name: string }>>([]);
   const [programmes, setProgrammes] = useState<Array<{ id: string; name: string }>>([]);
-  const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
+  const [pagination, setPagination] = useState(EMPTY_PAGINATION);
+  const [clockOpen, setClockOpen] = useState(false);
+  const [clockDays, setClockDays] = useState("1");
 
-  const fetchFollowups = async () => {
+  const fetchFollowups = useCallback(async () => {
     setLoading(true);
+    setError(false);
     try {
       const params = new URLSearchParams({
         page: pagination.page.toString(),
@@ -77,40 +112,43 @@ export default function FollowupsPage() {
       });
 
       const res = await fetch(`/api/v1/followups?${params}`);
-      const data = await res.json();
-      setFollowups(data.data || []);
-      setPagination(data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
-    } catch (err) {
-      console.error("Failed to fetch follow-ups:", err);
+      const data = (await res.json()) as FollowupsResponse;
+      setFollowups(data.data ?? []);
+      setPagination(data.pagination ?? EMPTY_PAGINATION);
+    } catch {
+      setError(true);
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, filters]);
 
-  const fetchCohortsAndProgrammes = async () => {
+  const fetchCohortsAndProgrammes = useCallback(async () => {
     try {
-      const cohortsRes = await fetch("/api/v1/cohorts?limit=100");
-      const cohortsData = await cohortsRes.json();
-      const cohortsList = cohortsData.data || [];
-      setCohorts(cohortsList.map((c: any) => ({ id: c.id, name: c.name })));
-      
+      const res = await fetch("/api/v1/cohorts?limit=100");
+      const data = (await res.json()) as {
+        data?: Array<{ id: string; name: string; programme?: { id: string; name: string } }>;
+      };
+      const cohortsList = data.data ?? [];
+      setCohorts(cohortsList.map((c) => ({ id: c.id, name: c.name })));
+
       // Extract unique programmes
-      const programmeMap = new Map();
-      cohortsList.forEach((c: any) => {
-        if (c.programme) {
-          programmeMap.set(c.programme.id, c.programme.name);
-        }
+      const programmeMap = new Map<string, string>();
+      cohortsList.forEach((c) => {
+        if (c.programme) programmeMap.set(c.programme.id, c.programme.name);
       });
       setProgrammes(Array.from(programmeMap.entries()).map(([id, name]) => ({ id, name })));
-    } catch (err) {
-      console.error("Failed to fetch cohorts/programmes:", err);
+    } catch {
+      // non-critical — the filters just stay empty
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchCohortsAndProgrammes();
-    fetchFollowups();
-  }, [pagination.page, filters.status, filters.checkpointDays, filters.cohortId, filters.programmeId, filters.traineeSearch, filters.fromDate, filters.toDate]);
+    void fetchCohortsAndProgrammes();
+  }, [fetchCohortsAndProgrammes]);
+
+  useEffect(() => {
+    void fetchFollowups();
+  }, [fetchFollowups]);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -124,55 +162,10 @@ export default function FollowupsPage() {
 
   const hasActiveFilters = Object.values(filters).some((v) => v);
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline" | "success"> = {
-      SCHEDULED: "secondary",
-      SENT: "default",
-      RESPONDED: "success",
-      FAILED: "destructive",
-      EXPIRED: "destructive",
-    };
-    const icons: Record<string, React.ReactNode> = {
-      SCHEDULED: <Clock className="h-3 w-3" />,
-      SENT: <Send className="h-3 w-3" />,
-      RESPONDED: <CheckCircle className="h-3 w-3" />,
-      FAILED: <AlertTriangle className="h-3 w-3" />,
-      EXPIRED: <XCircle className="h-3 w-3" />,
-    };
-    return (
-      <Badge variant={variants[status] || "outline"} className="gap-1">
-        {icons[status] || null}
-        {status}
-      </Badge>
-    );
-  };
-
-  const getBotSessionState = (sessions: FollowupEvent["botSessions"]) => {
-    if (!sessions?.[0]) return null;
-    const state = sessions[0].state;
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline" | "success"> = {
-      AWAITING_STATUS: "secondary",
-      AWAITING_EMPLOYER_NAME: "default",
-      AWAITING_ROLE: "default",
-      AWAITING_SALARY_BAND: "default",
-      AWAITING_NON_PLACEMENT_REASON: "default",
-      AWAITING_RETENTION_STATUS: "secondary",
-      AWAITING_RETENTION_SALARY_BAND: "default",
-      DONE: "success",
-    };
-    return (
-      <Badge variant={variants[state] || "outline"} className="gap-1">
-        {state.replace(/_/g, " ")}
-      </Badge>
-    );
-  };
-
   const advanceClock = async () => {
-    const days = prompt("How many days to advance? (default: 1)", "1");
-    if (days === null) return;
-    const d = parseInt(days, 10);
+    const d = parseInt(clockDays, 10);
     if (isNaN(d) || d < 1) {
-      alert("Please enter a valid number of days");
+      toast.error("Please enter a valid number of days");
       return;
     }
     setLoading(true);
@@ -182,254 +175,296 @@ export default function FollowupsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ days: d }),
       });
-      const data = await res.json();
-      if (data.success) {
-        alert(data.message);
-        fetchFollowups();
+      const json = (await res.json()) as { success?: boolean; message?: string; error?: { message?: string } };
+      if (json.success) {
+        toast.success(json.message ?? "Clock advanced");
+        setClockOpen(false);
+        void fetchFollowups();
       } else {
-        alert("Failed to advance clock: " + (data.error?.message || "Unknown error"));
+        toast.error("Failed to advance clock: " + (json.error?.message ?? "Unknown error"));
       }
-    } catch (err) {
-      console.error("Failed to advance clock:", err);
-      alert("Failed to advance clock");
+    } catch {
+      toast.error("Failed to advance clock");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="container py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <BackLink href="/dashboard" className="mb-2" />
-          <h1 className="text-3xl font-bold">Follow-up Operations</h1>
-          <p className="text-muted-foreground">
-            Monitor and manage all follow-up events across cohorts
-          </p>
+    <div>
+      <PageHeader
+        title="Follow-up Operations"
+        caption="Monitor and manage all follow-up events across cohorts"
+        actions={
+          <>
+            <AlertDialog
+              open={clockOpen}
+              onOpenChange={(open) => {
+                setClockOpen(open);
+                if (open) setClockDays("1");
+              }}
+            >
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" disabled={loading}>
+                  <FastForward />
+                  Advance clock
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Advance the demo clock</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Fast-forwards the simulation clock to trigger scheduled follow-ups. This affects demo data only.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <Input
+                  type="number"
+                  min={1}
+                  value={clockDays}
+                  onChange={(e) => setClockDays(e.target.value)}
+                  aria-label="Days to advance"
+                />
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={(e) => {
+                      // stay open on validation failure; close on success
+                      e.preventDefault();
+                      void advanceClock();
+                    }}
+                  >
+                    Advance
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            <Button variant="ghost" onClick={fetchFollowups} disabled={loading} aria-label="Refresh">
+              <RefreshCw />
+            </Button>
+          </>
+        }
+      />
+
+      <FilterBar
+        className="mb-6"
+        onClear={hasActiveFilters ? clearFilters : undefined}
+      >
+        <Select value={filters.status} onValueChange={(v) => handleFilterChange("status", v)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All statuses</SelectItem>
+            <SelectItem value="SCHEDULED">Scheduled</SelectItem>
+            <SelectItem value="SENT">Sent</SelectItem>
+            <SelectItem value="RESPONDED">Responded</SelectItem>
+            <SelectItem value="FAILED">Failed</SelectItem>
+            <SelectItem value="EXPIRED">Expired</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={filters.checkpointDays} onValueChange={(v) => handleFilterChange("checkpointDays", v)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Checkpoint" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All checkpoints</SelectItem>
+            <SelectItem value="30">30-day</SelectItem>
+            <SelectItem value="90">90-day</SelectItem>
+            <SelectItem value="180">180-day</SelectItem>
+            <SelectItem value="365">365-day</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={filters.cohortId} onValueChange={(v) => handleFilterChange("cohortId", v)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Cohort" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All cohorts</SelectItem>
+            {cohorts.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={filters.programmeId} onValueChange={(v) => handleFilterChange("programmeId", v)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Programme" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All programmes</SelectItem>
+            {programmes.map((p) => (
+              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Input
+          placeholder="Search trainee (name, ID, phone)"
+          value={filters.traineeSearch}
+          onChange={(e) => handleFilterChange("traineeSearch", e.target.value)}
+          className="lg:col-span-2"
+          aria-label="Search trainees"
+        />
+        <div className="flex gap-2 lg:col-span-2">
+          <Input
+            type="datetime-local"
+            value={filters.fromDate}
+            onChange={(e) => handleFilterChange("fromDate", e.target.value)}
+            placeholder="From date"
+            className="flex-1"
+            aria-label="From date"
+          />
+          <Input
+            type="datetime-local"
+            value={filters.toDate}
+            onChange={(e) => handleFilterChange("toDate", e.target.value)}
+            placeholder="To date"
+            className="flex-1"
+            aria-label="To date"
+          />
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={advanceClock} disabled={loading} className="gap-2">
-            <FastForward className="h-4 w-4" />
-            Advance Clock
-          </Button>
-          <Button variant="outline" onClick={fetchFollowups} disabled={loading} className="gap-2">
-            <RefreshCw className="h-4 w-4" />
-            Refresh
-          </Button>
-        </div>
-      </div>
+      </FilterBar>
 
-      {/* Filters */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Select value={filters.status} onValueChange={(v) => handleFilterChange("status", v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All statuses</SelectItem>
-                <SelectItem value="SCHEDULED">Scheduled</SelectItem>
-                <SelectItem value="SENT">Sent</SelectItem>
-                <SelectItem value="RESPONDED">Responded</SelectItem>
-                <SelectItem value="FAILED">Failed</SelectItem>
-                <SelectItem value="EXPIRED">Expired</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={filters.checkpointDays} onValueChange={(v) => handleFilterChange("checkpointDays", v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Checkpoint" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All checkpoints</SelectItem>
-                <SelectItem value="30">30-day</SelectItem>
-                <SelectItem value="90">90-day</SelectItem>
-                <SelectItem value="180">180-day</SelectItem>
-                <SelectItem value="365">365-day</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={filters.cohortId} onValueChange={(v) => handleFilterChange("cohortId", v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Cohort" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All cohorts</SelectItem>
-                {cohorts.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filters.programmeId} onValueChange={(v) => handleFilterChange("programmeId", v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Programme" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All programmes</SelectItem>
-                {programmes.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3 mt-4">
-            <Input
-              placeholder="Search trainee (name, ID, phone)"
-              value={filters.traineeSearch}
-              onChange={(e) => handleFilterChange("traineeSearch", e.target.value)}
-              className="md:col-span-2"
-            />
-            <div className="flex gap-2">
-              <Input
-                type="datetime-local"
-                value={filters.fromDate}
-                onChange={(e) => handleFilterChange("fromDate", e.target.value)}
-                placeholder="From date"
-              />
-              <Input
-                type="datetime-local"
-                value={filters.toDate}
-                onChange={(e) => handleFilterChange("toDate", e.target.value)}
-                placeholder="To date"
-              />
-            </div>
-          </div>
-
-          {hasActiveFilters && (
-            <div className="mt-4">
-              <Button variant="outline" onClick={clearFilters} className="gap-2">
-                <X className="h-4 w-4" />
-                Clear all filters
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Follow-ups Table */}
       {loading ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
-            <p>Loading follow-ups...</p>
+        <Card className="p-5">
+          <CardHeader className="p-0">
+            <CardTitle>Loading follow-ups…</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0 pt-4">
+            <div className="space-y-4">
+              {Array.from({ length: 5 }, (_, i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <Skeleton className="h-4 w-36" />
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                  <Skeleton className="h-5 w-24 rounded-full" />
+                  <Skeleton className="h-4 w-28" />
+                </div>
+              ))}
+            </div>
           </CardContent>
+        </Card>
+      ) : error ? (
+        <Card className="p-5">
+          <ErrorState
+            title="Could not load follow-ups"
+            description="Check your connection and try again."
+            onRetry={fetchFollowups}
+          />
         </Card>
       ) : followups.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Send className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-            <h3 className="text-lg font-medium mb-2">No follow-ups found</h3>
-            <p className="text-muted-foreground">Try adjusting your filters or trigger a new follow-up.</p>
-          </CardContent>
+        <Card className="p-5">
+          <EmptyState
+            icon={<Send />}
+            title="No follow-ups found"
+            description="Try adjusting your filters or trigger a new follow-up."
+          />
         </Card>
       ) : (
-        <>
-          <Card>
-            <CardHeader>
-              <CardTitle>Follow-up Events ({pagination.total})</CardTitle>
-              <CardDescription>
-                Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} events
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[600px] w-full">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead className="w-[80px]">Trainee</TableHead>
-                      <TableHead className="w-[150px]">Cohort / Programme</TableHead>
-                      <TableHead className="w-[100px]">Checkpoint</TableHead>
-                      <TableHead className="w-[120px]">Status</TableHead>
-                      <TableHead className="w-[140px]">Bot Session</TableHead>
-                      <TableHead className="w-[160px]">Sent At</TableHead>
-                      <TableHead className="w-[160px]">Responded At</TableHead>
-                      <TableHead className="w-[160px]">Created At</TableHead>
+        <Card className="p-5">
+          <CardHeader className="p-0">
+            <CardTitle>Follow-up events ({pagination.total})</CardTitle>
+            <CardDescription>
+              Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} events
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0 pt-4">
+            <ScrollArea className="h-[600px] w-full">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="w-[80px]">Trainee</TableHead>
+                    <TableHead className="w-[150px]">Cohort / Programme</TableHead>
+                    <TableHead className="w-[100px]">Checkpoint</TableHead>
+                    <TableHead className="w-[120px]">Status</TableHead>
+                    <TableHead className="w-[140px]">Bot Session</TableHead>
+                    <TableHead className="w-[160px]">Sent At</TableHead>
+                    <TableHead className="w-[160px]">Responded At</TableHead>
+                    <TableHead className="w-[160px]">Created At</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {followups.map((fu) => (
+                    <TableRow key={fu.id} className="border-t hover:bg-muted/50">
+                      <TableCell>
+                        {fu.trainee ? (
+                          <div>
+                            <p className="font-medium">{fu.trainee.fullName}</p>
+                            <p className="text-caption text-muted-foreground">{fu.trainee.publicId}</p>
+                            <p className="text-caption text-muted-foreground">{fu.trainee.district}</p>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {fu.cohort ? (
+                          <div>
+                            <p className="font-medium">{fu.cohort.name}</p>
+                            {fu.cohort.programme && (
+                              <p className="text-caption text-muted-foreground">{fu.cohort.programme.name}</p>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{fu.checkpointDays}-day</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={fu.status} />
+                      </TableCell>
+                      <TableCell>
+                        <BotSessionBadge sessions={fu.botSessions} />
+                      </TableCell>
+                      <TableCell>
+                        {fu.sentAt ? <span className="tabular-nums">{datetime(fu.sentAt)}</span> : <span className="text-muted-foreground">—</span>}
+                      </TableCell>
+                      <TableCell>
+                        {fu.respondedAt ? <span className="tabular-nums">{datetime(fu.respondedAt)}</span> : <span className="text-muted-foreground">—</span>}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-caption text-muted-foreground tabular-nums">{datetime(fu.createdAt)}</span>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {followups.map((fu) => (
-                      <TableRow key={fu.id} className="border-t hover:bg-muted/50">
-                        <TableCell>
-                          {fu.trainee ? (
-                            <div>
-                              <p className="font-medium">{fu.trainee.fullName}</p>
-                              <p className="text-xs text-muted-foreground">{fu.trainee.publicId}</p>
-                              <p className="text-xs text-muted-foreground">{fu.trainee.district}</p>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {fu.cohort ? (
-                            <div>
-                              <p className="font-medium">{fu.cohort.name}</p>
-                              {fu.cohort.programme && (
-                                <p className="text-xs text-muted-foreground">{fu.cohort.programme.name}</p>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{fu.checkpointDays}-day</Badge>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(fu.status)}</TableCell>
-                        <TableCell>{getBotSessionState(fu.botSessions)}</TableCell>
-                        <TableCell>
-                          {fu.sentAt ? format(new Date(fu.sentAt), "yyyy-MM-dd HH:mm") : <span className="text-muted-foreground">—</span>}
-                        </TableCell>
-                        <TableCell>
-                          {fu.respondedAt ? format(new Date(fu.respondedAt), "yyyy-MM-dd HH:mm") : <span className="text-muted-foreground">—</span>}
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">{format(new Date(fu.createdAt), "yyyy-MM-dd HH:mm")}</span>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
+                  ))}
+                </TableBody>
+              </Table>
+            </ScrollArea>
 
-              {/* Pagination */}
-              {pagination.totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Page {pagination.page} of {pagination.totalPages}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
-                      disabled={pagination.page === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
-                      disabled={pagination.page === pagination.totalPages}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
+            {/* Pagination (§4.5 footer pattern) */}
+            {pagination.totalPages > 1 && (
+              <div className="mt-4 flex items-center justify-between text-caption text-muted-foreground">
+                <span className="tabular-nums">
+                  Page {pagination.page} of {pagination.totalPages}
+                </span>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
+                    onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
+                    disabled={pagination.page === 1}
+                    aria-label="Previous page"
+                  >
+                    <ChevronLeft />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
+                    onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
+                    disabled={pagination.page === pagination.totalPages}
+                    aria-label="Next page"
+                  >
+                    <ChevronRight />
+                  </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
     </div>
   );
