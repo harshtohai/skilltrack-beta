@@ -1,6 +1,7 @@
 // Auth-aware screenshot harness for the Merivo reskin (throwaway/dev tool).
-// Usage: node scripts/shot-auth.mjs <path> [theme] [width] [outName]
-// Logs in as the government admin demo user, then screenshots <path>.
+// Usage: USER=institute node scripts/shot-auth.mjs <path> [theme] [width] [outName] [clickTab]
+// Logs in as a demo user (USER env var: admin default | institute | employer),
+// then screenshots <path>.
 // Theme: light | dark. Width: viewport width (default 1440).
 // Requires the dev server on :3000. Chromium from /opt/google/chrome/chrome.
 import { chromium } from "playwright-core";
@@ -29,20 +30,27 @@ if (themeArg === "dark") {
   });
 }
 
-// Log in as government admin (demo creds shown on the login page itself)
+// Log in as a demo user (creds shown on the login page itself). USER env var
+// selects the role: admin (default) | institute | employer.
+const DEMO_USERS = {
+  admin: { radio: "Government Admin", email: "admin@maharashtra.gov.in", password: "admin123" },
+  institute: { radio: "Training Institute", email: "institute@pmkvy.gov.in", password: "institute123" },
+  employer: { radio: "Employer", email: "hr@company.com", password: "employer123" },
+};
+const user = DEMO_USERS[process.env.USER in DEMO_USERS ? process.env.USER : "admin"];
 await page.goto("http://localhost:3000/login", { waitUntil: "networkidle", timeout: 30000 });
-await page.getByRole("radio", { name: /Government Admin/ }).click();
-await page.fill('input[name="email"]', "admin@maharashtra.gov.in");
-await page.fill('input[name="password"]', "admin123");
+await page.getByRole("radio", { name: user.radio }).click();
+await page.fill('input[name="email"]', user.email);
+await page.fill('input[name="password"]', user.password);
 await page.click('button[type="submit"]');
-await page.waitForURL("**/admin/analytics", { timeout: 30000 }).catch(() => {});
+await page.waitForURL("**/analytics", { timeout: 30000 }).catch(() => {});
 await page.waitForTimeout(1500);
 
 // Navigate to the target path
 await page.goto(`http://localhost:3000${urlPath}`, { waitUntil: "networkidle", timeout: 30000 }).catch(async () => {
   await page.goto(`http://localhost:3000${urlPath}`, { waitUntil: "load", timeout: 30000 });
 });
-await page.waitForTimeout(1200);
+await page.waitForTimeout(6000);
 
 // Optional: open a tab (e.g. "Verification Queue") before the shot
 if (clickTab) {
