@@ -1,14 +1,25 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { ArrowRight, Calendar, User, Phone, MapPin, Briefcase, Award, ShieldCheck, AlertTriangle, FileText, CheckCircle2, XCircle } from "lucide-react";
+import { Calendar, Briefcase, Award, ShieldCheck, AlertTriangle, ChevronRight } from "lucide-react";
 import { db } from "~/server/db";
+import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Badge } from "~/components/ui/badge";
-import { Separator } from "~/components/ui/separator";
 import { CopyButton } from "~/components/copy-button";
-import { formatDateTime, maskPhoneE164 } from "~/lib/utils";
+import { EmptyState } from "~/components/patterns/empty-state";
+import { Skeleton } from "~/components/patterns/skeleton";
+import { StatusBadge, type StatusKey } from "~/components/patterns/status-badge";
+import { datetime } from "~/lib/format";
+import { maskPhoneE164 } from "~/lib/utils";
 
 export const dynamic = "force-dynamic";
+
+const SALARY_BAND_LABELS: Record<string, string> = {
+  LT_10K: "< ₹10K",
+  B_10_20K: "₹10-20K",
+  B_20_35K: "₹20-35K",
+  B_35_50K: "₹35-50K",
+  GT_50K: "> ₹50K",
+};
 
 async function getTrainee(publicId: string) {
   const trainee = await db.trainee.findUnique({
@@ -91,7 +102,7 @@ async function getTimeline(traineeId: string): Promise<TimelineEvent[]> {
       type: "FOLLOWUP",
       date: f.sentAt ?? f.createdAt,
       title: `${f.checkpointDays}-day follow-up`,
-      description: `Status: ${f.status}`,
+      description: "",
       metadata: { followupId: f.id, checkpointDays: f.checkpointDays, status: f.status },
       icon: Calendar,
     })),
@@ -99,7 +110,7 @@ async function getTimeline(traineeId: string): Promise<TimelineEvent[]> {
       type: "CLAIM",
       date: c.createdAt,
       title: "Employment claim submitted",
-      description: `${c.verificationStatus} • ${c.employerName ?? "N/A"} • ${c.role ?? "N/A"} • ${c.salaryBand ?? "N/A"}`,
+      description: `${c.employerName ?? "N/A"} · ${c.role ?? "N/A"} · ${c.salaryBand ? SALARY_BAND_LABELS[c.salaryBand] ?? c.salaryBand : "N/A"}`,
       metadata: {
         claimId: c.id,
         verificationStatus: c.verificationStatus,
@@ -129,35 +140,24 @@ async function getTimeline(traineeId: string): Promise<TimelineEvent[]> {
 
 function TimelineSkeleton() {
   return (
-    <Card>
-      <CardHeader>
+    <Card className="p-5">
+      <CardHeader className="p-0">
         <CardTitle>Timeline</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0 pt-4">
         <div className="space-y-6">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex gap-4">
-              <div className="h-8 w-8 rounded-full bg-muted animate-pulse flex-shrink-0" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 w-48 bg-muted animate-pulse rounded" />
-                <div className="h-4 w-64 bg-muted animate-pulse rounded" />
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="flex gap-3">
+              <Skeleton className="size-8 shrink-0 rounded-md" />
+              <div className="flex-1 space-y-2 pt-1">
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-4 w-64" />
               </div>
             </div>
           ))}
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function EvidenceBadge({ level }: { level: number }) {
-  const labels = ["Unknown", "Self-reported", "Provider confirmed", "Employer confirmed", "Document verified", "System verified"];
-  const colors: ("default" | "outline" | "info" | "success" | "warning" | "destructive")[] = ["default", "outline", "info", "success", "warning", "destructive"];
-  return (
-    <Badge variant={colors[level] ?? "default"} className="gap-1">
-      <ShieldCheck className="h-3 w-3" />
-      Level {level}: {labels[level] ?? "Unknown"}
-    </Badge>
   );
 }
 
@@ -165,10 +165,11 @@ function isClaimEvent(event: TimelineEvent): event is ClaimEvent {
   return event.type === "CLAIM";
 }
 
-function isVerificationEvent(event: TimelineEvent): event is VerificationEvent {
-  return event.type === "VERIFICATION";
+function isFollowupEvent(event: TimelineEvent): event is FollowupEvent {
+  return event.type === "FOLLOWUP";
 }
 
+/** §9.5 Activity card — icon chips (bg-primary-soft) on a bg-border connector. */
 async function TraineeTimeline({ publicId }: { publicId: string }) {
   const trainee = await getTrainee(publicId);
   if (!trainee) return null;
@@ -176,49 +177,67 @@ async function TraineeTimeline({ publicId }: { publicId: string }) {
   const events = await getTimeline(trainee.id);
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="p-5">
+      <CardHeader className="p-0">
         <CardTitle>Timeline</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          {events.map((event, index) => (
-            <div key={`${event.type}-${event.date.toISOString()}-${index}`} className="flex gap-4">
-              <div className="relative flex-shrink-0">
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <event.icon className="h-4 w-4 text-primary" />
+      <CardContent className="p-0 pt-4">
+        {events.length === 0 ? (
+          <EmptyState
+            title="No events yet"
+            description="Certifications, claims and follow-ups show up here."
+          />
+        ) : (
+          <div className="space-y-6">
+            {events.map((event, index) => (
+              <div key={`${event.type}-${event.date.toISOString()}-${index}`} className="relative flex gap-3">
+                <div className="relative shrink-0">
+                  <span className="grid size-8 place-items-center rounded-md bg-primary-soft text-primary-strong [&_svg]:size-4">
+                    <event.icon />
+                  </span>
+                  {index < events.length - 1 && (
+                    <div className="absolute bottom-0 left-4 top-8 w-px bg-border" />
+                  )}
                 </div>
-                {index < events.length - 1 && (
-                  <div className="absolute left-3.5 top-8 bottom-0 w-0.5 bg-border" />
-                )}
-              </div>
-              <div className="flex-1 pt-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium">{event.title}</span>
-                  <span className="text-sm text-muted-foreground">{formatDateTime(event.date)}</span>
-                </div>
-                <p className="text-sm text-muted-foreground">{event.description}</p>
-                {(() => {
-                  if (isClaimEvent(event)) {
-                    return event.metadata.evidenceLevel !== undefined ? (
-                      <EvidenceBadge level={event.metadata.evidenceLevel} />
-                    ) : null;
-                  }
-                  if (isVerificationEvent(event)) {
-                    // Verification events don't have evidenceLevel in our current schema
+                <div className="min-w-0 flex-1 pt-0.5">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="text-body-sm font-medium">{event.title}</span>
+                    <span className="text-caption text-muted-foreground">{datetime(event.date)}</span>
+                  </div>
+                  {event.description ? (
+                    <p className="mt-0.5 text-body-sm text-muted-foreground">{event.description}</p>
+                  ) : null}
+                  {(() => {
+                    if (isClaimEvent(event)) {
+                      return (
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                          <StatusBadge status={event.metadata.verificationStatus as StatusKey} />
+                          <StatusBadge evidence={event.metadata.evidenceLevel} />
+                        </div>
+                      );
+                    }
+                    if (isFollowupEvent(event)) {
+                      return <StatusBadge className="mt-1.5" status={event.metadata.status as StatusKey} />;
+                    }
                     return null;
-                  }
-                  return null;
-                })()}
+                  })()}
+                </div>
               </div>
-            </div>
-          ))}
-          {events.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">No events yet</div>
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
+  );
+}
+
+/** Description list per §4: `grid grid-cols-2 gap-y-3`, label muted, value medium. */
+function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <>
+      <dt className="text-body-sm text-muted-foreground">{label}</dt>
+      <dd className="text-body-sm font-medium">{children}</dd>
+    </>
   );
 }
 
@@ -228,9 +247,14 @@ export default async function TraineeDetailPage({ params }: { params: Promise<{ 
 
   if (!trainee) {
     return (
-      <div className="container py-8 text-center">
-        <h1 className="text-2xl font-bold mb-4">Trainee not found</h1>
-        <Link href="/dashboard" className="text-primary hover:underline">Back to Dashboard</Link>
+      <div className="py-16 text-center">
+        <h1 className="text-h2 font-semibold">Trainee not found</h1>
+        <p className="mt-1 text-body-sm text-muted-foreground">
+          That trainee ID does not match any record.
+        </p>
+        <Button asChild className="mt-4">
+          <Link href="/dashboard">Back to dashboard</Link>
+        </Button>
       </div>
     );
   }
@@ -240,139 +264,108 @@ export default async function TraineeDetailPage({ params }: { params: Promise<{ 
     : null;
 
   return (
-    <div className="container py-8">
-      <div className="flex items-center justify-between mb-8">
-        <Link href="/dashboard" className="text-primary hover:underline flex items-center gap-1 mb-2">
-          <ArrowRight className="h-4 w-4 rotate-180" /> Dashboard
+    <div>
+      {/* Breadcrumb (§9.5 — above H1, mb-2) */}
+      <nav
+        aria-label="Breadcrumb"
+        className="mb-2 flex items-center gap-1 text-caption text-muted-foreground"
+      >
+        <Link href="/dashboard" className="rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40">
+          Dashboard
         </Link>
+        <ChevronRight className="size-3" aria-hidden />
+        <Link href="/trainees" className="rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40">
+          Trainees
+        </Link>
+        <ChevronRight className="size-3" aria-hidden />
+        <span className="text-foreground" aria-current="page">{trainee.fullName}</span>
+      </nav>
+
+      {/* H1 + status badge (§9.5 header) */}
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-center gap-3">
+          <h1 className="text-h1 font-medium tracking-tight">{trainee.fullName}</h1>
+          <StatusBadge status={trainee.consentGiven ? "GIVEN" : "PENDING_CONSENT"} />
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3 mb-8">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>{trainee.fullName}</CardTitle>
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* main (col-span-2): identity as a description list (§9.5 Summary) */}
+        <Card className="p-5 lg:col-span-2">
+          <CardHeader className="p-0">
+            <CardTitle>Identity</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-3">
-              <User className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Trainee ID</p>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-lg font-bold text-primary">{trainee.publicId}</span>
+          <CardContent className="p-0 pt-4">
+            <dl className="grid grid-cols-2 gap-y-3">
+              <DetailRow label="Trainee ID">
+                <span className="inline-flex items-center gap-1">
+                  <span className="font-mono text-primary-strong">{trainee.publicId}</span>
                   <CopyButton value={trainee.publicId} />
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Phone className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Phone</p>
-                <p>{maskPhoneE164(trainee.phoneE164)}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <MapPin className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">District</p>
-                <p>{trainee.district}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Calendar className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Language</p>
-                <p>{trainee.language === "EN" ? "English" : "Hindi"}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <FileText className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Consent Status</p>
-                <div className="flex items-center gap-2">
-                  {trainee.consentGiven ? (
-                    <>
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      <span className="text-green-600">Given</span>
-                      {trainee.consentGivenAt && (
-                        <span className="text-xs text-muted-foreground">
-                          on {formatDateTime(trainee.consentGivenAt)}
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-500">Not given</span>
-                    </>
-                  )}
-                  {trainee.consentRevokedAt && (
-                    <span className="text-xs text-orange-500">(Revoked)</span>
-                  )}
-                </div>
-              </div>
-            </div>
-            {trainee.consentMethod && (
-              <div className="flex items-center gap-3">
-                <FileText className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Consent Method</p>
-                  <p>{trainee.consentMethod}</p>
-                </div>
-              </div>
-            )}
+                </span>
+              </DetailRow>
+              <DetailRow label="Phone">
+                <span className="font-mono">{maskPhoneE164(trainee.phoneE164)}</span>
+              </DetailRow>
+              <DetailRow label="District">{trainee.district}</DetailRow>
+              <DetailRow label="Language">{trainee.language === "EN" ? "English" : "Hindi"}</DetailRow>
+              <DetailRow label="Consent">
+                <span className="inline-flex flex-wrap items-center gap-1.5">
+                  <StatusBadge status={trainee.consentGiven ? "GIVEN" : "PENDING_CONSENT"} />
+                  {trainee.consentGiven && trainee.consentGivenAt ? (
+                    <span className="text-caption font-normal text-muted-foreground">
+                      on {datetime(trainee.consentGivenAt)}
+                    </span>
+                  ) : null}
+                  {trainee.consentRevokedAt ? (
+                    <span className="text-caption font-normal text-warning-text">(Revoked)</span>
+                  ) : null}
+                </span>
+              </DetailRow>
+              {trainee.consentMethod ? (
+                <DetailRow label="Consent method">{trainee.consentMethod}</DetailRow>
+              ) : null}
+            </dl>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Current Status</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {latestClaim ? (
-              <>
-                <div>
-                  <p className="text-sm text-muted-foreground">Verification Status</p>
-                  <Badge variant={
-                    latestClaim.verificationStatus === "EMPLOYER_CONFIRMED" ? "success" :
-                    latestClaim.verificationStatus === "CONFLICT" ? "destructive" :
-                    "outline"
-                  } className="text-capitalize">
-                    {latestClaim.verificationStatus.replace(/_/g, " ").toLowerCase()}
-                  </Badge>
-                </div>
-                <Separator />
-                <div>
-                  <p className="text-sm text-muted-foreground">Evidence Level</p>
-                  <EvidenceBadge level={latestClaim.evidenceLevel} />
-                </div>
-                <Separator />
-                <div>
-                  <p className="text-sm text-muted-foreground">Employer</p>
-                  <p className="font-medium">{latestClaim.employerName ?? "Not provided"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Role</p>
-                  <p className="font-medium">{latestClaim.role ?? "Not provided"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Salary Band</p>
-                  <p className="font-medium">{latestClaim.salaryBand ?? "Not provided"}</p>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-4 text-muted-foreground">
-                <Briefcase className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>No employment claim yet</p>
-                <p className="text-sm">Trigger a follow-up to start tracking</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* aside (col-span-1): current status + timeline (§9.5 Details + Activity) */}
+        <div className="space-y-4">
+          <Card className="p-5">
+            <CardHeader className="p-0">
+              <CardTitle>Current status</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 pt-4">
+              {latestClaim ? (
+                <dl className="grid grid-cols-2 gap-y-3">
+                  <DetailRow label="Verification">
+                    <StatusBadge status={latestClaim.verificationStatus} />
+                  </DetailRow>
+                  <DetailRow label="Evidence">
+                    <StatusBadge evidence={latestClaim.evidenceLevel} />
+                  </DetailRow>
+                  <DetailRow label="Employer">{latestClaim.employerName ?? "—"}</DetailRow>
+                  <DetailRow label="Role">{latestClaim.role ?? "—"}</DetailRow>
+                  <DetailRow label="Salary band">
+                    {latestClaim.salaryBand
+                      ? SALARY_BAND_LABELS[latestClaim.salaryBand] ?? latestClaim.salaryBand
+                      : "—"}
+                  </DetailRow>
+                </dl>
+              ) : (
+                <EmptyState
+                  icon={<Briefcase />}
+                  title="No employment claim yet"
+                  description="Trigger a follow-up to start tracking."
+                />
+              )}
+            </CardContent>
+          </Card>
+
+          <Suspense fallback={<TimelineSkeleton />}>
+            <TraineeTimeline publicId={public_id} />
+          </Suspense>
+        </div>
       </div>
-
-      <Suspense fallback={<TimelineSkeleton />}>
-        <TraineeTimeline publicId={public_id} />
-      </Suspense>
     </div>
   );
 }
