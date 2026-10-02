@@ -29,11 +29,19 @@ async function authorize(fields: LoginFields) {
 
   if (role === "institute" || (!role && email === INSTITUTE_EMAIL.toLowerCase())) {
     if (email !== INSTITUTE_EMAIL.toLowerCase() || password !== INSTITUTE_PASSWORD) return null;
+    // Institute scoping (INST-01): the institute maps to ONE TrainingCenter,
+    // resolved at sign-in from INSTITUTE_CENTER_CODE. Missing env or no
+    // matching center → login fails (same DB-lookup pattern as the employer).
+    const center = await db.trainingCenter.findUnique({
+      where: { code: process.env.INSTITUTE_CENTER_CODE ?? "" },
+    });
+    if (!center) return null;
     return {
       id: "institute-001",
       email: INSTITUTE_EMAIL,
       name: "Training Institute",
       role: "institute" as UserRole,
+      instituteCenterId: center.id,
     };
   }
 
@@ -75,6 +83,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.sub = user.id;
         token.role = user.role;
+        token.instituteCenterId = user.instituteCenterId;
       }
       return token;
     },

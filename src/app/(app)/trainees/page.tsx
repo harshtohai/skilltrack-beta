@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { db } from "~/server/db";
+import { getSessionScope } from "~/server/scope";
 import { PageHeader } from "~/components/patterns/page-header";
 import { TraineesTable } from "./trainees-table";
 
@@ -21,15 +22,24 @@ export default async function TraineesListPage({
   const { page, q } = await searchParams;
   const currentPage = Math.max(1, Number(page) || 1);
   const query = (q ?? "").trim();
+  const scope = await getSessionScope();
 
-  const traineeWhere = query
-    ? {
-        OR: [
-          { publicId: { contains: query, mode: "insensitive" as const } },
-          { fullName: { contains: query, mode: "insensitive" as const } },
-        ],
-      }
+  // INST-01: institutes see only trainees enrolled in their center's cohorts.
+  const centerFilter = scope.centerId
+    ? { enrolments: { some: { cohort: { trainingCenterId: scope.centerId } } } }
     : {};
+
+  const traineeWhere = {
+    ...(query
+      ? {
+          OR: [
+            { publicId: { contains: query, mode: "insensitive" as const } },
+            { fullName: { contains: query, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+    ...centerFilter,
+  };
 
   const [trainees, total] = await Promise.all([
     db.trainee.findMany({

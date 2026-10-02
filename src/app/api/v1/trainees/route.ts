@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "~/server/db";
+import { getSessionScope } from "~/server/scope";
 import { createErrorResponse, handleZodError } from "../_utils";
 import { encryptPhone, hashPhone } from "~/lib/phone-encrypt";
 
@@ -27,11 +28,19 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const query = traineeListQuerySchema.parse(Object.fromEntries(searchParams));
+    const scope = await getSessionScope();
 
     const where: Record<string, unknown> = {};
 
-    if (query.cohortId) {
-      where.enrolments = { some: { cohortId: query.cohortId } };
+    // INST-01: institutes see only trainees enrolled in their center's
+    // cohorts; the cohortId filter (if any) merges into the same `some`.
+    if (query.cohortId || scope.centerId) {
+      where.enrolments = {
+        some: {
+          ...(query.cohortId ? { cohortId: query.cohortId } : {}),
+          ...(scope.centerId ? { cohort: { trainingCenterId: scope.centerId } } : {}),
+        },
+      };
     }
     if (query.district) {
       where.district = query.district;

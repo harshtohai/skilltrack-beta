@@ -12,19 +12,19 @@ export const protectedRoutes: { path: string; roles: UserRole[] }[] = [
   { path: "/trainees", roles: ["admin", "institute"] },
   { path: "/trainee", roles: ["trainee"] },
   { path: "/dashboard", roles: ["admin", "institute", "trainee"] },
-  { path: "/followups", roles: ["admin", "institute"] },
+  { path: "/followups", roles: ["admin"] }, // INST-01: gov-authority surface
   { path: "/cohorts", roles: ["admin", "institute"] },
-  { path: "/conflicts", roles: ["admin", "institute"] },
-  { path: "/audit-logs", roles: ["admin", "institute"] },
+  { path: "/conflicts", roles: ["admin"] }, // INST-01: gov-authority surface
+  { path: "/audit-logs", roles: ["admin"] }, // INST-01: gov-authority surface
   // API — server-side data endpoints. Client pages fetch these with the
   // session cookie, so edge pre-checks don't break them.
   { path: "/api/v1/outcomes/government", roles: ["admin"] },
   { path: "/api/v1/outcomes/institute", roles: ["institute", "admin"] },
   { path: "/api/v1/kpis/overview", roles: ["admin", "institute", "trainee"] },
-  { path: "/api/v1/followups", roles: ["admin", "institute"] },
-  { path: "/api/v1/conflicts", roles: ["admin", "institute"] },
-  { path: "/api/v1/audit-logs", roles: ["admin", "institute"] },
-  { path: "/api/v1/trainees", roles: ["admin", "institute"] },
+  { path: "/api/v1/followups", roles: ["admin"] }, // INST-01: gov-authority surface
+  { path: "/api/v1/conflicts", roles: ["admin"] }, // INST-01: gov-authority surface
+  { path: "/api/v1/audit-logs", roles: ["admin"] }, // INST-01: gov-authority surface
+  { path: "/api/v1/trainees", roles: ["admin", "institute"] }, // center-scoped for institutes
   { path: "/api/v1/cohorts", roles: ["admin", "institute"] },
   { path: "/api/v1/demo", roles: ["admin", "institute"] },
   { path: "/api/v1/employer/me", roles: ["employer", "admin"] },
