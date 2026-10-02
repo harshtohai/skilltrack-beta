@@ -13,6 +13,7 @@ import {
   RotateCw,
   ShieldCheck,
   TrendingUp,
+  Trophy,
   Users,
 } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -67,6 +68,30 @@ interface DistrictsResponse {
   districts: DistrictPoint[];
 }
 
+/** Institute dashboard (INST-04): the center's standing from the scoring engine. */
+interface CenterStanding {
+  centerName: string;
+  rank: number;
+  totalCenters: number;
+  overallScore: number;
+  placementScore: number;
+  academicScore: number;
+  volumeScore: number;
+}
+
+interface InstituteCohort {
+  id: string;
+  name: string;
+  programme: string;
+  trainees: number;
+  placementRate: number;
+}
+
+interface StandingResponse {
+  standing: CenterStanding | null;
+  cohorts: InstituteCohort[];
+}
+
 /** Relative time for the "Last updated" caption (§9.1); absolute past 24h. */
 function timeAgo(d: Date): string {
   const s = Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000));
@@ -82,8 +107,37 @@ function welcomeTitle(userName: string): string {
   return userName.trim() !== "" ? `Welcome back, ${userName}` : "Welcome back";
 }
 
+/** Ordinal suffix for the center's leaderboard rank (§9.1 side card). */
+function ordinal(n: number): string {
+  const rem10 = n % 10;
+  const rem100 = n % 100;
+  if (rem10 === 1 && rem100 !== 11) return `${n}st`;
+  if (rem10 === 2 && rem100 !== 12) return `${n}nd`;
+  if (rem10 === 3 && rem100 !== 13) return `${n}rd`;
+  return `${n}th`;
+}
+
+/** Shared loading skeleton (§9.1 layout: KPI row → analytics row → table). */
+function DashboardSkeleton() {
+  return (
+    <div>
+      <Skeleton className="mb-6 h-14 w-72" />
+      <div className="mb-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }, (_, i) => (
+          <Skeleton key={i} className="h-32" />
+        ))}
+      </div>
+      <div className="mb-4 grid gap-4 lg:grid-cols-3">
+        <Skeleton className="h-72 lg:col-span-2" />
+        <Skeleton className="h-72" />
+      </div>
+      <Skeleton className="h-80" />
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------ */
-/* Admin / institute KPI view (§9.1)                                   */
+/* Admin + institute KPI views (§9.1)                                  */
 /* ------------------------------------------------------------------ */
 
 interface FunnelStage {
@@ -239,6 +293,74 @@ function DistrictCard({ districts, className }: { districts: DistrictPoint[]; cl
   );
 }
 
+/** Institute peer ranking (INST-04): the center's standing vs peers (§9.1 side-card slot). */
+function PeerRankingCard({
+  standing,
+  className,
+}: {
+  standing: CenterStanding | null;
+  className?: string;
+}) {
+  return (
+    <Card className={className}>
+      <CardHeader className="flex-row items-start justify-between space-y-0">
+        <div>
+          <CardTitle>Center standing</CardTitle>
+          <CardDescription>
+            {standing ? standing.centerName : "Your center"} vs peer centers.
+          </CardDescription>
+        </div>
+        <Button variant="ghost" size="icon-xs" asChild aria-label="Open analytics">
+          <Link href="/institute/analytics">
+            <ArrowUpRight />
+          </Link>
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {standing === null ? (
+          <EmptyState
+            icon={<Trophy />}
+            title="Not ranked yet"
+            description="Your center appears once outcomes are recorded across centers."
+          />
+        ) : (
+          <>
+            <p className="text-stat font-semibold tabular-nums">
+              {ordinal(standing.rank)}
+              <span className="ml-2 text-body-sm font-normal text-muted-foreground">
+                of {number(standing.totalCenters)} centers
+              </span>
+            </p>
+            <p className="mt-1 text-caption text-muted-foreground">
+              Ranked by overall score across all centers.
+            </p>
+            <div className="mt-4 grid grid-cols-3 gap-2 border-t pt-3">
+              <div>
+                <p className="text-body-sm font-semibold tabular-nums">
+                  {number(standing.overallScore)}
+                </p>
+                <p className="text-caption text-muted-foreground">Overall</p>
+              </div>
+              <div>
+                <p className="text-body-sm font-semibold tabular-nums">
+                  {number(standing.placementScore)}
+                </p>
+                <p className="text-caption text-muted-foreground">Placement</p>
+              </div>
+              <div>
+                <p className="text-body-sm font-semibold tabular-nums">
+                  {number(standing.academicScore)}
+                </p>
+                <p className="text-caption text-muted-foreground">Academic</p>
+              </div>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 const ACTIVITY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   FOLLOWUP: Calendar,
   CLAIM: Briefcase,
@@ -381,23 +503,7 @@ function AdminDashboard({ userName }: { userName: string }) {
     setRefreshing(false);
   };
 
-  if (loading && !kpis) {
-    return (
-      <div>
-        <Skeleton className="mb-6 h-14 w-72" />
-        <div className="mb-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
-        </div>
-        <div className="mb-4 grid gap-4 lg:grid-cols-3">
-          <Skeleton className="h-72 lg:col-span-2" />
-          <Skeleton className="h-72" />
-        </div>
-        <Skeleton className="h-80" />
-      </div>
-    );
-  }
+  if (loading && !kpis) return <DashboardSkeleton />;
 
   if (error || !kpis) {
     return (
@@ -509,8 +615,207 @@ function AdminDashboard({ userName }: { userName: string }) {
   );
 }
 
-export function DashboardView({ userName, isTrainee }: { userName: string; isTrainee: boolean }) {
-  // Trainees land on the jobs board (UI-09); admin/institute get the §9.1 KPI view.
+const instituteCohortColumns: ColumnDef<InstituteCohort, unknown>[] = [
+  {
+    accessorKey: "name",
+    header: "Cohort",
+    cell: ({ row }) => (
+      <Link href={`/cohorts/${row.original.id}`} className="font-medium hover:underline">
+        {row.original.name}
+      </Link>
+    ),
+  },
+  {
+    id: "trainees",
+    accessorFn: (row) => row.trainees,
+    header: "Trainees",
+    cell: ({ row }) => <span className="tabular-nums">{number(row.original.trainees)}</span>,
+  },
+  {
+    id: "placementRate",
+    accessorFn: (row) => row.placementRate,
+    header: "Placement rate",
+    cell: ({ row }) => (
+      <span className="tabular-nums">
+        {percent(row.original.placementRate, { sign: false, digits: 1 })}
+      </span>
+    ),
+  },
+  rowActionsColumn((row) => (
+    <Button variant="ghost" size="icon-xs" asChild aria-label={`Open ${row.name}`}>
+      <Link href={`/cohorts/${row.id}`}>
+        <ArrowUpRight />
+      </Link>
+    </Button>
+  )),
+];
+
+/**
+ * Institute dashboard (INST-04): the §9.1 KPI view with center-scoped numbers
+ * from /api/v1/kpis/overview and peer ranking from /api/v1/kpis/center-standing.
+ */
+function InstituteDashboard({ userName }: { userName: string }) {
+  const [kpis, setKpis] = useState<KPIData | null>(null);
+  const [standing, setStanding] = useState<CenterStanding | null>(null);
+  const [cohorts, setCohorts] = useState<InstituteCohort[]>([]);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const [kpisRes, standingRes] = await Promise.all([
+        fetch("/api/v1/kpis/overview"),
+        fetch("/api/v1/kpis/center-standing"),
+      ]);
+      if (!kpisRes.ok || !standingRes.ok) throw new Error("Failed to fetch data");
+
+      const kpisData = (await kpisRes.json()) as KPIData;
+      const standingData = (await standingRes.json()) as StandingResponse;
+
+      setKpis(kpisData);
+      setStanding(standingData.standing);
+      setCohorts(standingData.cohorts);
+      setUpdatedAt(new Date());
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load dashboard");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchData();
+  }, [fetchData]);
+
+  const refetch = async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  };
+
+  if (loading && !kpis) return <DashboardSkeleton />;
+
+  if (error || !kpis) {
+    return (
+      <ErrorState
+        title="Couldn't load the dashboard"
+        description="The data didn't arrive. Check your connection and retry."
+        onRetry={() => void fetchData()}
+      />
+    );
+  }
+
+  // Placement rate per the scoring engine's basis: placed among trainees with
+  // known outcomes (matches the cohort table's placementRate below).
+  const placedRate =
+    kpis.funnel.outcomeKnown.count > 0
+      ? Math.round((kpis.funnel.employed.count / kpis.funnel.outcomeKnown.count) * 100)
+      : 0;
+
+  return (
+    <div>
+      <PageHeader
+        title={welcomeTitle(userName)}
+        caption={updatedAt ? `Last updated ${timeAgo(updatedAt)}` : undefined}
+        actions={
+          <Button variant="outline" size="sm" onClick={() => void refetch()} disabled={refreshing}>
+            <RotateCw className={refreshing ? "animate-spin" : ""} />
+            Refresh
+          </Button>
+        }
+      />
+
+      {/* KPI row (§9.1) — center-scoped numbers; no delta/sparkline: no time-series history */}
+      <div className="mb-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Trainees produced"
+          value={number(kpis.trainees.total)}
+          icon={<Users />}
+          chip="brand"
+          href="/trainees"
+        />
+        <StatCard
+          title="Certified"
+          value={number(kpis.funnel.certified.count)}
+          icon={<GraduationCap />}
+          chip="purple"
+        />
+        <StatCard
+          title="Placed"
+          value={number(kpis.funnel.employed.count)}
+          icon={<Briefcase />}
+          chip="blue"
+        />
+        <StatCard
+          title="Placement rate"
+          value={
+            <span className="inline-flex items-baseline gap-2">
+              {percent(placedRate, { sign: false, digits: 0 })}
+              <span className="text-body-sm font-normal text-muted-foreground">
+                {number(kpis.funnel.employed.count)}/{number(kpis.funnel.outcomeKnown.count)} known
+              </span>
+            </span>
+          }
+          icon={<TrendingUp />}
+          chip="brand"
+        />
+      </div>
+
+      {/* Analytics + table rows (§9.1): funnel 8/12 · standing 4/12 · cohorts 8/12 · activity 4/12 */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <FunnelCard funnel={kpis.funnel} className="lg:col-span-2" />
+        <PeerRankingCard standing={standing} />
+        <div className="lg:col-span-2">
+          <DataTable
+            columns={instituteCohortColumns}
+            data={cohorts}
+            loading={loading}
+            title="Cohort performance"
+            emptyState={
+              <EmptyState
+                title="No cohorts yet"
+                description="Cohorts appear here once trainees are enrolled at your center."
+              />
+            }
+            mobileCard={(cohort) => (
+              <div className="rounded-lg bg-muted/60 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <Link
+                    href={`/cohorts/${cohort.id}`}
+                    className="text-body-sm font-medium hover:underline"
+                  >
+                    {cohort.name}
+                  </Link>
+                  <ArrowUpRight className="size-4 shrink-0 text-muted-foreground" />
+                </div>
+                <p className="mt-1 text-caption text-muted-foreground">
+                  {cohort.programme} · {number(cohort.trainees)} trainees ·{" "}
+                  {percent(cohort.placementRate, { sign: false, digits: 1 })} placed
+                </p>
+              </div>
+            )}
+          />
+        </div>
+        <ActivityCard activity={kpis.recentActivity ?? []} />
+      </div>
+    </div>
+  );
+}
+
+export function DashboardView({
+  userName,
+  isTrainee,
+  isInstitute = false,
+}: {
+  userName: string;
+  isTrainee: boolean;
+  isInstitute?: boolean;
+}) {
+  // Trainees land on the jobs board (UI-09); institutes get the center-scoped
+  // §9.1 KPI view (INST-04); admin gets the unscoped KPI view.
   if (isTrainee) {
     return (
       <div>
@@ -521,6 +826,10 @@ export function DashboardView({ userName, isTrainee }: { userName: string; isTra
         <TraineeJobsBoard />
       </div>
     );
+  }
+
+  if (isInstitute) {
+    return <InstituteDashboard userName={userName} />;
   }
 
   return <AdminDashboard userName={userName} />;
