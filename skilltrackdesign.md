@@ -57,6 +57,7 @@ SOURCE      : one Dribbble preview image (orange e-commerce admin dashboard, "Me
 | D-03 | Dark mode is a full second theme via CSS variables. Components MUST NOT contain `dark:` color overrides except where Section 2.9 allows | Single source of truth |
 | D-04 | Next.js assumed. If plain React/Vite, only Section 13 file paths change | Stack |
 | D-05 | shadcn components newer than your installed CLI (e.g. `field`, `input-group`, `button-group`, `spinner`, `kbd`, `empty`, `item`) MUST be tried with `npx shadcn@latest add <name>`. If unavailable, build from the spec in Section 4 using the same tokens | Registry changes over time |
+| D-06 | Signup carries 5 fields (gender added by owner decision, Oct 2026); §9.3's "never > 4 fields at signup" rule is overridden by owner choice | Gender feeds outcome analytics; owner explicitly chose the extra field |
 
 ---
 

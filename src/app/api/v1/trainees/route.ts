@@ -1,10 +1,12 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { db } from "~/server/db";
 import { getSessionScope } from "~/server/scope";
 import { createErrorResponse, handleZodError } from "../_utils";
 import { encryptPhone, hashPhone } from "~/lib/phone-encrypt";
+import { mintAndSendLoginToken } from "~/server/magic-link";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +15,10 @@ const traineeCreateSchema = z.object({
   phoneE164: z.string().min(10),
   email: z.string().email().optional().nullable(),
   district: z.string().min(1),
+  gender: z.enum(["FEMALE", "MALE", "NON_BINARY", "SELF_DESCRIBED", "PREFER_NOT_TO_SAY"]).default("PREFER_NOT_TO_SAY"),
+  genderSelfDescribed: z.string().max(100).optional().nullable(),
   language: z.enum(["EN", "HI"]).default("EN"),
+  consent: z.literal(true),
 });
 
 const traineeListQuerySchema = z.object({
@@ -97,19 +102,49 @@ export async function POST(request: NextRequest) {
 
     const trainee = await db.trainee.create({
       data: {
-        ...data,
+        fullName: data.fullName,
+        email: data.email ?? null,
         phoneE164: normalizedPhone,
         phoneEncrypted,
         phoneHash,
+        district: data.district,
+        language: data.language,
+        gender: data.gender,
+        // Self-described text only applies to SELF_DESCRIBED.
+        genderSelfDescribed: data.gender === "SELF_DESCRIBED" ? (data.genderSelfDescribed?.trim() ?? null) : null,
+        // Signup form collects consent (z.literal(true) above) — persist it.
+        consentGiven: true,
+        consentGivenAt: new Date(),
+        consentMethod: "SIGNUP_FORM",
         publicId: `TRN-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
       },
     });
 
+    // First magic-link send via the shared helper — never duplicate the mint
+    // logic. The trainee exists either way: a failed send (EmailSendError or
+    // a DB hiccup while minting) is recovered by the sent page's resend, so
+    // still return 201.
+    try {
+      await mintAndSendLoginToken(
+        { id: trainee.id, email: trainee.email, fullName: trainee.fullName },
+        "EMAIL",
+      );
+    } catch (sendError) {
+      console.error("POST /api/v1/trainees: magic-link send failed:", sendError);
+    }
+
     return NextResponse.json(trainee, { status: 201 });
   } catch (error: unknown) {
     if (error instanceof z.ZodError) return handleZodError(error);
-    if (error instanceof Error && error.message.includes("Unique constraint")) {
-      return createErrorResponse("DUPLICATE_PHONE", "Phone number already exists", 409);
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      // Unique target tells email and phone duplicates apart (was mislabeled
+      // DUPLICATE_PHONE for both). Target is the field name(s) as string or array.
+      const target = error.meta?.target;
+      const targetText = Array.isArray(target) ? target.join(" ") : typeof target === "string" ? target : "";
+      if (targetText.includes("email")) {
+        return createErrorResponse("EMAIL_EXISTS", "An account with this email already exists", 409);
+      }
+      return createErrorResponse("PHONE_EXISTS", "An account with this phone number already exists", 409);
     }
     console.error("POST /api/v1/trainees error:", error);
     return createErrorResponse("INTERNAL_ERROR", "Failed to create trainee", 500);
