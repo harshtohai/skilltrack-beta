@@ -97,8 +97,8 @@ function LoginPageContent() {
           body: JSON.stringify({ email: data.email, channel: "EMAIL" }),
         });
         if (!res.ok) {
-          const json = (await res.json()) as { error?: string };
-          throw new Error(json.error ?? "Failed to send magic link");
+          const json = (await res.json()) as { error?: { message?: string } };
+          throw new Error(json.error?.message ?? "Failed to send magic link");
         }
         router.push(`/auth/trainee/sent?email=${encodeURIComponent(data.email)}`);
       } else {
@@ -290,7 +290,7 @@ function LoginPageContent() {
                 {loading
                   ? "Sending..."
                   : selectedType === "trainee"
-                    ? "Send Magic Link"
+                    ? "Send magic link"
                     : "Sign In"}
               </Button>
             </form>

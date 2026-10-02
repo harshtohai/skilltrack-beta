@@ -14,6 +14,8 @@ const magicLinkSchema = z.object({
   channel: z.enum(["EMAIL", "WHATSAPP"]).default("EMAIL"),
 });
 
+const RESEND_COOLDOWN_MS = 30 * 1000;
+
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as unknown;
@@ -25,6 +27,32 @@ export async function POST(request: NextRequest) {
 
     if (!trainee) {
       return NextResponse.json({ success: true });
+    }
+
+    // Server-side 30s cooldown so a double-click on "Resend link" cannot
+    // mint extra tokens (§7 rate pattern). Unknown emails never reach here.
+    const lastToken = await db.traineeLoginToken.findFirst({
+      where: { traineeId: trainee.id },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (lastToken) {
+      const retryAfter = Math.ceil(
+        (RESEND_COOLDOWN_MS - (Date.now() - lastToken.createdAt.getTime())) /
+          1000,
+      );
+      if (retryAfter > 0) {
+        return NextResponse.json(
+          {
+            error: {
+              code: "RATE_LIMITED",
+              message: `Too many requests. Try again in ${retryAfter}s.`,
+              retryAfter,
+            },
+          },
+          { status: 429 },
+        );
+      }
     }
 
     const token = crypto.randomBytes(32).toString("hex");
@@ -45,10 +73,14 @@ export async function POST(request: NextRequest) {
       try {
         await sendMagicLinkEmail(trainee.email, trainee.fullName, magicLink);
       } catch (emailError) {
-        // Never fail the login request because of the email provider —
-        // log the link so it stays retrievable from server logs.
+        // The send failed — say so instead of claiming success. The raw link
+        // is never logged here; dev mock mode (no env keys) still logs it.
         console.error("[MAGIC-LINK] Email send failed:", emailError);
-        console.log(`[MAGIC-LINK] Magic link for ${trainee.email}: ${magicLink}`);
+        return createErrorResponse(
+          "EMAIL_SEND_FAILED",
+          "Couldn't send the email. Try again in a moment.",
+          502,
+        );
       }
     }
 
