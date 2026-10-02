@@ -67,6 +67,8 @@ function LoginPageContent() {
   const [selectedType, setSelectedType] = useState<UserType>("trainee");
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState("");
+  // Unverified enrollment — inline guidance instead of the sent page.
+  const [needsVerification, setNeedsVerification] = useState(false);
 
   const redirect = searchParams.get("redirect") ?? "";
   const urlError = searchParams.get("error") ?? "";
@@ -87,6 +89,7 @@ function LoginPageContent() {
       return;
     }
     setFormError("");
+    setNeedsVerification(false);
     setLoading(true);
 
     try {
@@ -96,8 +99,18 @@ function LoginPageContent() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: data.email, channel: "EMAIL" }),
         });
+        const json = (await res.json()) as {
+          needsVerification?: boolean;
+          error?: { message?: string };
+        };
+        if (res.ok && json.needsVerification) {
+          // Unverified enrollment — the link or code from the enrollment
+          // email is their verification path (CL-31: what happened + what to do).
+          setNeedsVerification(true);
+          setLoading(false);
+          return;
+        }
         if (!res.ok) {
-          const json = (await res.json()) as { error?: { message?: string } };
           throw new Error(json.error?.message ?? "Failed to send magic link");
         }
         router.push(`/auth/trainee/sent?email=${encodeURIComponent(data.email)}`);
@@ -159,7 +172,15 @@ function LoginPageContent() {
             </p>
           </div>
 
-          {bannerError ? (
+          {needsVerification ? (
+            <Alert className="mb-4">
+              <AlertDescription>
+                Verify your enrollment first — use the link or code from your
+                enrollment email. Contact your institute to resend the
+                enrollment email.
+              </AlertDescription>
+            </Alert>
+          ) : bannerError ? (
             <Alert variant="destructive" className="mb-4">
               <AlertDescription>{bannerError}</AlertDescription>
             </Alert>

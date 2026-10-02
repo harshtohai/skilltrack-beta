@@ -1,4 +1,4 @@
-function renderMagicLinkHtml(name: string, magicLink: string): string {
+function renderMagicLinkHtml(name: string, magicLink: string, otp: string): string {
   return `
     <!DOCTYPE html>
     <html>
@@ -20,6 +20,11 @@ function renderMagicLinkHtml(name: string, magicLink: string): string {
             <a href="${magicLink}" style="display: inline-block; background: #3b82f6; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">Sign In to OutcomeTrack</a>
           </div>
 
+          <p style="color: #4b5563; font-size: 14px; text-align: center; margin: 0 0 8px;">Or enter this code on the verification page:</p>
+          <div style="text-align: center; margin: 0 0 30px;">
+            <span style="display: inline-block; font-size: 28px; font-weight: 700; letter-spacing: 8px; color: #1f2937; background: #f3f4f6; padding: 14px 20px; border-radius: 8px;">${otp}</span>
+          </div>
+
           <p style="color: #6b7280; font-size: 14px;">Or copy this link into your browser:</p>
           <p style="word-break: break-all; color: #3b82f6; font-size: 13px; background: #f3f4f6; padding: 12px; border-radius: 6px;">${magicLink}</p>
 
@@ -39,11 +44,11 @@ function renderMagicLinkHtml(name: string, magicLink: string): string {
   `;
 }
 
-export async function sendMagicLinkEmail(email: string, name: string, magicLink: string): Promise<void> {
+export async function sendMagicLinkEmail(email: string, name: string, magicLink: string, otp: string): Promise<void> {
   const apiKey = process.env.BREVO_API_KEY;
   const from = process.env.EMAIL_FROM;
   if (!apiKey || !from) {
-    console.log(`[EMAIL-MOCK] Magic link sent to ${email}: ${magicLink}`);
+    console.log(`[EMAIL-MOCK] Magic link sent to ${email}: ${magicLink} (OTP: ${otp})`);
     return;
   }
 
@@ -58,7 +63,7 @@ export async function sendMagicLinkEmail(email: string, name: string, magicLink:
       sender: { name: "OutcomeTrack", email: from },
       to: [{ email }],
       subject: "Your OutcomeTrack Magic Link",
-      htmlContent: renderMagicLinkHtml(name, magicLink),
+      htmlContent: renderMagicLinkHtml(name, magicLink, otp),
     }),
   });
 

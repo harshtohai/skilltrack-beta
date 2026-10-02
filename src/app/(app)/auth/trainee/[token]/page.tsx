@@ -3,12 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Award, Briefcase, Pencil, Target, Clock, User } from "lucide-react";
+import { Award, Briefcase, MailCheck, Pencil, Target, Clock, User } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Badge } from "~/components/ui/badge";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
+import { Input } from "~/components/ui/input";
 import { Separator } from "~/components/ui/separator";
 import { StatusBadge, type StatusKey } from "~/components/patterns/status-badge";
 import { EmptyState } from "~/components/patterns/empty-state";
@@ -101,6 +102,81 @@ function PortalSkeleton() {
   );
 }
 
+/**
+ * 6-slot OTP input per §4.2: size-11 rounded-lg slots, group gap-2, active
+ * slot ring-3 ring-ring/40 border-ring; paste fills all; auto-submit on
+ * complete; errors via aria-invalid + message (no shake).
+ */
+function OtpSlots({
+  value,
+  onValueChange,
+  invalid,
+  disabled,
+}: {
+  value: string;
+  onValueChange: (value: string) => void;
+  invalid: boolean;
+  disabled: boolean;
+}) {
+  const slotsRef = useRef<Array<HTMLInputElement | null>>([]);
+  const digits = value.split("");
+
+  function focusSlot(index: number) {
+    slotsRef.current[Math.max(0, Math.min(5, index))]?.focus();
+  }
+
+  function setDigit(index: number, digit: string) {
+    const next = [...digits];
+    next[index] = digit;
+    onValueChange(next.join(""));
+  }
+
+  return (
+    <div className="flex gap-2">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <input
+          key={index}
+          ref={(el) => {
+            slotsRef.current[index] = el;
+          }}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={1}
+          autoComplete={index === 0 ? "one-time-code" : "off"}
+          aria-label={`Digit ${index + 1}`}
+          aria-invalid={invalid || undefined}
+          disabled={disabled}
+          value={digits[index] ?? ""}
+          className="size-11 rounded-lg border border-input bg-card text-center text-title font-semibold tabular-nums text-foreground placeholder:text-muted-foreground transition-colors duration-150 hover:border-ring/50 focus:outline-none focus:border-ring focus:ring-3 focus:ring-ring/40 aria-invalid:border-destructive disabled:cursor-not-allowed disabled:opacity-50"
+          onChange={(e) => {
+            const raw = e.target.value.replace(/\D/g, "").slice(-1);
+            setDigit(index, raw);
+            if (raw) focusSlot(index + 1);
+          }}
+          onPaste={(e) => {
+            const pasted = e.clipboardData
+              .getData("text")
+              .replace(/\D/g, "")
+              .slice(0, 6);
+            if (!pasted) return;
+            e.preventDefault();
+            onValueChange(pasted);
+            focusSlot(pasted.length);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Backspace" && !e.currentTarget.value && index > 0) {
+              setDigit(index - 1, "");
+              focusSlot(index - 1);
+              e.preventDefault();
+            }
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function TraineeAuthPage() {
   const params = useParams();
   const router = useRouter();
@@ -109,12 +185,28 @@ export default function TraineeAuthPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [verifyNonce, setVerifyNonce] = useState(0);
+  // Invalid/expired/used token → the OTP recovery form; anything else
+  // (network, 5xx) → the existing hard-failure ErrorState.
+  const [recoverable, setRecoverable] = useState(false);
+  // OTP recovery form state (§9.10 email verification).
+  const [otp, setOtp] = useState("");
+  const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [otpError, setOtpError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   // StrictMode double-fires effects in dev — guard so each token/nonce pair
   // verifies exactly once (the token is one-time server-side; a second POST
   // would hit TOKEN_USED and wrongly flip the loaded profile to the error state).
   const verifiedKeysRef = useRef(new Set<string>());
 
   useEffect(() => {
+    if (!token) {
+      // No token in the URL — the OTP form is the primary path (§9.10).
+      setLoading(false);
+      setRecoverable(true);
+      setError("This link is incomplete — enter the code from your email.");
+      return;
+    }
     const key = `${token}:${verifyNonce}`;
     if (verifiedKeysRef.current.has(key)) return;
     verifiedKeysRef.current.add(key);
@@ -127,7 +219,14 @@ export default function TraineeAuthPage() {
           body: JSON.stringify({ token }),
         });
         if (!res.ok) {
-          const data = (await res.json()) as { error?: { message?: string } };
+          const data = (await res.json()) as {
+            error?: { code?: string; message?: string };
+          };
+          setRecoverable(
+            data.error?.code === "INVALID_TOKEN" ||
+              data.error?.code === "TOKEN_USED" ||
+              data.error?.code === "TOKEN_EXPIRED",
+          );
           throw new Error(data.error?.message ?? "Invalid or expired link");
         }
         const data = (await res.json()) as { trainee: TraineeProfile };
@@ -141,6 +240,50 @@ export default function TraineeAuthPage() {
     })();
   }, [token, verifyNonce]);
 
+  // Pre-fill the recovery email from ?email= (sent-page hand-off) once.
+  useEffect(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get("email");
+    if (fromUrl) setEmail((prev) => prev || fromUrl);
+  }, []);
+
+  async function submitOtp(code: string) {
+    const cleanEmail = email.trim();
+    if (!cleanEmail) {
+      setEmailError("Enter your email");
+      return;
+    }
+    if (!/^\S+@\S+\.\S+$/.test(cleanEmail)) {
+      setEmailError("Enter a valid email");
+      return;
+    }
+    if (code.length !== 6) {
+      setOtpError("Enter the 6-digit code");
+      return;
+    }
+    setSubmitting(true);
+    setEmailError("");
+    setOtpError("");
+    try {
+      const res = await fetch(`/api/v1/auth/trainee/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail, otp: code }),
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: { message?: string } };
+        setOtpError(data.error?.message ?? "That code is invalid or has expired");
+        return;
+      }
+      const data = (await res.json()) as { trainee: TraineeProfile };
+      setProfile(data.trainee);
+      setError("");
+    } catch {
+      setOtpError("Verification failed — try again in a moment");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="mx-auto w-full max-w-4xl">
@@ -149,7 +292,7 @@ export default function TraineeAuthPage() {
     );
   }
 
-  if (error || !profile) {
+  if (error && !recoverable) {
     return (
       <div className="mx-auto w-full max-w-4xl">
         <ErrorState
@@ -165,6 +308,103 @@ export default function TraineeAuthPage() {
             Request a new link
           </Link>
         </div>
+      </div>
+    );
+  }
+
+  // Token invalid/expired/used (or missing) — the 6-digit code from
+  // the enrollment email is the recovery path (§9.10 email verification).
+  if (!profile) {
+    return (
+      <div className="mx-auto w-full max-w-md">
+        <Card>
+          <CardContent className="py-8">
+            <div className="mb-6 space-y-1 text-center">
+              <span className="mx-auto mb-3 grid size-10 shrink-0 place-items-center rounded-full bg-primary-soft text-primary-strong [&_svg]:size-5">
+                <MailCheck aria-hidden />
+              </span>
+              <h1 className="text-h2 font-semibold">Enter your verification code</h1>
+              <p className="text-caption text-muted-foreground">
+                Enter the 6-digit code from your enrollment email to continue.
+              </p>
+              {error ? (
+                <p role="alert" className="text-caption text-danger-text">
+                  {error}
+                </p>
+              ) : null}
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                void submitOtp(otp);
+              }}
+              className="grid gap-4"
+            >
+              <div className="grid gap-1.5">
+                <label htmlFor="otp-email" className="text-body-sm font-medium">
+                  Email <span className="text-danger-text">*</span>
+                </label>
+                <Input
+                  id="otp-email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="your@email.com"
+                  className="h-11"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (emailError) setEmailError("");
+                  }}
+                  aria-invalid={emailError ? true : undefined}
+                  aria-required="true"
+                  required
+                  disabled={submitting}
+                />
+                {emailError ? (
+                  <p role="alert" className="text-caption text-danger-text">
+                    {emailError}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="grid gap-1.5">
+                <label className="text-body-sm font-medium">
+                  Verification code <span className="text-danger-text">*</span>
+                </label>
+                <OtpSlots
+                  value={otp}
+                  onValueChange={(next) => {
+                    setOtp(next);
+                    if (otpError) setOtpError("");
+                    // Auto-submit on complete (§4.2 OTP input).
+                    if (next.length === 6) void submitOtp(next);
+                  }}
+                  invalid={Boolean(otpError)}
+                  disabled={submitting}
+                />
+                {otpError ? (
+                  <p role="alert" className="text-caption text-danger-text">
+                    {otpError}
+                  </p>
+                ) : null}
+              </div>
+
+              <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+                {submitting ? "Verifying..." : "Verify"}
+              </Button>
+            </form>
+
+            <p className="mt-6 text-center">
+              <Link
+                href="/login"
+                className="text-body-sm text-muted-foreground underline hover:text-foreground"
+              >
+                Request a new link
+              </Link>
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }

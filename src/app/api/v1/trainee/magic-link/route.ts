@@ -28,6 +28,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
+    // Unverified enrollment: the link/OTP from the enrollment email is their
+    // verification path — do NOT mint a login token yet. This reveals only
+    // that an unverified enrollment exists (accepted trade-off for the block
+    // message); unknown emails stay fully silent above.
+    if (!trainee.consentGiven) {
+      return NextResponse.json({ success: true, needsVerification: true });
+    }
+
     // Server-side 30s cooldown so a double-click on "Resend link" cannot
     // mint extra tokens (§7 rate pattern). Unknown emails never reach here.
     const lastToken = await db.traineeLoginToken.findFirst({
