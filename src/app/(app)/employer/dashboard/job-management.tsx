@@ -18,6 +18,8 @@ import { EmptyState } from "~/components/patterns/empty-state";
 import { ErrorState } from "~/components/patterns/error-state";
 import { Skeleton } from "~/components/patterns/skeleton";
 import { StatusBadge } from "~/components/patterns/status-badge";
+import { ConfirmDialog } from "~/components/patterns/confirm-dialog";
+import { date } from "~/lib/format";
 import type {
   Applicant,
   EmployerJobsResponse,
@@ -337,7 +339,7 @@ export function JobManagement() {
                       {job.applicationCount} application{job.applicationCount === 1 ? "" : "s"} ·{" "}
                       {job.hireCount} hired
                       {job.applicationDeadline
-                        ? ` · applies by ${new Date(job.applicationDeadline).toLocaleDateString("en-IN")}`
+                        ? ` · applies by ${date(job.applicationDeadline)}`
                         : ""}
                     </p>
                   </div>
@@ -352,15 +354,21 @@ export function JobManagement() {
                       Applicants ({job.applicationCount})
                     </Button>
                     {job.status === "OPEN" ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => void setStatus(job.id, "CLOSED")}
-                        disabled={actionBusy === `${job.id}:status`}
-                      >
-                        {actionBusy === `${job.id}:status` && "Closing…"}
-                        {actionBusy !== `${job.id}:status` && "Close"}
-                      </Button>
+                      <ConfirmDialog
+                        trigger={
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={actionBusy === `${job.id}:status`}
+                          >
+                            Close
+                          </Button>
+                        }
+                        title={`Close "${job.title}"?`}
+                        description="The job becomes hidden from trainees and stops accepting applications. You can re-open it any time."
+                        confirmLabel="Close job"
+                        onConfirm={() => void setStatus(job.id, "CLOSED")}
+                      />
                     ) : (
                       <Button
                         size="sm"
@@ -482,7 +490,7 @@ export function JobManagement() {
                                 <span className="font-normal">· masked until shortlisted</span>
                               </span>
                             )}
-                            <span> · applied {new Date(applicant.appliedAt).toLocaleDateString("en-IN")}</span>
+                            <span> · applied {date(applicant.appliedAt)}</span>
                           </p>
                         </div>
                       ))

@@ -123,7 +123,7 @@ export default function EmployerVerificationPage() {
   if (loading) {
     return (
       <div className="grid min-h-svh place-items-center bg-background p-4">
-        <Spinner className="size-6 text-primary" />
+        <Spinner className="size-6 text-primary-strong" />
       </div>
     );
   }

@@ -21,42 +21,37 @@ import type { UserRole } from "~/lib/protected-routes";
 export type NavItem = { label: string; href: string; icon: LucideIcon };
 export type NavGroup = { label?: string; items: NavItem[] };
 
+/** Operations surfaces — identical for admin and institute (shared reference). */
+const OPERATIONS: NavGroup = {
+  label: "Operations",
+  items: [
+    { label: "All trainees", href: "/trainees", icon: Users },
+    { label: "Follow-up operations", href: "/followups", icon: CalendarClock },
+    { label: "Conflict queue", href: "/conflicts", icon: AlertTriangle },
+    { label: "Audit log viewer", href: "/audit-logs", icon: ScrollText },
+  ],
+};
+
 export const navForRole: Record<UserRole, NavGroup[]> = {
   admin: [
     {
       label: "Tracking",
       items: [
         { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-        { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+        { label: "Government analytics", href: "/admin/analytics", icon: BarChart3 },
       ],
     },
-    {
-      label: "Operations",
-      items: [
-        { label: "Trainees", href: "/trainees", icon: Users },
-        { label: "Follow-ups", href: "/followups", icon: CalendarClock },
-        { label: "Conflicts", href: "/conflicts", icon: AlertTriangle },
-        { label: "Audit logs", href: "/audit-logs", icon: ScrollText },
-      ],
-    },
+    OPERATIONS,
   ],
   institute: [
     {
       label: "Tracking",
       items: [
         { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-        { label: "Analytics", href: "/institute/analytics", icon: BarChart3 },
+        { label: "Institute analytics", href: "/institute/analytics", icon: BarChart3 },
       ],
     },
-    {
-      label: "Operations",
-      items: [
-        { label: "Trainees", href: "/trainees", icon: Users },
-        { label: "Follow-ups", href: "/followups", icon: CalendarClock },
-        { label: "Conflicts", href: "/conflicts", icon: AlertTriangle },
-        { label: "Audit logs", href: "/audit-logs", icon: ScrollText },
-      ],
-    },
+    OPERATIONS,
   ],
   employer: [
     {

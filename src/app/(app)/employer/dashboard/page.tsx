@@ -123,7 +123,7 @@ function DashboardSkeleton() {
         ))}
       </div>
       <Skeleton className="mb-4 h-24 w-full" />
-      <div className="mb-4 grid gap-6 lg:grid-cols-2">
+      <div className="mb-4 grid gap-4 lg:grid-cols-2">
         {Array.from({ length: 4 }, (_, i) => (
           <Skeleton key={i} className="h-80" />
         ))}
@@ -230,7 +230,7 @@ export default function EmployerDashboardPage() {
       </div>
 
       {/* Charts (§4.11 — chart tokens, built-in legends; empty handled inside) */}
-      <div className="mb-6 grid gap-6 lg:grid-cols-2">
+      <div className="mb-6 grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Claims over time</CardTitle>
@@ -240,7 +240,7 @@ export default function EmployerDashboardPage() {
             <LineChart
               data={data.timeline.map((t) => ({ name: t.month, count: t.count }))}
               xKey="name"
-              height={300}
+              height={320}
               lines={[{ key: "count", label: "Claims" }]}
               yAxisLabel="Claims"
             />
@@ -260,7 +260,7 @@ export default function EmployerDashboardPage() {
                 expected: v.count,
               }))}
               xKey="name"
-              height={300}
+              height={320}
               showLegend={false}
               yAxisLabel="Claims"
             />
@@ -280,7 +280,7 @@ export default function EmployerDashboardPage() {
                 expected: w.count,
               }))}
               xKey="name"
-              height={300}
+              height={320}
               showLegend={false}
               yAxisLabel="Claims"
             />
@@ -309,7 +309,7 @@ export default function EmployerDashboardPage() {
                   },
                 ]}
                 xKey="name"
-                height={300}
+                height={320}
                 yAxisLabel="Retention Score"
                 showAverage={true}
                 averageValue={peerAvg}

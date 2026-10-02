@@ -5,13 +5,15 @@ import { CheckCircle2, RefreshCw, XCircle } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "~/components/ui/dialog";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { EmptyState } from "~/components/patterns/empty-state";
 import { ErrorState } from "~/components/patterns/error-state";
@@ -87,7 +89,7 @@ export function VerificationQueue({ onChanged }: VerificationQueueProps) {
     <Card>
       <CardHeader className="flex-row items-start justify-between space-y-0">
         <div>
-          <CardTitle>Verification Queue</CardTitle>
+          <CardTitle>Verification queue</CardTitle>
           <CardDescription>
             Recruiter signups awaiting a decision. Approve lets them post jobs immediately; Reject marks them rejected.
           </CardDescription>
@@ -124,7 +126,7 @@ export function VerificationQueue({ onChanged }: VerificationQueueProps) {
                 <TableHead>Recruiter</TableHead>
                 <TableHead>Contact Email</TableHead>
                 <TableHead>District</TableHead>
-                <TableHead>Hiring Needs</TableHead>
+                <TableHead>Hiring needs</TableHead>
                 <TableHead>Employees</TableHead>
                 <TableHead>Registered</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -136,7 +138,7 @@ export function VerificationQueue({ onChanged }: VerificationQueueProps) {
                   <TableCell className="font-medium">{employer.companyName}</TableCell>
                   <TableCell className="font-mono text-caption">{employer.contactEmail}</TableCell>
                   <TableCell>{employer.district}</TableCell>
-                  <TableCell className="max-w-[220px] truncate" title={employer.hiringNeeds ?? undefined}>
+                  <TableCell className="max-w-col-3xl truncate" title={employer.hiringNeeds ?? undefined}>
                     {employer.hiringNeeds ?? "—"}
                   </TableCell>
                   <TableCell className="tabular-nums">{employer.employeeCount ?? "—"}</TableCell>
@@ -172,33 +174,34 @@ export function VerificationQueue({ onChanged }: VerificationQueueProps) {
         )}
       </CardContent>
 
-      <Dialog open={action !== null} onOpenChange={(open) => !open && setAction(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
+      <AlertDialog open={action !== null} onOpenChange={(open) => !open && setAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
               {action?.decision === "VERIFIED" ? "Approve recruiter?" : "Reject recruiter?"}
-            </DialogTitle>
-            <DialogDescription>
+            </AlertDialogTitle>
+            <AlertDialogDescription>
               {action?.decision === "VERIFIED"
                 ? `${action?.employer.companyName} will be verified and can post jobs immediately.`
                 : `${action?.employer.companyName} will be marked rejected.`}{" "}
               The decision is recorded in the audit log.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAction(null)}>
-              Cancel
-            </Button>
-            <Button
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
               variant={action?.decision === "VERIFIED" ? "default" : "destructive"}
               disabled={submitting}
-              onClick={() => void recordDecision()}
+              onClick={(e) => {
+                e.preventDefault();
+                void recordDecision();
+              }}
             >
               {submitting ? "Saving…" : action?.decision === "VERIFIED" ? "Approve" : "Reject"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

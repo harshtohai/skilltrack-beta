@@ -108,11 +108,11 @@ export default function ConflictsPage() {
   return (
     <div>
       <PageHeader
-        title="Conflict Queue"
+        title="Conflict queue"
         caption="Employment claims where trainee and employer sources disagree"
         actions={
           <Select value={selectedCohortId} onValueChange={setSelectedCohortId}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-col-2xl">
               <SelectValue placeholder="All cohorts" />
             </SelectTrigger>
             <SelectContent>
@@ -171,16 +171,16 @@ export default function ConflictsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0 pt-4">
-            <ScrollArea className="h-[600px] w-full">
+            <ScrollArea className="h-list w-full">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="w-[80px]">Trainee</TableHead>
-                    <TableHead className="w-[150px]">Cohort</TableHead>
-                    <TableHead className="w-[100px]">Checkpoint</TableHead>
-                    <TableHead className="w-[200px]">Trainee Says</TableHead>
-                    <TableHead className="w-[200px]">Employer Says</TableHead>
-                    <TableHead className="w-[100px]">Evidence</TableHead>
+                    <TableHead className="w-col-xs">Trainee</TableHead>
+                    <TableHead className="w-col-lg">Cohort</TableHead>
+                    <TableHead className="w-col-sm">Checkpoint</TableHead>
+                    <TableHead className="w-col-2xl">Trainee says</TableHead>
+                    <TableHead className="w-col-2xl">Employer says</TableHead>
+                    <TableHead className="w-col-sm">Evidence</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

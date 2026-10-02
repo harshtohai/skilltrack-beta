@@ -119,7 +119,7 @@ function MagicLinkSentContent() {
         {/* Footer links below card (§9.2) */}
         <p className="mt-6 text-center text-caption text-muted-foreground">
           Didn’t receive the email?{" "}
-          <Link href="/login" className="text-primary hover:underline">
+          <Link href="/login" className="text-primary-strong hover:underline">
             Try a different email
           </Link>
         </p>

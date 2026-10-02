@@ -112,7 +112,7 @@ export default function AuditLogsPage() {
   return (
     <div>
       <PageHeader
-        title="Audit Log Viewer"
+        title="Audit log viewer"
         caption="Immutable log of all state changes in the system"
       />
 
@@ -154,13 +154,13 @@ export default function AuditLogsPage() {
           </SelectContent>
         </Select>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 lg:col-span-2">
           <Input
             type="datetime-local"
             value={filters.fromDate}
             onChange={(e) => handleFilterChange("fromDate", e.target.value)}
             placeholder="From date"
-            className="flex-1"
+            className="min-w-40 flex-1"
             aria-label="From date"
           />
           <Input
@@ -168,7 +168,7 @@ export default function AuditLogsPage() {
             value={filters.toDate}
             onChange={(e) => handleFilterChange("toDate", e.target.value)}
             placeholder="To date"
-            className="flex-1"
+            className="min-w-40 flex-1"
             aria-label="To date"
           />
         </div>
@@ -218,15 +218,15 @@ export default function AuditLogsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0 pt-4">
-            <ScrollArea className="h-[600px] w-full">
+            <ScrollArea className="h-list w-full">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="w-[160px]">Timestamp</TableHead>
-                    <TableHead className="w-[120px]">Actor</TableHead>
-                    <TableHead className="w-[140px]">Action</TableHead>
-                    <TableHead className="w-[140px]">Entity Type</TableHead>
-                    <TableHead className="w-[160px]">Entity ID</TableHead>
+                    <TableHead className="w-col-xl">Timestamp</TableHead>
+                    <TableHead className="w-col-status">Actor</TableHead>
+                    <TableHead className="w-col-md">Action</TableHead>
+                    <TableHead className="w-col-md">Entity type</TableHead>
+                    <TableHead className="w-col-xl">Entity ID</TableHead>
                     <TableHead>Metadata</TableHead>
                   </TableRow>
                 </TableHeader>

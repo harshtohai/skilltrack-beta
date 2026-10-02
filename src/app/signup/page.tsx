@@ -289,16 +289,16 @@ export default function SignupPage() {
                       </FormControl>
                       <FormLabel className="cursor-pointer font-normal">
                         I agree to the{" "}
-                        <Link href="/terms" className="text-primary hover:underline">
+                        <Link href="/terms" className="text-primary-strong hover:underline">
                           Terms of Service
                         </Link>{" "}
                         and{" "}
-                        <Link href="/privacy" className="text-primary hover:underline">
+                        <Link href="/privacy" className="text-primary-strong hover:underline">
                           Privacy Policy
                         </Link>
                         . I consent to OutcomeTrack processing my personal data
                         for employment outcome tracking as described in the{" "}
-                        <Link href="/consent" className="text-primary hover:underline">
+                        <Link href="/consent" className="text-primary-strong hover:underline">
                           Consent Policy
                         </Link>
                         .
@@ -317,7 +317,7 @@ export default function SignupPage() {
 
           <p className="mt-6 text-center text-caption text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="text-primary hover:underline">
+            <Link href="/login" className="text-primary-strong hover:underline">
               Sign in
             </Link>
           </p>

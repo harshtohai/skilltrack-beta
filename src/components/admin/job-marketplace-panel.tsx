@@ -6,13 +6,15 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "~/components/ui/dialog";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { Textarea } from "~/components/ui/textarea";
 import { StatCard } from "~/components/patterns/stat-card";
@@ -69,7 +71,7 @@ export function JobMarketplacePanel({ marketplace, onRefresh }: JobMarketplacePa
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Job Marketplace</CardTitle>
+          <CardTitle>Job marketplace</CardTitle>
         </CardHeader>
         <CardContent>
           <EmptyState
@@ -189,7 +191,7 @@ export function JobMarketplacePanel({ marketplace, onRefresh }: JobMarketplacePa
                   <TableRow className="hover:bg-transparent">
                     <TableHead>District</TableHead>
                     <TableHead className="text-right">Signals</TableHead>
-                    <TableHead className="text-right">Open Jobs</TableHead>
+                    <TableHead className="text-right">Open jobs</TableHead>
                     <TableHead>Reasons</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -245,7 +247,7 @@ export function JobMarketplacePanel({ marketplace, onRefresh }: JobMarketplacePa
                   <TableHead>Employer</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Hires</TableHead>
-                  <TableHead>Retention Score</TableHead>
+                  <TableHead>Retention score</TableHead>
                   <TableHead>Flag</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -297,14 +299,14 @@ export function JobMarketplacePanel({ marketplace, onRefresh }: JobMarketplacePa
         </CardContent>
       </Card>
 
-      <Dialog open={suspendTarget !== null} onOpenChange={(open) => !open && setSuspendTarget(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Suspend {suspendTarget?.companyName}?</DialogTitle>
-            <DialogDescription>
+      <AlertDialog open={suspendTarget !== null} onOpenChange={(open) => !open && setSuspendTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Suspend {suspendTarget?.companyName}?</AlertDialogTitle>
+            <AlertDialogDescription>
               The verified badge is revoked and their jobs become hidden from trainees. The action is recorded in the audit log.
-            </DialogDescription>
-          </DialogHeader>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
           <div className="space-y-2">
             <Textarea
               placeholder="Reason (optional — minimum 3 characters)"
@@ -314,20 +316,21 @@ export function JobMarketplacePanel({ marketplace, onRefresh }: JobMarketplacePa
             />
             {error && <p className="text-body-sm text-danger-text">{error}</p>}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSuspendTarget(null)}>
-              Cancel
-            </Button>
-            <Button
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
               variant="destructive"
               disabled={submitting || (reason.trim().length > 0 && reason.trim().length < 3)}
-              onClick={() => void confirmSuspend()}
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmSuspend();
+              }}
             >
               {submitting ? "Suspending…" : "Suspend employer"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

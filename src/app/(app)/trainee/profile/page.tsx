@@ -217,7 +217,7 @@ export default function TraineeProfilePage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between gap-4">
-              <span className="font-mono text-2xl font-bold text-primary tabular-nums">{trainee.publicId}</span>
+              <span className="font-mono text-2xl font-semibold text-primary-strong tabular-nums">{trainee.publicId}</span>
               <Button variant="outline" size="sm" onClick={() => void copyTraineeId()} className="gap-2">
                 {copied ? <Check className="text-success-text" /> : <Copy />}
                 {copied ? "Copied" : "Copy"}
@@ -290,11 +290,11 @@ export default function TraineeProfilePage() {
             <Lock className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="flex items-center justify-between gap-6 border-b py-4">
+            <div className="flex items-center justify-between gap-4 border-b py-4">
               <span className="text-body-sm text-muted-foreground">Phone (verified via WhatsApp)</span>
               <span className="font-mono text-body-sm font-medium tabular-nums">{maskPhoneE164(trainee.phoneE164)}</span>
             </div>
-            <div className="flex items-center justify-between gap-6 border-b py-4">
+            <div className="flex items-center justify-between gap-4 border-b py-4">
               <span className="text-body-sm text-muted-foreground">Consent</span>
               <div className="flex items-center gap-3">
                 <StatusBadge status={trainee.consentGiven ? "GIVEN" : "PENDING_CONSENT"} />
@@ -320,7 +320,7 @@ export default function TraineeProfilePage() {
               />
             ) : (
               trainee.certificates.map((cert) => (
-                <div key={cert.id} className="flex items-center justify-between gap-6 border-b py-4">
+                <div key={cert.id} className="flex items-center justify-between gap-4 border-b py-4">
                   <div className="min-w-0">
                     <p className="text-body-sm font-medium">{cert.name}</p>
                     <p className="text-caption text-muted-foreground">{cert.issuer}</p>
@@ -346,7 +346,7 @@ export default function TraineeProfilePage() {
               />
             ) : (
               trainee.employmentHistory.map((job) => (
-                <div key={job.id} className="flex items-center justify-between gap-6 border-b py-4">
+                <div key={job.id} className="flex items-center justify-between gap-4 border-b py-4">
                   <div className="min-w-0">
                     <p className="text-body-sm font-medium">{job.employer}</p>
                     <p className="text-caption text-muted-foreground">{job.role ?? "—"}</p>
@@ -377,7 +377,7 @@ export default function TraineeProfilePage() {
               />
             ) : (
               trainee.outcomeEvents.map((o) => (
-                <div key={o.id} className="flex items-center justify-between gap-6 border-b py-4">
+                <div key={o.id} className="flex items-center justify-between gap-4 border-b py-4">
                   <span className="text-body-sm font-medium">{o.checkpointDays}-day checkpoint</span>
                   <div className="flex items-center gap-3">
                     <StatusBadge status={o.outcomeStatus as StatusKey} />

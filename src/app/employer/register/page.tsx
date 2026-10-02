@@ -394,7 +394,7 @@ export default function EmployerRegisterPage() {
 
           <p className="mt-6 text-center text-caption text-muted-foreground">
             Already registered?{" "}
-            <Link href="/employer/login" className="text-primary hover:underline">
+            <Link href="/employer/login" className="text-primary-strong hover:underline">
               Sign in
             </Link>
           </p>

@@ -133,7 +133,7 @@ const leaderboardColumns: ColumnDef<TrainingCenterScore, unknown>[] = [
   },
   {
     accessorKey: "centerName",
-    header: "Training Center",
+    header: "Training center",
     cell: ({ row }) => <span className="font-medium">{row.original.centerName}</span>,
   },
   {
@@ -232,7 +232,7 @@ function AnalyticsSkeleton() {
         ))}
       </div>
       <Skeleton className="mb-4 h-72 w-full" />
-      <div className="mb-4 grid gap-6 lg:grid-cols-2">
+      <div className="mb-4 grid gap-4 lg:grid-cols-2">
         {Array.from({ length: 4 }, (_, i) => (
           <Skeleton key={i} className="h-80" />
         ))}
@@ -303,7 +303,7 @@ export default function GovernmentAnalyticsDashboard() {
         actions={
           <>
             <Select value={timeWindow} onValueChange={setTimeWindow}>
-              <SelectTrigger className="w-[170px]" aria-label="Time window">
+              <SelectTrigger className="w-col-xl" aria-label="Time window">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -367,10 +367,10 @@ export default function GovernmentAnalyticsDashboard() {
       </FilterBar>
 
       <Tabs defaultValue="outcomes">
-        <TabsList className="mb-6">
+        <TabsList className="mb-6 w-full justify-start overflow-x-auto">
           <TabsTrigger value="outcomes">Outcomes</TabsTrigger>
-          <TabsTrigger value="verification">Verification Queue</TabsTrigger>
-          <TabsTrigger value="marketplace">Job Marketplace</TabsTrigger>
+          <TabsTrigger value="verification">Verification queue</TabsTrigger>
+          <TabsTrigger value="marketplace">Job marketplace</TabsTrigger>
         </TabsList>
 
         <TabsContent value="outcomes">
@@ -431,7 +431,7 @@ export default function GovernmentAnalyticsDashboard() {
           </Card>
 
           {/* Expected vs actual comparisons (§4.11 — chart tokens, built-in legends) */}
-          <div className="mb-4 grid gap-6 lg:grid-cols-2">
+          <div className="mb-4 grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle>Placement rate: expected vs actual</CardTitle>
@@ -445,7 +445,7 @@ export default function GovernmentAnalyticsDashboard() {
                     expected: d.expectedPlacement,
                   }))}
                   xKey="name"
-                  height={300}
+                  height={320}
                   yAxisLabel="Placement Rate (%)"
                 />
               </CardContent>
@@ -464,7 +464,7 @@ export default function GovernmentAnalyticsDashboard() {
                     expected: d.expectedRetention,
                   }))}
                   xKey="name"
-                  height={300}
+                  height={320}
                   yAxisLabel="Retention Rate (%)"
                 />
               </CardContent>
@@ -483,7 +483,7 @@ export default function GovernmentAnalyticsDashboard() {
                     expected: d.expectedVerified,
                   }))}
                   xKey="name"
-                  height={300}
+                  height={320}
                   yAxisLabel="Verified Rate (%)"
                 />
               </CardContent>
@@ -502,7 +502,7 @@ export default function GovernmentAnalyticsDashboard() {
                     expected: d.expectedWageProgression,
                   }))}
                   xKey="name"
-                  height={300}
+                  height={320}
                   yAxisLabel="Wage Progression Rate (%)"
                 />
               </CardContent>
@@ -510,7 +510,7 @@ export default function GovernmentAnalyticsDashboard() {
           </div>
 
           {/* Monthly trends (§4.11 line charts — chart token order, max 4 series) */}
-          <div className="mb-4 grid gap-6 lg:grid-cols-2">
+          <div className="mb-4 grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle>Monthly trends overview</CardTitle>
@@ -520,10 +520,10 @@ export default function GovernmentAnalyticsDashboard() {
                 <LineChart
                   data={data.monthlyData.map((d) => ({ name: d.month, ...d }))}
                   xKey="month"
-                  height={350}
+                  height={320}
                   lines={[
-                    { key: "placementRate", label: "Placement Rate" },
-                    { key: "retentionRate", label: "Retention Rate" },
+                    { key: "placementRate", label: "Placement rate" },
+                    { key: "retentionRate", label: "Retention rate" },
                     { key: "verifiedRate", label: "Verified Rate" },
                     { key: "wageProgressionRate", label: "Wage Progression" },
                   ]}
@@ -541,7 +541,7 @@ export default function GovernmentAnalyticsDashboard() {
                 <LineChart
                   data={data.monthlyData.map((d) => ({ name: d.month, ...d }))}
                   xKey="month"
-                  height={350}
+                  height={320}
                   lines={[
                     { key: "certified", label: "Certified" },
                     { key: "employed", label: "Employed" },

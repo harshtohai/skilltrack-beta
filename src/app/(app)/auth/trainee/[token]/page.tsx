@@ -266,7 +266,7 @@ export default function TraineeAuthPage() {
                   description="Your work experience will appear here once it's verified."
                 />
               ) : (
-                <div className="relative space-y-6 before:absolute before:inset-y-2 before:left-[5px] before:w-px before:bg-border">
+                <div className="relative space-y-6 before:absolute before:inset-y-2 before:left-1 before:w-px before:bg-border">
                   {profile.employmentHistory.map((job) => (
                     <div key={job.id} className="relative pl-6">
                       <span
@@ -323,7 +323,7 @@ export default function TraineeAuthPage() {
                           href={cert.fileUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="mt-2 inline-flex items-center gap-1 text-body-sm text-primary hover:underline"
+                          className="mt-2 inline-flex items-center gap-1 text-body-sm text-primary-strong hover:underline"
                         >
                           View certificate
                         </a>

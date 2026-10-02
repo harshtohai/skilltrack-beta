@@ -123,6 +123,17 @@ export default function PostJobPage() {
     },
   });
 
+  // Leave guard per §9.6/§10: warn before leaving with unsaved form edits.
+  const isDirty = form.formState.isDirty;
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
   useEffect(() => {
     let active = true;
     void (async () => {

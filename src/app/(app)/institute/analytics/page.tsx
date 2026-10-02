@@ -126,12 +126,12 @@ const cohortColumns: ColumnDef<InstituteAnalyticsData["cohorts"][number], unknow
   },
   {
     accessorKey: "placementRate",
-    header: "Placement Rate",
+    header: "Placement rate",
     cell: ({ row }) => percent(row.original.placementRate, { sign: false, digits: 1 }),
   },
   {
     accessorKey: "retentionRate",
-    header: "Retention Rate",
+    header: "Retention rate",
     cell: ({ row }) => percent(row.original.retentionRate, { sign: false, digits: 1 }),
   },
   {
@@ -161,7 +161,7 @@ function AnalyticsSkeleton() {
           <Skeleton key={i} className="h-32" />
         ))}
       </div>
-      <div className="mb-6 grid gap-6 lg:grid-cols-2">
+      <div className="mb-6 grid gap-4 lg:grid-cols-2">
         {Array.from({ length: 4 }, (_, i) => (
           <Skeleton key={i} className="h-80" />
         ))}
@@ -232,7 +232,7 @@ export default function InstituteAnalyticsDashboard() {
         actions={
           <>
             <Select value={timeWindow} onValueChange={setTimeWindow}>
-              <SelectTrigger className="w-[170px]" aria-label="Time window">
+              <SelectTrigger className="w-col-xl" aria-label="Time window">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -331,7 +331,7 @@ export default function InstituteAnalyticsDashboard() {
       </div>
 
       {/* Monthly comparisons (§4.11 — chart tokens, built-in legends, semantic names) */}
-      <div className="mb-6 grid gap-6 lg:grid-cols-2">
+      <div className="mb-6 grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Placement rate: your institute vs peer average</CardTitle>
@@ -345,7 +345,7 @@ export default function InstituteAnalyticsDashboard() {
                 expected: data.peerComparison.avgPlacementRate,
               }))}
               xKey="name"
-              height={300}
+              height={320}
               yAxisLabel="Placement Rate (%)"
               names={{ actual: "Your institute", expected: "Peer avg" }}
             />
@@ -365,7 +365,7 @@ export default function InstituteAnalyticsDashboard() {
                 expected: 60,
               }))}
               xKey="name"
-              height={300}
+              height={320}
               yAxisLabel="Retention Rate (%)"
               names={{ actual: "Your institute", expected: "Benchmark (60%)" }}
             />
@@ -381,7 +381,7 @@ export default function InstituteAnalyticsDashboard() {
             <LineChart
               data={data.monthlyData.map((d) => ({ name: d.month, verifiedRate: d.verifiedRate, wageProgressionRate: d.wageProgressionRate }))}
               xKey="month"
-              height={300}
+              height={320}
               lines={[
                 { key: "verifiedRate", label: "Verified Rate" },
                 { key: "wageProgressionRate", label: "Wage Progression" },
@@ -400,7 +400,7 @@ export default function InstituteAnalyticsDashboard() {
             <LineChart
               data={data.monthlyData.map((d) => ({ name: d.month, certified: d.certified, employed: d.employed, retained90: d.retained90 }))}
               xKey="month"
-              height={300}
+              height={320}
               lines={[
                 { key: "certified", label: "Certified" },
                 { key: "employed", label: "Employed" },
@@ -413,7 +413,7 @@ export default function InstituteAnalyticsDashboard() {
       </div>
 
       {/* Peer comparison charts (§4.11 — chart-3 series, grey peers, dashed average) */}
-      <div className="mb-6 grid gap-6 lg:grid-cols-2">
+      <div className="mb-6 grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Placement rate: your institute vs peers</CardTitle>
@@ -428,7 +428,7 @@ export default function InstituteAnalyticsDashboard() {
                 { name: "State Target", value: 70, isCurrent: false },
               ]}
               xKey="name"
-              height={300}
+              height={320}
               yAxisLabel="Placement Rate (%)"
               showAverage={true}
               averageValue={data.peerComparison.avgPlacementRate}
@@ -461,7 +461,7 @@ export default function InstituteAnalyticsDashboard() {
                 { name: "Benchmark", value: 60, isCurrent: false },
               ]}
               xKey="name"
-              height={300}
+              height={320}
               yAxisLabel="Retention Rate (%)"
               showAverage={true}
               averageValue={data.peerComparison.avgRetentionRate}
@@ -483,7 +483,7 @@ export default function InstituteAnalyticsDashboard() {
                 { name: "State Target", value: 30, isCurrent: false },
               ]}
               xKey="name"
-              height={300}
+              height={320}
               yAxisLabel="Wage Progression Rate (%)"
               showAverage={true}
               averageValue={data.peerComparison.avgWageProgressionRate}
@@ -505,7 +505,7 @@ export default function InstituteAnalyticsDashboard() {
                 { name: "Benchmark", value: 2, isCurrent: false },
               ]}
               xKey="name"
-              height={300}
+              height={320}
               yAxisLabel="Avg Certificates per Trainee"
               showAverage={true}
               averageValue={data.peerComparison.avgCertificatesPerTrainee}

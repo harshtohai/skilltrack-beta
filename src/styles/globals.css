@@ -149,6 +149,20 @@
   --text-stat: 2rem;          --text-stat--line-height: 2.5rem;
   --text-display: 3.5rem;     --text-display--line-height: 1.05;
 
+  /* Column widths (CL-03: documented tokens, no silent arbitrary values).
+     status mirrors §4.5's "status 120px"; the wider text/date columns serve
+     the §9.4 hand-rolled ops lists. Values sit on the 4px scale (§3.5). */
+  --width-col-xs: 5rem;       /* 80px — narrow lead column */
+  --width-col-sm: 6.25rem;    /* 100px — checkpoint/evidence */
+  --width-col-status: 7.5rem; /* 120px — status */
+  --width-col-md: 8.75rem;    /* 140px — action/entity type/bot session */
+  --width-col-lg: 9.5rem;     /* 152px — cohort/programme */
+  --width-col-xl: 10rem;      /* 160px — sent at/responded at/entity id */
+  --width-col-2xl: 12.5rem;   /* 200px — person/quoted text */
+  --width-col-3xl: 13.75rem;  /* 220px — truncated long-text cells */
+  --height-list: 37.5rem;     /* 600px — ops list ScrollArea max-height */
+  --height-list-sm: 26.25rem; /* 420px — chat/compact list max-height */
+
   /* motion */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-enter: cubic-bezier(0, 0, 0.2, 1);
@@ -179,19 +193,4 @@
 }
 @utility animate-collapsible-up {
   animation: collapsible-up 200ms var(--ease-standard);
-}
-
-/* ── RESKIN COMPAT SHIM — removed in UI-16 final sweep ──────────────────────
-   Pages not yet re-skinned use a custom `.container` class. Tailwind v4's
-   built-in `container` utility has no padding, so keep the old behavior for
-   un-migrated pages. Delete this block once every page is migrated. */
-@layer components {
-  .container {
-    width: 100%;
-    max-width: 1280px;
-    margin-inline: auto;
-    padding-inline: 1rem;
-  }
-  @media (min-width: 768px) { .container { padding-inline: 1.5rem; } }
-  @media (min-width: 1024px) { .container { padding-inline: 2rem; } }
 }

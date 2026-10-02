@@ -193,7 +193,7 @@ export default function FollowupsPage() {
   return (
     <div>
       <PageHeader
-        title="Follow-up Operations"
+        title="Follow-up operations"
         caption="Monitor and manage all follow-up events across cohorts"
         actions={
           <>
@@ -307,13 +307,13 @@ export default function FollowupsPage() {
           className="lg:col-span-2"
           aria-label="Search trainees"
         />
-        <div className="flex gap-2 lg:col-span-2">
+        <div className="flex flex-wrap gap-2 lg:col-span-2">
           <Input
             type="datetime-local"
             value={filters.fromDate}
             onChange={(e) => handleFilterChange("fromDate", e.target.value)}
             placeholder="From date"
-            className="flex-1"
+            className="min-w-40 flex-1"
             aria-label="From date"
           />
           <Input
@@ -321,7 +321,7 @@ export default function FollowupsPage() {
             value={filters.toDate}
             onChange={(e) => handleFilterChange("toDate", e.target.value)}
             placeholder="To date"
-            className="flex-1"
+            className="min-w-40 flex-1"
             aria-label="To date"
           />
         </div>
@@ -371,18 +371,18 @@ export default function FollowupsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0 pt-4">
-            <ScrollArea className="h-[600px] w-full">
+            <ScrollArea className="h-list w-full">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="w-[80px]">Trainee</TableHead>
-                    <TableHead className="w-[150px]">Cohort / Programme</TableHead>
-                    <TableHead className="w-[100px]">Checkpoint</TableHead>
-                    <TableHead className="w-[120px]">Status</TableHead>
-                    <TableHead className="w-[140px]">Bot Session</TableHead>
-                    <TableHead className="w-[160px]">Sent At</TableHead>
-                    <TableHead className="w-[160px]">Responded At</TableHead>
-                    <TableHead className="w-[160px]">Created At</TableHead>
+                    <TableHead className="w-col-xs">Trainee</TableHead>
+                    <TableHead className="w-col-lg">Cohort / Programme</TableHead>
+                    <TableHead className="w-col-sm">Checkpoint</TableHead>
+                    <TableHead className="w-col-status">Status</TableHead>
+                    <TableHead className="w-col-md">Bot Session</TableHead>
+                    <TableHead className="w-col-xl">Sent at</TableHead>
+                    <TableHead className="w-col-xl">Responded at</TableHead>
+                    <TableHead className="w-col-xl">Created At</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

@@ -19,7 +19,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { formatDateTime } from "~/lib/utils";
+import { datetime } from "~/lib/format";
 import { compact, number, percent, date as fmtDate } from "~/lib/format";
 import { PageHeader } from "~/components/patterns/page-header";
 import { StatCard } from "~/components/patterns/stat-card";
@@ -281,11 +281,11 @@ function ActivityCard({
                   <div className="pt-0.5">
                     <p className="text-body-sm font-medium">{event.title}</p>
                     <p className="text-caption text-muted-foreground">
-                      {event.traineeName} • {formatDateTime(new Date(event.date))}
+                      {event.traineeName} • {datetime(event.date)}
                     </p>
                     <Link
                       href={`/trainees/${event.traineePublicId}`}
-                      className="text-caption text-primary hover:underline"
+                      className="text-caption text-primary-strong hover:underline"
                     >
                       View trainee
                     </Link>

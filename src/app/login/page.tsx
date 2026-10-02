@@ -300,17 +300,17 @@ function LoginPageContent() {
         {/* Footer links below card (§9.2) */}
         <p className="mt-6 text-center text-caption text-muted-foreground">
           Don’t have an account?{" "}
-          <Link href="/signup" className="text-primary hover:underline">
+          <Link href="/signup" className="text-primary-strong hover:underline">
             Sign up
           </Link>
         </p>
         <p className="mt-2 text-center text-caption text-muted-foreground">
           By continuing, you agree to our{" "}
-          <Link href="/terms" className="text-primary hover:underline">
+          <Link href="/terms" className="text-primary-strong hover:underline">
             Terms of Service
           </Link>{" "}
           and{" "}
-          <Link href="/privacy" className="text-primary hover:underline">
+          <Link href="/privacy" className="text-primary-strong hover:underline">
             Privacy Policy
           </Link>
         </p>

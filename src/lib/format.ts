@@ -45,4 +45,9 @@ export function datetime(d: Date | string): string {
   return fnsFormat(new Date(d), "MMM d, yyyy, h:mm a");
 }
 
-export const format = { currency, number, compact, percent, date, datetime };
+/** Time-only 12h — "4:05 PM" (CL-14), for chat bubbles and compact rows. */
+export function time(d: Date | string): string {
+  return fnsFormat(new Date(d), "h:mm a");
+}
+
+export const format = { currency, number, compact, percent, date, datetime, time };

@@ -20,8 +20,18 @@ import { Button } from "~/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "~/components/ui/dialog";
-import { toast } from "~/hooks/use-toast";
-import { formatDate } from "~/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
+import { toast } from "sonner";
+import { date } from "~/lib/format";
 import { FilterBar } from "~/components/patterns/filter-bar";
 import { EmptyState } from "~/components/patterns/empty-state";
 import { ErrorState } from "~/components/patterns/error-state";
@@ -115,7 +125,7 @@ function JobCard({ job, applying, onApply }: { job: PublicJob; applying: boolean
         <div className="flex items-center gap-2 text-caption text-muted-foreground">
           <Calendar className="h-3.5 w-3.5" />
           {job.applicationDeadline
-            ? `Apply by ${formatDate(new Date(job.applicationDeadline))}`
+            ? `Apply by ${date(job.applicationDeadline)}`
             : "Rolling applications"}
         </div>
 
@@ -166,7 +176,7 @@ function JobCard({ job, applying, onApply }: { job: PublicJob; applying: boolean
             <DialogDescription>
               {job.companyName} · {job.district} ·{" "}
               {job.applicationDeadline
-                ? `Apply by ${formatDate(new Date(job.applicationDeadline))}`
+                ? `Apply by ${date(job.applicationDeadline)}`
                 : "Rolling applications"}
             </DialogDescription>
           </DialogHeader>
@@ -209,7 +219,7 @@ function ApplicationRow({
               {app.companyName} · {app.district}
             </p>
             <p className="mt-1 text-caption text-muted-foreground">
-              Applied {formatDate(new Date(app.appliedAt))}
+              Applied {date(app.appliedAt)}
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
@@ -314,32 +324,19 @@ export function TraineeJobsBoard() {
             j.id === jobId ? { ...j, applied: true, appliedAt: new Date().toISOString() } : j
           )
         );
-        toast({
-          title: "Application sent",
-          description: "The employer can now see your profile.",
-          variant: "success",
-        });
+        toast.success("Application sent", { description: "The employer can now see your profile." });
       } else {
         const json = (await res.json()) as { error?: { code?: string; message?: string } };
         if (json.error?.code === "DUPLICATE_APPLICATION") {
-          toast({
-            title: "Already applied",
-            description: "You have already applied to this job.",
-          });
+          toast("Already applied", { description: "You have already applied to this job." });
         } else {
-          toast({
-            title: "Could not apply",
+          toast.error("Could not apply", {
             description: json.error?.message ?? "Something went wrong",
-            variant: "destructive",
           });
         }
       }
     } catch {
-      toast({
-        title: "Could not apply",
-        description: "Something went wrong",
-        variant: "destructive",
-      });
+      toast.error("Could not apply", { description: "Something went wrong" });
     } finally {
       setApplyingId(null);
     }
@@ -363,21 +360,15 @@ export function TraineeJobsBoard() {
             j.id === withdrawn.jobPostingId ? { ...j, applied: false, appliedAt: null } : j
           )
         );
-        toast({ title: "Application withdrawn", variant: "success" });
+        toast.success("Application withdrawn");
       } else {
         const json = (await res.json()) as { error?: { message?: string } };
-        toast({
-          title: "Could not withdraw",
+        toast.error("Could not withdraw", {
           description: json.error?.message ?? "Something went wrong",
-          variant: "destructive",
         });
       }
     } catch {
-      toast({
-        title: "Could not withdraw",
-        description: "Something went wrong",
-        variant: "destructive",
-      });
+      toast.error("Could not withdraw", { description: "Something went wrong" });
     } finally {
       setWithdrawing(false);
       setWithdrawTarget(null);
@@ -394,23 +385,17 @@ export function TraineeJobsBoard() {
         body: JSON.stringify({ reason: signalReason }),
       });
       if (res.ok) {
-        toast({ title: "Signal recorded — thank you", variant: "success" });
+        toast.success("Signal recorded — thank you");
         setSignalOpen(false);
         setSignalReason("");
       } else {
         const json = (await res.json()) as { error?: { message?: string } };
-        toast({
-          title: "Could not record signal",
+        toast.error("Could not record signal", {
           description: json.error?.message ?? "Something went wrong",
-          variant: "destructive",
         });
       }
     } catch {
-      toast({
-        title: "Could not record signal",
-        description: "Something went wrong",
-        variant: "destructive",
-      });
+      toast.error("Could not record signal", { description: "Something went wrong" });
     } finally {
       setSignaling(false);
     }
@@ -422,11 +407,7 @@ export function TraineeJobsBoard() {
       setCopiedEmail(email);
       setTimeout(() => setCopiedEmail(null), 2000);
     } catch {
-      toast({
-        title: "Could not copy email",
-        description: "Copy it manually instead.",
-        variant: "destructive",
-      });
+      toast.error("Could not copy email", { description: "Copy it manually instead." });
     }
   };
 
@@ -580,31 +561,36 @@ export function TraineeJobsBoard() {
       </Tabs>
 
       {/* Withdraw confirm step */}
-      <Dialog
+      <AlertDialog
         open={withdrawTarget !== null}
         onOpenChange={(open) => {
           if (!open) setWithdrawTarget(null);
         }}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Withdraw application?</DialogTitle>
-            <DialogDescription>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Withdraw application?</AlertDialogTitle>
+            <AlertDialogDescription>
               You will stop being considered for {withdrawTarget?.jobTitle} at{" "}
               {withdrawTarget?.companyName}. You can apply again later.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setWithdrawTarget(null)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" disabled={withdrawing} onClick={() => void handleWithdraw()}>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={withdrawing}
+              onClick={(e) => {
+                e.preventDefault();
+                void handleWithdraw();
+              }}
+            >
               {withdrawing && <Loader2 className="h-4 w-4 animate-spin" />}
               Withdraw
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Can't-find-a-job signal */}
       <Dialog open={signalOpen} onOpenChange={setSignalOpen}>
