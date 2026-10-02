@@ -14,6 +14,7 @@ export const protectedRoutes: {
   { path: "/admin", roles: ["admin"] },
   { path: "/institute", roles: ["institute", "admin"] },
   { path: "/employer", roles: ["employer", "admin"] },
+  { path: "/trainees/add", roles: ["institute", "admin"] }, // INST-02: add-trainee flow (only the institute nav links it)
   { path: "/trainees", roles: ["admin", "institute"] },
   { path: "/trainee", roles: ["trainee"] },
   { path: "/dashboard", roles: ["admin", "institute", "trainee"] },

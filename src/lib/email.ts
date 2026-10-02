@@ -1,4 +1,4 @@
-function renderMagicLinkHtml(name: string, magicLink: string, otp: string): string {
+function renderMagicLinkHtml(name: string, magicLink: string, otp: string, programme?: string): string {
   return `
     <!DOCTYPE html>
     <html>
@@ -14,6 +14,7 @@ function renderMagicLinkHtml(name: string, magicLink: string, otp: string): stri
 
         <div style="background: #fefefe; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
           <h2 style="color: #1f2937; margin-top: 0;">Hi ${name},</h2>
+          ${programme ? `<p style="color: #4b5563; font-size: 14px;">You've been enrolled in <strong>${programme}</strong>.</p>` : ""}
           <p style="color: #4b5563; font-size: 16px;">We received a request to sign in to your OutcomeTrack account. Click the button below to access your dashboard:</p>
 
           <div style="text-align: center; margin: 30px 0;">
@@ -44,7 +45,7 @@ function renderMagicLinkHtml(name: string, magicLink: string, otp: string): stri
   `;
 }
 
-export async function sendMagicLinkEmail(email: string, name: string, magicLink: string, otp: string): Promise<void> {
+export async function sendMagicLinkEmail(email: string, name: string, magicLink: string, otp: string, programme?: string): Promise<void> {
   const apiKey = process.env.BREVO_API_KEY;
   const from = process.env.EMAIL_FROM;
   if (!apiKey || !from) {
@@ -63,7 +64,7 @@ export async function sendMagicLinkEmail(email: string, name: string, magicLink:
       sender: { name: "OutcomeTrack", email: from },
       to: [{ email }],
       subject: "Your OutcomeTrack Magic Link",
-      htmlContent: renderMagicLinkHtml(name, magicLink, otp),
+      htmlContent: renderMagicLinkHtml(name, magicLink, otp, programme),
     }),
   });
 

@@ -9,13 +9,15 @@ export class EmailSendError extends Error {}
  * Mints a single-use trainee login token (+30 min expiry) with a 6-digit OTP
  * (same token row, same single-use/expiry semantics) and sends the magic-link
  * email for the EMAIL channel. Shared by the login route (after its
- * rate-limit check) and signup (first send). Send failures propagate as
- * EmailSendError; DB errors propagate raw. Returns { magicLink, otp } so the
- * email can carry both.
+ * rate-limit check) and signup (first send). `options.programme` (INST-02
+ * institute enrollment) adds a programme line to the email. Send failures
+ * propagate as EmailSendError; DB errors propagate raw. Returns
+ * { magicLink, otp } so the email can carry both.
  */
 export async function mintAndSendLoginToken(
   trainee: { id: string; email: string | null; fullName: string },
   channel: "EMAIL" | "WHATSAPP",
+  options?: { programme?: string },
 ): Promise<{ magicLink: string; otp: string }> {
   const token = crypto.randomBytes(32).toString("hex");
   const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
@@ -31,7 +33,7 @@ export async function mintAndSendLoginToken(
 
   if (channel === "EMAIL" && trainee.email) {
     try {
-      await sendMagicLinkEmail(trainee.email, trainee.fullName, magicLink, otp);
+      await sendMagicLinkEmail(trainee.email, trainee.fullName, magicLink, otp, options?.programme);
     } catch (emailError) {
       console.error("[MAGIC-LINK] Email send failed:", emailError);
       throw new EmailSendError("Email delivery failed");
