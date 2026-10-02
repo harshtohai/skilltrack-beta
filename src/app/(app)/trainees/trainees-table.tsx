@@ -14,7 +14,7 @@ import {
 import { CopyButton } from "~/components/copy-button";
 import { DataTable, rowActionsColumn } from "~/components/patterns/data-table";
 import { EmptyState } from "~/components/patterns/empty-state";
-import { StatusBadge } from "~/components/patterns/status-badge";
+import { StatusBadge, STATUS_MAP } from "~/components/patterns/status-badge";
 
 export interface TraineeListRow {
   id: string;
@@ -22,16 +22,21 @@ export interface TraineeListRow {
   fullName: string;
   district: string;
   consentGiven: boolean;
+  /** Enrolment lifecycle (INST-03); null when the trainee has no enrolments. */
+  lifecycleStatus: "ACTIVE" | "DROPPED_OUT" | "COMPLETED" | null;
 }
+
+export type TraineeLifecycleTab = "all" | "ACTIVE" | "DROPPED_OUT" | "COMPLETED";
 
 /** Client-side CSV of the loaded page rows (idea bag #6 pattern — Blob, no backend route). */
 function downloadCsv(rows: TraineeListRow[]) {
-  const header = ["Name", "Trainee ID", "District", "Consent"];
+  const header = ["Name", "Trainee ID", "District", "Consent", "Status"];
   const body = rows.map((r) => [
     r.fullName,
     r.publicId,
     r.district,
     r.consentGiven ? "Given" : "Pending",
+    r.lifecycleStatus ? STATUS_MAP[r.lifecycleStatus]?.label ?? "" : "",
   ]);
   const csv = [header, ...body]
     .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
@@ -72,6 +77,16 @@ const traineeColumns: ColumnDef<TraineeListRow, unknown>[] = [
       <StatusBadge status={row.original.consentGiven ? "GIVEN" : "PENDING_CONSENT"} />
     ),
   },
+  {
+    accessorKey: "lifecycleStatus",
+    header: "Status",
+    cell: ({ row }) =>
+      row.original.lifecycleStatus ? (
+        <StatusBadge status={row.original.lifecycleStatus} />
+      ) : (
+        <span className="text-body-sm text-muted-foreground">—</span>
+      ),
+  },
   rowActionsColumn((row) => (
     <Button variant="ghost" size="sm" asChild>
       <Link href={`/trainees/${row.publicId}`}>View</Link>
@@ -86,7 +101,16 @@ const traineeColumns: ColumnDef<TraineeListRow, unknown>[] = [
  * Column defs live here because cell renderers can't cross the server/client
  * boundary (same split as dashboard-view.tsx).
  */
-export function TraineesTable({ rows, query }: { rows: TraineeListRow[]; query: string }) {
+export function TraineesTable({
+  rows,
+  query,
+  status,
+}: {
+  rows: TraineeListRow[];
+  query: string;
+  /** Active lifecycle tab — preserved through the search form. */
+  status?: TraineeLifecycleTab;
+}) {
   return (
     <DataTable
       columns={traineeColumns}
@@ -95,6 +119,9 @@ export function TraineesTable({ rows, query }: { rows: TraineeListRow[]; query: 
       toolbar={
         <>
           <form method="GET" action="/trainees" className="relative w-full sm:w-56">
+            {status && status !== "ACTIVE" ? (
+              <input type="hidden" name="status" value={status} />
+            ) : null}
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
@@ -131,7 +158,10 @@ export function TraineesTable({ rows, query }: { rows: TraineeListRow[]; query: 
         <div className="rounded-lg border bg-card p-4">
           <div className="flex items-center justify-between gap-2">
             <p className="font-medium">{t.fullName}</p>
-            <StatusBadge status={t.consentGiven ? "GIVEN" : "PENDING_CONSENT"} />
+            <div className="flex items-center gap-1.5">
+              {t.lifecycleStatus ? <StatusBadge status={t.lifecycleStatus} /> : null}
+              <StatusBadge status={t.consentGiven ? "GIVEN" : "PENDING_CONSENT"} />
+            </div>
           </div>
           <div className="mt-2 flex items-center gap-1">
             <span className="font-mono text-caption text-primary-strong">{t.publicId}</span>
