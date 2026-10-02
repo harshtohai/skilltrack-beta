@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "~/server/db";
 import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
-import crypto from "crypto";
-import { sendMagicLinkEmail } from "~/lib/email";
+import { EmailSendError, mintAndSendLoginToken } from "~/server/magic-link";
 
 export const dynamic = "force-dynamic";
 
@@ -55,44 +54,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const token = crypto.randomBytes(32).toString("hex");
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
-
-    await db.traineeLoginToken.create({
-      data: {
-        traineeId: trainee.id,
-        tokenHash,
-        expiresAt,
-      },
-    });
-
-    const magicLink = `${process.env.APP_BASE_URL}/auth/trainee/${token}`;
-
-    if (data.channel === "EMAIL" && trainee.email) {
-      try {
-        await sendMagicLinkEmail(trainee.email, trainee.fullName, magicLink);
-      } catch (emailError) {
-        // The send failed — say so instead of claiming success. The raw link
-        // is never logged here; dev mock mode (no env keys) still logs it.
-        console.error("[MAGIC-LINK] Email send failed:", emailError);
+    try {
+      await mintAndSendLoginToken(trainee, data.channel);
+    } catch (sendError) {
+      if (sendError instanceof EmailSendError) {
         return createErrorResponse(
           "EMAIL_SEND_FAILED",
           "Couldn't send the email. Try again in a moment.",
           502,
         );
       }
+      throw sendError;
     }
-
-    await db.auditEvent.create({
-      data: {
-        entityType: "trainee_login_token",
-        entityId: tokenHash,
-        action: "LOGIN_SENT",
-        actorType: "SYSTEM",
-        metadata: { traineeId: trainee.id, channel: data.channel, email: trainee.email },
-      },
-    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

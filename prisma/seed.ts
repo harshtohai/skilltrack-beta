@@ -16,7 +16,7 @@
  * Compactness: ~3.5k rows total via batched createMany, 300 trainees, and a
  * deterministic PRNG so re-seeding reproduces the same dataset.
  */
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Gender } from "@prisma/client";
 import crypto from "crypto";
 
 const prisma = new PrismaClient({
@@ -360,7 +360,16 @@ async function main() {
       }
     }
   }
-  const traineeRows: Array<{ id: string; fullName: string; phoneE164: string; phoneEncrypted: string; phoneHash: string; email: string; district: string; language: string; consentGiven: boolean; consentGivenAt: Date | null; consentMethod: string | null; createdAt: Date }> = [];
+  /** Inclusive gender distribution (2026 norms); deterministic via the shared PRNG. */
+  function genderFor(): { gender: Gender; genderSelfDescribed: string | null } {
+    const r = rand();
+    if (r < 0.44) return { gender: "FEMALE", genderSelfDescribed: null };
+    if (r < 0.84) return { gender: "MALE", genderSelfDescribed: null };
+    if (r < 0.94) return { gender: "NON_BINARY", genderSelfDescribed: null };
+    if (r < 0.97) return { gender: "SELF_DESCRIBED", genderSelfDescribed: pick(["Genderfluid", "Agender", "Questioning", "Bigender"]) };
+    return { gender: "PREFER_NOT_TO_SAY", genderSelfDescribed: null };
+  }
+  const traineeRows: Array<{ id: string; fullName: string; phoneE164: string; phoneEncrypted: string; phoneHash: string; email: string; district: string; language: string; gender: Gender; genderSelfDescribed: string | null; consentGiven: boolean; consentGivenAt: Date | null; consentMethod: string | null; createdAt: Date }> = [];
   const plans: Array<{ id: string; certDate: Date; cohort: (typeof cohorts)[number] }> = [];
   for (let i = 0; i < TRAINEES; i++) {
     const cohort = cohorts[cohortPool[i]!]!;
@@ -370,6 +379,7 @@ async function main() {
     const last = pick(LAST_NAMES);
     const id = i === 0 ? DEMO_TRAINEE_ID : uuid();
     const consentGiven = chance(0.88);
+    const g = genderFor();
     traineeRows.push({
       id,
       fullName: `${first} ${last}`,
@@ -379,6 +389,8 @@ async function main() {
       email: `${first.toLowerCase()}.${last.toLowerCase()}${i}@example.com`,
       district: i === 0 ? "Chandrapur" : pick(districtPool), // demo trainee pinned (UI harness expects Chandrapur)
       language: pick(["EN", "HI", "MR"]),
+      gender: g.gender,
+      genderSelfDescribed: g.genderSelfDescribed,
       consentGiven,
       consentGivenAt: consentGiven ? addDays(certDate, -int(10, 60)) : null,
       consentMethod: consentGiven ? "WHATSAPP" : null,
