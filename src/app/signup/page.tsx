@@ -441,12 +441,15 @@ export default function SignupPage() {
 
       {/* Right: brand panel with dot-matrix art + testimonial (§9.3) */}
       <div className="hidden lg:flex flex-col justify-center gap-10 bg-muted p-10">
-        <div className="flex items-center justify-center">
-          <DotSparkline
-            data={BRAND_SPARK}
-            color="var(--chart-1)"
-            ariaLabel="Decorative placement trend"
-          />
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-title font-medium text-foreground">Placement trends</span>
+          <div className="w-36 shrink-0">
+            <DotSparkline
+              data={BRAND_SPARK}
+              color="var(--chart-1)"
+              ariaLabel="Placement trends"
+            />
+          </div>
         </div>
         <figure className="mx-auto max-w-sm space-y-3">
           <blockquote className="text-h2 font-semibold tracking-tight text-foreground">
