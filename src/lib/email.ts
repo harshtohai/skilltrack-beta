@@ -21,7 +21,7 @@ function renderMagicLinkHtml(name: string, magicLink: string, otp: string, progr
             <a href="${magicLink}" style="display: inline-block; background: #3b82f6; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">Sign In to OutcomeTrack</a>
           </div>
 
-          <p style="color: #4b5563; font-size: 14px; text-align: center; margin: 0 0 8px;">Or enter this code on the verification page:</p>
+          <p style="color: #4b5563; font-size: 14px; text-align: center; margin: 0 0 8px;">Or enter this code on <a href="${process.env.APP_BASE_URL}/auth/trainee" style="color: #3b82f6; text-decoration: underline;">the verification page</a>:</p>
           <div style="text-align: center; margin: 0 0 30px;">
             <span style="display: inline-block; font-size: 28px; font-weight: 700; letter-spacing: 8px; color: #1f2937; background: #f3f4f6; padding: 14px 20px; border-radius: 8px;">${otp}</span>
           </div>

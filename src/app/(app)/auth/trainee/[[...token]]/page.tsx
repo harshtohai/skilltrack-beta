@@ -180,7 +180,7 @@ function OtpSlots({
 export default function TraineeAuthPage() {
   const params = useParams();
   const router = useRouter();
-  const token = params.token as string;
+  const token = Array.isArray(params.token) ? (params.token[0] ?? "") : (params.token ?? "");
   const [profile, setProfile] = useState<TraineeProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
