@@ -21,7 +21,11 @@ import type { UserRole } from "~/lib/protected-routes";
 export type NavItem = { label: string; href: string; icon: LucideIcon };
 export type NavGroup = { label?: string; items: NavItem[] };
 
-/** Operations surfaces — identical for admin and institute (shared reference). */
+/**
+ * Government-operations surfaces — admin only (INST-01/INST-02): the pages
+ * are admin-only routes, so institute clicks would 403. Institute gets a
+ * flat tracking group instead (see navForRole.institute).
+ */
 const OPERATIONS: NavGroup = {
   label: "Operations",
   items: [
@@ -44,14 +48,19 @@ export const navForRole: Record<UserRole, NavGroup[]> = {
     OPERATIONS,
   ],
   institute: [
+    // INST-02: exactly Dashboard · All trainees · Add trainee · Institute
+    // analytics. The gov-operations pages were dropped — they are admin-only
+    // routes (institute clicks would 403), and "Add trainee" targets the
+    // institute's enrollment flow.
     {
       label: "Tracking",
       items: [
         { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+        { label: "All trainees", href: "/trainees", icon: Users },
+        { label: "Add trainee", href: "/trainees/add", icon: CirclePlus },
         { label: "Institute analytics", href: "/institute/analytics", icon: BarChart3 },
       ],
     },
-    OPERATIONS,
   ],
   employer: [
     {

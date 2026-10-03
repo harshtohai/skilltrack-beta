@@ -23,7 +23,9 @@ export type StatusKey =
   // employer_verification_status
   | "PENDING" | "VERIFIED" | "SUSPENDED"
   // generic
-  | "GIVEN" | "PENDING_CONSENT";
+  | "GIVEN" | "PENDING_CONSENT"
+  // enrolment lifecycle (INST-03)
+  | "ACTIVE" | "DROPPED_OUT" | "COMPLETED";
 
 const STATUS_MAP: Record<StatusKey, { label: string; badge: "success" | "warning" | "danger" | "info" | "neutral" }> = {
   // outcomes — green = good (CL-24), red only for genuinely bad states
@@ -63,6 +65,10 @@ const STATUS_MAP: Record<StatusKey, { label: string; badge: "success" | "warning
   // consent
   GIVEN: { label: "Given", badge: "success" },
   PENDING_CONSENT: { label: "Pending", badge: "warning" },
+  // enrolment lifecycle — §4.10 map: Active → success, Dropped out → neutral, Completed → info
+  ACTIVE: { label: "Active", badge: "success" },
+  DROPPED_OUT: { label: "Dropped out", badge: "neutral" },
+  COMPLETED: { label: "Completed", badge: "info" },
 };
 
 const BADGE_VARIANT = {

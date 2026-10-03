@@ -100,16 +100,14 @@ export default async function LandingPage() {
                   <Link href="#how-it-works">See how it works</Link>
                 </Button>
               </div>
-              {/* Signature dot-matrix band (on-brand, decorative) */}
+              {/* Signature dot-matrix band (on-brand) */}
               <div className="mt-14 w-full max-w-xl rounded-2xl border bg-card p-6" aria-hidden>
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="text-caption font-medium text-muted-foreground">Placement outcomes, last 20 months</span>
-                  <span className="inline-flex items-center gap-1.5 text-caption text-success-text">
-                    <span className="size-1.5 rounded-full bg-success" />
-                    On track
-                  </span>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-title font-medium text-foreground">Placement trends</span>
+                  <div className="w-36 shrink-0">
+                    <DotSparkline data={HERO_SPARK} color="var(--chart-1)" ariaLabel="Placement trends" />
+                  </div>
                 </div>
-                <DotSparkline data={HERO_SPARK} color="var(--chart-1)" ariaLabel="Decorative placement trend" />
               </div>
             </div>
           </div>

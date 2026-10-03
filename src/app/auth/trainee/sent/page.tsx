@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -13,12 +13,28 @@ import { Button } from "~/components/ui/button";
  * feedback (§4.9); info rows in a bg-muted panel (§4.4).
  */
 
+/** Matches the server-side 30s token cooldown in the magic-link route. */
+const RESEND_COOLDOWN_S = 30;
+
 function MagicLinkSentContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "your email";
   const [resending, setResending] = useState(false);
+  const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_S);
+
+  const cooldownActive = cooldown > 0;
+
+  // Live countdown; interval only runs while cooling down, cleanup on unmount.
+  useEffect(() => {
+    if (!cooldownActive) return;
+    const timer = setInterval(() => {
+      setCooldown((s) => Math.max(0, s - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldownActive]);
 
   const handleResend = async () => {
+    setCooldown(RESEND_COOLDOWN_S);
     setResending(true);
     try {
       const res = await fetch("/api/v1/trainee/magic-link", {
@@ -27,8 +43,13 @@ function MagicLinkSentContent() {
         body: JSON.stringify({ email, channel: "EMAIL" }),
       });
       if (!res.ok) {
-        const json = (await res.json()) as { error?: string };
-        throw new Error(json.error ?? "Failed to resend magic link");
+        const json = (await res.json()) as {
+          error?: { message?: string; retryAfter?: number };
+        };
+        if (res.status === 429 && typeof json.error?.retryAfter === "number") {
+          setCooldown(json.error.retryAfter);
+        }
+        throw new Error(json.error?.message ?? "Failed to resend magic link");
       }
       toast.success("Magic link resent", {
         description: "Check your inbox — it can take a minute to arrive.",
@@ -68,8 +89,9 @@ function MagicLinkSentContent() {
             <div className="space-y-1">
               <h2 className="text-h2 font-semibold">Check your inbox</h2>
               <p className="text-caption text-muted-foreground">
-                We sent a magic link to{" "}
-                <span className="font-mono text-foreground">{email}</span>
+                If an account exists for{" "}
+                <span className="font-mono text-foreground">{email}</span>,
+                we’ve sent a login link.
               </p>
             </div>
           </div>
@@ -109,11 +131,16 @@ function MagicLinkSentContent() {
             className="mt-6 w-full"
             size="lg"
             onClick={handleResend}
-            disabled={resending}
+            disabled={resending || cooldownActive}
           >
             <RefreshCw className={resending ? "animate-spin" : undefined} aria-hidden />
-            {resending ? "Sending..." : "Resend Link"}
+            Resend link
           </Button>
+          {cooldownActive ? (
+            <p className="mt-1.5 text-caption tabular-nums text-muted-foreground">
+              You can request a new link in {cooldown}s
+            </p>
+          ) : null}
         </div>
 
         {/* Footer links below card (§9.2) */}

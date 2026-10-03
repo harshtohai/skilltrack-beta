@@ -4,27 +4,34 @@
 
 export type UserRole = "admin" | "institute" | "employer" | "trainee";
 
-export const protectedRoutes: { path: string; roles: UserRole[] }[] = [
+export const protectedRoutes: {
+  path: string;
+  roles: UserRole[];
+  /** Methods that skip the role check (e.g. unauthenticated self-signup POST). */
+  publicMethods?: string[];
+}[] = [
   // Pages — order matters: "/trainees" must precede "/trainee" (startsWith).
   { path: "/admin", roles: ["admin"] },
   { path: "/institute", roles: ["institute", "admin"] },
   { path: "/employer", roles: ["employer", "admin"] },
+  { path: "/trainees/add", roles: ["institute", "admin"] }, // INST-02: add-trainee flow (only the institute nav links it)
   { path: "/trainees", roles: ["admin", "institute"] },
   { path: "/trainee", roles: ["trainee"] },
   { path: "/dashboard", roles: ["admin", "institute", "trainee"] },
-  { path: "/followups", roles: ["admin", "institute"] },
+  { path: "/followups", roles: ["admin"] }, // INST-01: gov-authority surface
   { path: "/cohorts", roles: ["admin", "institute"] },
-  { path: "/conflicts", roles: ["admin", "institute"] },
-  { path: "/audit-logs", roles: ["admin", "institute"] },
+  { path: "/conflicts", roles: ["admin"] }, // INST-01: gov-authority surface
+  { path: "/audit-logs", roles: ["admin"] }, // INST-01: gov-authority surface
   // API — server-side data endpoints. Client pages fetch these with the
   // session cookie, so edge pre-checks don't break them.
   { path: "/api/v1/outcomes/government", roles: ["admin"] },
   { path: "/api/v1/outcomes/institute", roles: ["institute", "admin"] },
   { path: "/api/v1/kpis/overview", roles: ["admin", "institute", "trainee"] },
-  { path: "/api/v1/followups", roles: ["admin", "institute"] },
-  { path: "/api/v1/conflicts", roles: ["admin", "institute"] },
-  { path: "/api/v1/audit-logs", roles: ["admin", "institute"] },
-  { path: "/api/v1/trainees", roles: ["admin", "institute"] },
+  { path: "/api/v1/kpis/center-standing", roles: ["institute"] }, // INST-04: center dashboard standing
+  { path: "/api/v1/followups", roles: ["admin"] }, // INST-01: gov-authority surface
+  { path: "/api/v1/conflicts", roles: ["admin"] }, // INST-01: gov-authority surface
+  { path: "/api/v1/audit-logs", roles: ["admin"] }, // INST-01: gov-authority surface
+  { path: "/api/v1/trainees", roles: ["admin", "institute"], publicMethods: ["POST"] }, // GET center-scoped for institutes; POST = public self-signup
   { path: "/api/v1/cohorts", roles: ["admin", "institute"] },
   { path: "/api/v1/demo", roles: ["admin", "institute"] },
   { path: "/api/v1/employer/me", roles: ["employer", "admin"] },

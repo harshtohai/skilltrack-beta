@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Calendar, Briefcase, Award, ShieldCheck, AlertTriangle, ChevronRight } from "lucide-react";
+import { Calendar, Briefcase, Award, ShieldCheck, AlertTriangle, ChevronRight, UserMinus } from "lucide-react";
 import { db } from "~/server/db";
+import { getSessionScope } from "~/server/scope";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { CopyButton } from "~/components/copy-button";
@@ -10,6 +11,7 @@ import { Skeleton } from "~/components/patterns/skeleton";
 import { StatusBadge, type StatusKey } from "~/components/patterns/status-badge";
 import { datetime } from "~/lib/format";
 import { maskPhoneE164 } from "~/lib/utils";
+import { TraineeActions } from "./trainee-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +39,7 @@ async function getTrainee(publicId: string) {
 }
 
 interface BaseEvent {
-  type: "CERTIFICATION" | "FOLLOWUP" | "CLAIM" | "VERIFICATION";
+  type: "CERTIFICATION" | "FOLLOWUP" | "CLAIM" | "VERIFICATION" | "DROPOUT";
   date: Date;
   title: string;
   description: string;
@@ -64,7 +66,12 @@ interface VerificationEvent extends BaseEvent {
   metadata: { verificationId: string; action: string | null; claimId: string };
 }
 
-type TimelineEvent = CertificationEvent | FollowupEvent | ClaimEvent | VerificationEvent;
+interface DropoutEvent extends BaseEvent {
+  type: "DROPOUT";
+  metadata: { enrolmentId: string; cohortId: string; programmeId: string };
+}
+
+type TimelineEvent = CertificationEvent | FollowupEvent | ClaimEvent | VerificationEvent | DropoutEvent;
 
 async function getTimeline(traineeId: string): Promise<TimelineEvent[]> {
   const [enrolments, followups, claims, verifications] = await Promise.all([
@@ -90,14 +97,28 @@ async function getTimeline(traineeId: string): Promise<TimelineEvent[]> {
   ]);
 
   const events: TimelineEvent[] = [
-    ...enrolments.map((e): CertificationEvent => ({
-      type: "CERTIFICATION",
-      date: e.certificationDate,
-      title: `Certified: ${e.cohort.programme.name} - ${e.cohort.name}`,
-      description: `Completed training in ${e.cohort.programme.code}`,
-      metadata: { cohortId: e.cohortId, programmeId: e.cohort.programmeId },
-      icon: Award,
-    })),
+    // Dropped-out enrolments render the dropout node INSTEAD of the "Certified"
+    // node (they never completed) — INST-03, same §9.5 timeline style.
+    ...enrolments.flatMap((e): TimelineEvent[] => {
+      if (e.status === "DROPPED_OUT") {
+        return [{
+          type: "DROPOUT",
+          date: e.updatedAt,
+          title: `Dropped out of ${e.cohort.programme.name}`,
+          description: `${e.cohort.name} · ${e.cohort.programme.code}`,
+          metadata: { enrolmentId: e.id, cohortId: e.cohortId, programmeId: e.cohort.programmeId },
+          icon: UserMinus,
+        }];
+      }
+      return [{
+        type: "CERTIFICATION",
+        date: e.certificationDate,
+        title: `Certified: ${e.cohort.programme.name} - ${e.cohort.name}`,
+        description: `Completed training in ${e.cohort.programme.code}`,
+        metadata: { cohortId: e.cohortId, programmeId: e.cohort.programmeId },
+        icon: Award,
+      }];
+    }),
     ...followups.map((f): FollowupEvent => ({
       type: "FOLLOWUP",
       date: f.sentAt ?? f.createdAt,
@@ -263,6 +284,38 @@ export default async function TraineeDetailPage({ params }: { params: Promise<{ 
     ? trainee.employmentClaims.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
     : null;
 
+  // INST-03 lifecycle: derived status ACTIVE > COMPLETED > DROPPED_OUT.
+  const lifecycleStatus = trainee.enrolments.some((e) => e.status === "ACTIVE")
+    ? "ACTIVE"
+    : trainee.enrolments.some((e) => e.status === "COMPLETED")
+      ? "COMPLETED"
+      : trainee.enrolments.length > 0
+        ? "DROPPED_OUT"
+        : null;
+
+  // Move/drop-out are admin+institute actions; institutes only within their
+  // center (INST-01) and — for moves — only while the trainee has zero
+  // progress data (followupEvents count 0, the checkpoints proxy).
+  const scope = await getSessionScope();
+  const activeEnrolments = trainee.enrolments.filter((e) => e.status === "ACTIVE");
+  const inScope = !scope.centerId || trainee.enrolments.some((e) => e.cohort.trainingCenterId === scope.centerId);
+  const [followupCount, cohortRows] = await Promise.all([
+    db.followupEvent.count({ where: { traineeId: trainee.id } }),
+    // Cohorts of the trainee's active programmes, excluding any cohort they
+    // already have an enrolment record in (the unique constraint would 409).
+    db.cohort.findMany({
+      where: {
+        programmeId: { in: activeEnrolments.map((e) => e.cohort.programmeId) },
+        id: { notIn: trainee.enrolments.map((e) => e.cohortId) },
+        ...(scope.centerId ? { trainingCenterId: scope.centerId } : {}),
+      },
+      select: { id: true, name: true, programme: { select: { name: true } } },
+      orderBy: { startDate: "desc" },
+    }),
+  ]);
+  const canMove = activeEnrolments.length > 0 && inScope && (scope.role === "admin" || followupCount === 0);
+  const canDrop = activeEnrolments.length > 0 && inScope;
+
   return (
     <div>
       {/* Breadcrumb (§9.5 — above H1, mb-2) */}
@@ -281,12 +334,21 @@ export default async function TraineeDetailPage({ params }: { params: Promise<{ 
         <span className="text-foreground" aria-current="page">{trainee.fullName}</span>
       </nav>
 
-      {/* H1 + status badge (§9.5 header) */}
+      {/* H1 + status badges + lifecycle actions (§9.5 header) */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-h1 font-medium tracking-tight">{trainee.fullName}</h1>
+          {lifecycleStatus ? <StatusBadge status={lifecycleStatus} /> : null}
           <StatusBadge status={trainee.consentGiven ? "GIVEN" : "PENDING_CONSENT"} />
         </div>
+        <TraineeActions
+          publicId={trainee.publicId}
+          traineeName={trainee.fullName}
+          programmeName={activeEnrolments[0]?.cohort.programme.name ?? ""}
+          canMove={canMove}
+          canDrop={canDrop}
+          cohorts={cohortRows.map((c) => ({ id: c.id, name: c.name, programmeName: c.programme.name }))}
+        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">

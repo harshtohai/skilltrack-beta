@@ -1,33 +1,46 @@
 import { NextResponse } from "next/server";
 import { db } from "~/server/db";
+import { getSessionScope } from "~/server/scope";
 import { createErrorResponse } from "../../_utils";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    // INST-04: institutes see only their center's numbers, filtered through
+    // cohorts (same center claim as the trainees route); admin stays unscoped.
+    // Claims and followups reach the center via the trainee's enrolments.
+    const scope = await getSessionScope();
+    const centerFilter = scope.centerId
+      ? { cohort: { trainingCenterId: scope.centerId } }
+      : null;
+    const viaTrainee = centerFilter
+      ? { trainee: { enrolments: { some: centerFilter } } }
+      : {};
+
     // Total certified trainees
     const totalTrainees = await db.trainee.count({
       where: {
-        enrolments: { some: {} },
+        enrolments: { some: centerFilter ?? {} },
       },
     });
 
     // Trainees with known outcome (not UNKNOWN)
     const traineesWithOutcome = await db.trainee.count({
       where: {
+        ...(centerFilter ? { enrolments: { some: centerFilter } } : {}),
         outcomeEvents: { some: { outcomeStatus: { not: "UNKNOWN" } } },
       },
     });
 
     // Trainees with verified employment (EMPLOYER_CONFIRMED)
     const verifiedEmployed = await db.employmentClaim.count({
-      where: { verificationStatus: "EMPLOYER_CONFIRMED" },
+      where: { verificationStatus: "EMPLOYER_CONFIRMED", ...viaTrainee },
     });
 
     // Conflicts
     const conflicts = await db.employmentClaim.count({
-      where: { verificationStatus: "CONFLICT" },
+      where: { verificationStatus: "CONFLICT", ...viaTrainee },
     });
 
     // Funnel data
@@ -40,29 +53,40 @@ export async function GET() {
           { employerName: { not: null } },
           { nonPlacementReason: { not: null } },
         ],
+        ...viaTrainee,
       },
     });
     const verified = verifiedEmployed;
 
     // Follow-up response rate
-    const followupsSent = await db.followupEvent.count({ where: { status: "SENT" } });
-    const followupsResponded = await db.followupEvent.count({ where: { status: "RESPONDED" } });
+    const followupsSent = await db.followupEvent.count({
+      where: { status: "SENT", ...viaTrainee },
+    });
+    const followupsResponded = await db.followupEvent.count({
+      where: { status: "RESPONDED", ...viaTrainee },
+    });
 
-    // Recent activity timeline (latest events across all trainees)
+    // Recent activity timeline (latest events across the scoped trainees)
     const [recentFollowups, recentClaims, recentVerifications] = await Promise.all([
       db.followupEvent.findMany({
-        where: { status: { in: ["SENT", "RESPONDED"] } },
+        where: { status: { in: ["SENT", "RESPONDED"] }, ...viaTrainee },
         include: { trainee: true },
         orderBy: { createdAt: "desc" },
         take: 8,
       }),
       db.employmentClaim.findMany({
+        where: viaTrainee,
         include: { trainee: true },
         orderBy: { createdAt: "desc" },
         take: 8,
       }),
       db.verificationRequest.findMany({
-        where: { usedAt: { not: null } },
+        where: {
+          usedAt: { not: null },
+          ...(centerFilter
+            ? { employmentClaim: { trainee: { enrolments: { some: centerFilter } } } }
+            : {}),
+        },
         include: { employmentClaim: { include: { trainee: true } } },
         orderBy: { createdAt: "desc" },
         take: 8,

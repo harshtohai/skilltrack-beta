@@ -36,6 +36,8 @@ interface TraineeProfile {
   email: string | null;
   district: string;
   language: string;
+  gender: string;
+  genderSelfDescribed: string | null;
   consentGiven: boolean;
   consentGivenAt: string | null;
   consentMethod: string | null;
@@ -56,6 +58,14 @@ const SUB_NAV = [
   { label: "Employment", href: "#employment" },
   { label: "Outcomes", href: "#outcomes" },
 ] as const;
+
+const GENDER_LABELS: Record<string, string> = {
+  FEMALE: "Female",
+  MALE: "Male",
+  NON_BINARY: "Non-binary",
+  SELF_DESCRIBED: "Prefer to self-describe",
+  PREFER_NOT_TO_SAY: "Prefer not to say",
+};
 
 function ProfileSkeleton() {
   return (
@@ -82,6 +92,8 @@ export default function TraineeProfilePage() {
   const [email, setEmail] = useState("");
   const [district, setDistrict] = useState("");
   const [language, setLanguage] = useState("");
+  const [gender, setGender] = useState("PREFER_NOT_TO_SAY");
+  const [genderSelfDescribed, setGenderSelfDescribed] = useState("");
   const [activeSection, setActiveSection] = useState<string>("profile-details");
 
   const loadProfile = useCallback(async () => {
@@ -99,6 +111,8 @@ export default function TraineeProfilePage() {
       setEmail(json.trainee.email ?? "");
       setDistrict(json.trainee.district);
       setLanguage(json.trainee.language);
+      setGender(json.trainee.gender ?? "PREFER_NOT_TO_SAY");
+      setGenderSelfDescribed(json.trainee.genderSelfDescribed ?? "");
       setError("");
     } catch (err) {
       console.error("Profile load error:", err);
@@ -126,6 +140,8 @@ export default function TraineeProfilePage() {
           email: email.trim() || null,
           district,
           language,
+          gender,
+          genderSelfDescribed: gender === "SELF_DESCRIBED" ? genderSelfDescribed.trim() || null : null,
         }),
       });
       if (!res.ok) {
@@ -156,7 +172,9 @@ export default function TraineeProfilePage() {
     ? fullName !== data.trainee.fullName ||
       email !== (data.trainee.email ?? "") ||
       district !== data.trainee.district ||
-      language !== data.trainee.language
+      language !== data.trainee.language ||
+      gender !== data.trainee.gender ||
+      genderSelfDescribed !== (data.trainee.genderSelfDescribed ?? "")
     : false;
 
   // Leave guard per §10 settings flow: warn before leaving with unsaved edits.
@@ -184,6 +202,14 @@ export default function TraineeProfilePage() {
   }
 
   const trainee = data.trainee;
+
+  // Self-reported gender for the info list; "—" when prefer-not-to-say/unset.
+  const genderDisplay =
+    trainee.gender === "SELF_DESCRIBED" && trainee.genderSelfDescribed
+      ? trainee.genderSelfDescribed
+      : trainee.gender && trainee.gender !== "PREFER_NOT_TO_SAY"
+        ? (GENDER_LABELS[trainee.gender] ?? "—")
+        : "—";
 
   return (
     <div className="lg:flex lg:gap-8">
@@ -270,12 +296,43 @@ export default function TraineeProfilePage() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="gender">Gender</Label>
+                <Select value={gender} onValueChange={setGender}>
+                  <SelectTrigger id="gender" className="w-full">
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="FEMALE">Female</SelectItem>
+                    <SelectItem value="MALE">Male</SelectItem>
+                    <SelectItem value="NON_BINARY">Non-binary</SelectItem>
+                    <SelectItem value="SELF_DESCRIBED">Prefer to self-describe</SelectItem>
+                    <SelectItem value="PREFER_NOT_TO_SAY">Prefer not to say</SelectItem>
+                  </SelectContent>
+                </Select>
+                {gender === "SELF_DESCRIBED" ? (
+                  <>
+                    <Label htmlFor="genderSelfDescribed">Describe your gender</Label>
+                    <Input
+                      id="genderSelfDescribed"
+                      value={genderSelfDescribed}
+                      onChange={(e) => setGenderSelfDescribed(e.target.value)}
+                      maxLength={100}
+                    />
+                  </>
+                ) : null}
+              </div>
             </div>
 
             <Button
               className="mt-6 gap-2"
               onClick={() => void handleSave()}
-              disabled={saving || !dirty || !fullName.trim()}
+              disabled={
+                saving ||
+                !dirty ||
+                !fullName.trim() ||
+                (gender === "SELF_DESCRIBED" && !genderSelfDescribed.trim())
+              }
             >
               {saving ? <Loader2 className="animate-spin" /> : <Save />}
               {saving ? "Saving…" : "Save Changes"}
@@ -302,6 +359,10 @@ export default function TraineeProfilePage() {
                   <span className="text-caption text-muted-foreground">{datetime(trainee.consentGivenAt)}</span>
                 ) : null}
               </div>
+            </div>
+            <div className="flex items-center justify-between gap-4 border-b py-4">
+              <span className="text-body-sm text-muted-foreground">Gender</span>
+              <span className="text-body-sm font-medium">{genderDisplay}</span>
             </div>
           </CardContent>
         </Card>

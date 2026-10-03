@@ -94,17 +94,21 @@ function DotSparkline({
           );
         })}
       </svg>
-      <table className="sr-only">
-        <caption>{ariaLabel}</caption>
-        <tbody>
-          {points.map((v, i) => (
-            <tr key={i}>
-              <th scope="row">Point {i + 1}</th>
-              <td className="tabular-nums">{v}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* sr-only data table fallback — wrapped so the table's natural height
+          (tables treat height as a minimum) cannot extend the page's scroll area */}
+      <div className="sr-only">
+        <table>
+          <caption>{ariaLabel}</caption>
+          <tbody>
+            {points.map((v, i) => (
+              <tr key={i}>
+                <th scope="row">Point {i + 1}</th>
+                <td className="tabular-nums">{v}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

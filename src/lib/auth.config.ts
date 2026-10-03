@@ -35,10 +35,12 @@ declare module "next-auth" {
       email?: string | null;
       name?: string | null;
       role: UserRole;
+      instituteCenterId?: string | null;
     };
   }
   interface User {
     role: UserRole;
+    instituteCenterId?: string | null;
   }
 }
 
@@ -54,6 +56,7 @@ export const authConfig = {
     session({ session, token }) {
       session.user.id = token.sub ?? "";
       session.user.role = (token.role as UserRole) ?? "trainee";
+      session.user.instituteCenterId = (token.instituteCenterId as string | undefined) ?? null;
       return session;
     },
     authorized({ auth, request }) {

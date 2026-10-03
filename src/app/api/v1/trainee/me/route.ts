@@ -18,6 +18,8 @@ const patchSchema = z.object({
   email: z.string().email().max(200).nullable().optional(),
   district: z.string().max(60).optional(),
   language: z.enum(["EN", "HI", "MR"]).optional(),
+  gender: z.enum(["FEMALE", "MALE", "NON_BINARY", "SELF_DESCRIBED", "PREFER_NOT_TO_SAY"]).optional(),
+  genderSelfDescribed: z.string().max(100).nullable().optional(),
 });
 
 async function requireTrainee() {
@@ -54,6 +56,8 @@ export async function GET() {
         email: trainee.email,
         district: trainee.district,
         language: trainee.language,
+        gender: trainee.gender,
+        genderSelfDescribed: trainee.genderSelfDescribed,
         consentGiven: trainee.consentGiven,
         consentGivenAt: trainee.consentGivenAt?.toISOString() ?? null,
         consentMethod: trainee.consentMethod,
@@ -113,18 +117,27 @@ export async function PATCH(request: NextRequest) {
     const body = (await request.json()) as unknown;
     const data = patchSchema.parse(body);
 
-    // Only name/email/district/language are editable; phone, consent,
+    // Only name/email/district/language/gender are editable; phone, consent,
     // publicId and outcome data are locked.
     const update: {
       fullName?: string;
       email?: string | null;
       district?: string;
       language?: "EN" | "HI" | "MR";
+      gender?: "FEMALE" | "MALE" | "NON_BINARY" | "SELF_DESCRIBED" | "PREFER_NOT_TO_SAY";
+      genderSelfDescribed?: string | null;
     } = {};
     if (data.fullName !== undefined) update.fullName = data.fullName.trim();
     if (data.email !== undefined) update.email = data.email?.toLowerCase().trim() ?? null;
     if (data.district !== undefined) update.district = data.district.trim();
     if (data.language !== undefined) update.language = data.language;
+    if (data.gender !== undefined) {
+      update.gender = data.gender;
+      // Self-described text only applies to SELF_DESCRIBED — clear otherwise.
+      update.genderSelfDescribed = data.gender === "SELF_DESCRIBED" ? (data.genderSelfDescribed?.trim() ?? null) : null;
+    } else if (data.genderSelfDescribed !== undefined) {
+      update.genderSelfDescribed = data.genderSelfDescribed?.trim() ?? null;
+    }
 
     if (Object.keys(update).length === 0) {
       return createErrorResponse("VALIDATION_ERROR", "No editable fields provided", 400);

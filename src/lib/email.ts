@@ -1,4 +1,4 @@
-function renderMagicLinkHtml(name: string, magicLink: string): string {
+function renderMagicLinkHtml(name: string, magicLink: string, otp: string, programme?: string): string {
   return `
     <!DOCTYPE html>
     <html>
@@ -14,10 +14,16 @@ function renderMagicLinkHtml(name: string, magicLink: string): string {
 
         <div style="background: #fefefe; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
           <h2 style="color: #1f2937; margin-top: 0;">Hi ${name},</h2>
+          ${programme ? `<p style="color: #4b5563; font-size: 14px;">You've been enrolled in <strong>${programme}</strong>.</p>` : ""}
           <p style="color: #4b5563; font-size: 16px;">We received a request to sign in to your OutcomeTrack account. Click the button below to access your dashboard:</p>
 
           <div style="text-align: center; margin: 30px 0;">
             <a href="${magicLink}" style="display: inline-block; background: #3b82f6; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">Sign In to OutcomeTrack</a>
+          </div>
+
+          <p style="color: #4b5563; font-size: 14px; text-align: center; margin: 0 0 8px;">Or enter this code on <a href="${process.env.APP_BASE_URL}/auth/trainee" style="color: #3b82f6; text-decoration: underline;">the verification page</a>:</p>
+          <div style="text-align: center; margin: 0 0 30px;">
+            <span style="display: inline-block; font-size: 28px; font-weight: 700; letter-spacing: 8px; color: #1f2937; background: #f3f4f6; padding: 14px 20px; border-radius: 8px;">${otp}</span>
           </div>
 
           <p style="color: #6b7280; font-size: 14px;">Or copy this link into your browser:</p>
@@ -39,11 +45,11 @@ function renderMagicLinkHtml(name: string, magicLink: string): string {
   `;
 }
 
-export async function sendMagicLinkEmail(email: string, name: string, magicLink: string): Promise<void> {
+export async function sendMagicLinkEmail(email: string, name: string, magicLink: string, otp: string, programme?: string): Promise<void> {
   const apiKey = process.env.BREVO_API_KEY;
   const from = process.env.EMAIL_FROM;
   if (!apiKey || !from) {
-    console.log(`[EMAIL-MOCK] Magic link sent to ${email}: ${magicLink}`);
+    console.log(`[EMAIL-MOCK] Magic link sent to ${email}: ${magicLink} (OTP: ${otp})`);
     return;
   }
 
@@ -58,7 +64,7 @@ export async function sendMagicLinkEmail(email: string, name: string, magicLink:
       sender: { name: "OutcomeTrack", email: from },
       to: [{ email }],
       subject: "Your OutcomeTrack Magic Link",
-      htmlContent: renderMagicLinkHtml(name, magicLink),
+      htmlContent: renderMagicLinkHtml(name, magicLink, otp, programme),
     }),
   });
 

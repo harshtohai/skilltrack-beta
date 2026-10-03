@@ -17,6 +17,8 @@ export default auth((req) => {
   );
 
   if (!routeConfig) return NextResponse.next();
+  // Entries can exempt specific methods (e.g. trainee self-signup POST).
+  if (routeConfig.publicMethods?.includes(req.method)) return NextResponse.next();
   if (role && routeConfig.roles.includes(role)) return NextResponse.next();
 
   // API routes get JSON status codes, pages get a login redirect.

@@ -12,5 +12,11 @@ export default async function DashboardPage() {
   const role = session?.user?.role ?? "trainee";
   const name = session?.user?.name ?? "";
 
-  return <DashboardView userName={name} isTrainee={role === "trainee"} />;
+  return (
+    <DashboardView
+      userName={name}
+      isTrainee={role === "trainee"}
+      isInstitute={role === "institute"}
+    />
+  );
 }
