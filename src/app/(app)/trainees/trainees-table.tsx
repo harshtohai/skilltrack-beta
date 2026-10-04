@@ -132,9 +132,18 @@ export function TraineesTable({
               name="q"
               defaultValue={query}
               placeholder="Search by ID or name…"
-              className="h-8 pl-10"
+              className="h-8 pl-10 pr-9"
               aria-label="Search trainees"
             />
+            <Button
+              type="submit"
+              variant="outline"
+              size="icon-sm"
+              aria-label="Search"
+              className="absolute right-1 top-1/2 -translate-y-1/2"
+            >
+              <Search />
+            </Button>
           </form>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

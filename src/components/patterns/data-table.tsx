@@ -104,9 +104,6 @@ function DataTable<TData>({
     return Array.from({ length: 5 }, (_, i) => start + i);
   }, [pageIndex, pageTotal]);
 
-  const allSelected = rows.length > 0 && rows.every((r) => rowSelection[r.id]);
-  const someSelected = rows.some((r) => rowSelection[r.id]);
-
   return (
     <div
       data-slot="data-table"
