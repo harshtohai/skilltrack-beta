@@ -29,9 +29,12 @@ export function decryptPhone(encryptedData: string): string {
   
   const decipher = crypto.createDecipheriv(ALGORITHM, getKey(), iv);
   decipher.setAuthTag(authTag);
-  
-  const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
-  return `+91${decrypted.toString("utf8")}`;
+
+  const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]).toString("utf8");
+  // encryptPhone stores digits only ( country code included), so reconstruct the
+  // E.164 through the same normalization instead of blindly prepending +91 —
+  // a blind prefix double-prefixed 12-digit values (+91 + 91981200…).
+  return normalizePhoneE164(decrypted);
 }
 
 export function hashPhone(phoneE164: string): string {

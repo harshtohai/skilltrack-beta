@@ -105,17 +105,21 @@ export function TraineesTable({
   rows,
   query,
   status,
+  total,
 }: {
   rows: TraineeListRow[];
   query: string;
   /** Active lifecycle tab — preserved through the search form. */
   status?: TraineeLifecycleTab;
+  /** Server-side total (all pages) — makes the DataTable count honest. */
+  total?: number;
 }) {
   return (
     <DataTable
       columns={traineeColumns}
       data={rows}
       title="All trainees"
+      serverTotal={total}
       toolbar={
         <>
           <form method="GET" action="/trainees" className="relative w-full sm:w-56">

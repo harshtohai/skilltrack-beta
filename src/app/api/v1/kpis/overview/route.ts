@@ -33,9 +33,15 @@ export async function GET() {
       },
     });
 
-    // Trainees with verified employment (EMPLOYER_CONFIRMED)
-    const verifiedEmployed = await db.employmentClaim.count({
-      where: { verificationStatus: "EMPLOYER_CONFIRMED", ...viaTrainee },
+    // Trainees with verified employment (EMPLOYER_CONFIRMED) — trainee-based so
+    // the funnel and the placement rate stay consistent with the certified and
+    // outcome-known counts (a trainee with several claims must not count twice;
+    // claim-based counts made the rate exceed 100%).
+    const verifiedEmployed = await db.trainee.count({
+      where: {
+        employmentClaims: { some: { verificationStatus: "EMPLOYER_CONFIRMED" } },
+        ...(centerFilter ? { enrolments: { some: centerFilter } } : {}),
+      },
     });
 
     // Conflicts
@@ -46,14 +52,20 @@ export async function GET() {
     // Funnel data
     const certified = totalTrainees;
     const outcomeKnown = traineesWithOutcome;
-    const employed = await db.employmentClaim.count({
+    // Employed = trainees with at least one substantive claim (same unit as the
+    // certified/outcome-known funnel stages).
+    const employed = await db.trainee.count({
       where: {
-        verificationStatus: { in: ["SELF_REPORTED", "EMPLOYER_CONFIRMED"] },
-        OR: [
-          { employerName: { not: null } },
-          { nonPlacementReason: { not: null } },
-        ],
-        ...viaTrainee,
+        employmentClaims: {
+          some: {
+            verificationStatus: { in: ["SELF_REPORTED", "EMPLOYER_CONFIRMED"] },
+            OR: [
+              { employerName: { not: null } },
+              { nonPlacementReason: { not: null } },
+            ],
+          },
+        },
+        ...(centerFilter ? { enrolments: { some: centerFilter } } : {}),
       },
     });
     const verified = verifiedEmployed;

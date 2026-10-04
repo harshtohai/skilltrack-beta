@@ -48,6 +48,7 @@ function DataTable<TData>({
   mobileCard,
   emptyState,
   pageSize = 10,
+  serverTotal,
   className,
 }: {
   columns: ColumnDef<TData, unknown>[];
@@ -61,6 +62,12 @@ function DataTable<TData>({
   mobileCard?: (row: TData) => React.ReactNode;
   emptyState?: React.ReactNode;
   pageSize?: number;
+  /**
+   * True row count when the caller pages server-side (rows hold one page).
+   * Makes the count honest ("of 504") and hides the client pager — it would
+   * be dead: all fetched rows fit one client page.
+   */
+  serverTotal?: number;
   className?: string;
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -288,12 +295,15 @@ function DataTable<TData>({
           </table>
         </div>
 
-        {/* Footer: count left, pagination right */}
+        {/* Footer: count left, pagination right. Server-paginated tables page
+            through the URL (the caller renders its own prev/next footer), so
+            the client pager hides — with one page of fetched rows it is dead. */}
         {!loading && rows.length > 0 && (
           <div className="flex items-center justify-between gap-2 border-t p-4 text-caption text-muted-foreground">
             <span className="tabular-nums">
-              Showing {from}–{to} of {rowCount}
+              Showing {from}–{to} of {serverTotal ?? rowCount}
             </span>
+            {serverTotal === undefined ? (
             <div className="flex items-center gap-1">
               <Button
                 variant="outline"
@@ -327,6 +337,7 @@ function DataTable<TData>({
                 <ChevronRight />
               </Button>
             </div>
+            ) : null}
           </div>
         )}
       </div>

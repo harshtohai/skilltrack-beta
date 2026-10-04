@@ -208,11 +208,21 @@ export function AddTraineeForm({
                         inputMode="numeric"
                         placeholder="9876543210"
                         autoComplete="tel-national"
-                        maxLength={10}
                         required
                         disabled={submitting}
                         aria-required="true"
                         {...field}
+                        // No maxLength: silently truncating a +91-prefixed paste
+                        // produced a valid-looking but wrong number. Strip the
+                        // country code instead and let the zod regex flag the rest.
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\D/g, "");
+                          field.onChange(
+                            digits.length === 12 && digits.startsWith("91")
+                              ? digits.slice(2)
+                              : e.target.value,
+                          );
+                        }}
                       />
                     </FormControl>
                     {fieldState.error ? null : (
