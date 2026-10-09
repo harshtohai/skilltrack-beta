@@ -18,65 +18,77 @@ export async function GET() {
       ? { trainee: { enrolments: { some: centerFilter } } }
       : {};
 
-    // Total certified trainees
-    const totalTrainees = await db.trainee.count({
-      where: {
-        enrolments: { some: centerFilter ?? {} },
-      },
-    });
+    // Parallelized counts — run all 7 independent COUNT queries concurrently
+    // to avoid the sequential DB round-trip storm that causes 6.5–8.3s warm
+    // latency and 24s+ during pooler flakiness.
+    const [
+      totalTraineesResult,
+      traineesWithOutcomeResult,
+      verifiedEmployedResult,
+      conflictsResult,
+      employedResult,
+      followupsSentResult,
+      followupsRespondedResult,
+    ] = await Promise.all([
+      db.trainee.count({
+        where: {
+          enrolments: { some: centerFilter ?? {} },
+        },
+      }),
+      db.trainee.count({
+        where: {
+          ...(centerFilter ? { enrolments: { some: centerFilter } } : {}),
+          outcomeEvents: { some: { outcomeStatus: { not: "UNKNOWN" } } },
+        },
+      }),
+      db.trainee.count({
+        where: {
+          employmentClaims: { some: { verificationStatus: "EMPLOYER_CONFIRMED" } },
+          ...(centerFilter ? { enrolments: { some: centerFilter } } : {}),
+        },
+      }),
+      db.employmentClaim.count({
+        where: { verificationStatus: "CONFLICT", ...viaTrainee },
+      }),
+      db.trainee.count({
+        where: {
+          employmentClaims: {
+            some: {
+              verificationStatus: { in: ["SELF_REPORTED", "EMPLOYER_CONFIRMED"] },
+              OR: [
+                { employerName: { not: null } },
+                { nonPlacementReason: { not: null } },
+              ],
+            },
+          },
+          ...(centerFilter ? { enrolments: { some: centerFilter } } : {}),
+        },
+      }),
+      // Follow-up response rate — denominator counts followups EVER sent
+      // (SENT, RESPONDED, FAILED, EXPIRED), not just those currently in the
+      // SENT state: a RESPONDED followup was sent first (SCHEDULED → SENT →
+      // RESPONDED), so counting only status === "SENT" undercounted the
+      // denominator and produced an impossible 903% response rate.
+      db.followupEvent.count({
+        where: { status: { in: ["SENT", "RESPONDED", "FAILED", "EXPIRED"] }, ...viaTrainee },
+      }),
+      db.followupEvent.count({
+        where: { status: "RESPONDED", ...viaTrainee },
+      }),
+    ]);
 
-    // Trainees with known outcome (not UNKNOWN)
-    const traineesWithOutcome = await db.trainee.count({
-      where: {
-        ...(centerFilter ? { enrolments: { some: centerFilter } } : {}),
-        outcomeEvents: { some: { outcomeStatus: { not: "UNKNOWN" } } },
-      },
-    });
+    const totalTrainees = totalTraineesResult;
+    const traineesWithOutcome = traineesWithOutcomeResult;
+    const verifiedEmployed = verifiedEmployedResult;
+    const conflicts = conflictsResult;
+    const employed = employedResult;
+    const followupsSent = followupsSentResult;
+    const followupsResponded = followupsRespondedResult;
 
-    // Trainees with verified employment (EMPLOYER_CONFIRMED) — trainee-based so
-    // the funnel and the placement rate stay consistent with the certified and
-    // outcome-known counts (a trainee with several claims must not count twice;
-    // claim-based counts made the rate exceed 100%).
-    const verifiedEmployed = await db.trainee.count({
-      where: {
-        employmentClaims: { some: { verificationStatus: "EMPLOYER_CONFIRMED" } },
-        ...(centerFilter ? { enrolments: { some: centerFilter } } : {}),
-      },
-    });
-
-    // Conflicts
-    const conflicts = await db.employmentClaim.count({
-      where: { verificationStatus: "CONFLICT", ...viaTrainee },
-    });
-
-    // Funnel data
+    // Funnel aliases (same units as the stages above)
     const certified = totalTrainees;
     const outcomeKnown = traineesWithOutcome;
-    // Employed = trainees with at least one substantive claim (same unit as the
-    // certified/outcome-known funnel stages).
-    const employed = await db.trainee.count({
-      where: {
-        employmentClaims: {
-          some: {
-            verificationStatus: { in: ["SELF_REPORTED", "EMPLOYER_CONFIRMED"] },
-            OR: [
-              { employerName: { not: null } },
-              { nonPlacementReason: { not: null } },
-            ],
-          },
-        },
-        ...(centerFilter ? { enrolments: { some: centerFilter } } : {}),
-      },
-    });
     const verified = verifiedEmployed;
-
-    // Follow-up response rate
-    const followupsSent = await db.followupEvent.count({
-      where: { status: "SENT", ...viaTrainee },
-    });
-    const followupsResponded = await db.followupEvent.count({
-      where: { status: "RESPONDED", ...viaTrainee },
-    });
 
     // Recent activity timeline (latest events across the scoped trainees)
     const [recentFollowups, recentClaims, recentVerifications] = await Promise.all([
