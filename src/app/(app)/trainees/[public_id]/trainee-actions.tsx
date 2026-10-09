@@ -120,7 +120,24 @@ export function TraineeActions({
     }
   };
 
-  if (!canMove && !canDrop) return null;
+  // Bug Bag #21: a dropped trainee's actions don't vanish — they render
+  // disabled-with-tooltip (the codebase's non-functional-control pattern),
+  // so the dead corner explains itself instead of looking broken.
+  if (!canMove && !canDrop) {
+    return (
+      <div
+        className="flex items-center gap-2"
+        title={`${traineeName} is dropped out — they can't be moved to another cohort or dropped again.`}
+      >
+        <Button variant="ghost" size="sm" disabled>
+          Move to cohort…
+        </Button>
+        <Button variant="ghost" size="icon-sm" aria-label="More actions" disabled>
+          <MoreVertical />
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-2">
