@@ -4,27 +4,34 @@
 
 export type UserRole = "admin" | "institute" | "employer" | "trainee";
 
-export const protectedRoutes: { path: string; roles: UserRole[] }[] = [
+export const protectedRoutes: {
+  path: string;
+  roles: UserRole[];
+  /** Methods that skip the role check (e.g. unauthenticated self-signup POST). */
+  publicMethods?: string[];
+}[] = [
   // Pages — order matters: "/trainees" must precede "/trainee" (startsWith).
   { path: "/admin", roles: ["admin"] },
   { path: "/institute", roles: ["institute", "admin"] },
   { path: "/employer", roles: ["employer", "admin"] },
+  { path: "/trainees/add", roles: ["institute", "admin"] }, // INST-02: add-trainee flow (only the institute nav links it)
   { path: "/trainees", roles: ["admin", "institute"] },
   { path: "/trainee", roles: ["trainee"] },
   { path: "/dashboard", roles: ["admin", "institute", "trainee"] },
-  { path: "/followups", roles: ["admin", "institute"] },
+  { path: "/followups", roles: ["admin"] }, // INST-01: gov-authority surface
   { path: "/cohorts", roles: ["admin", "institute"] },
-  { path: "/conflicts", roles: ["admin", "institute"] },
-  { path: "/audit-logs", roles: ["admin", "institute"] },
+  { path: "/conflicts", roles: ["admin"] }, // INST-01: gov-authority surface
+  { path: "/audit-logs", roles: ["admin"] }, // INST-01: gov-authority surface
   // API — server-side data endpoints. Client pages fetch these with the
   // session cookie, so edge pre-checks don't break them.
   { path: "/api/v1/outcomes/government", roles: ["admin"] },
   { path: "/api/v1/outcomes/institute", roles: ["institute", "admin"] },
   { path: "/api/v1/kpis/overview", roles: ["admin", "institute", "trainee"] },
-  { path: "/api/v1/followups", roles: ["admin", "institute"] },
-  { path: "/api/v1/conflicts", roles: ["admin", "institute"] },
-  { path: "/api/v1/audit-logs", roles: ["admin", "institute"] },
-  { path: "/api/v1/trainees", roles: ["admin", "institute"] },
+  { path: "/api/v1/kpis/center-standing", roles: ["institute"] }, // INST-04: center dashboard standing
+  { path: "/api/v1/followups", roles: ["admin"] }, // INST-01: gov-authority surface
+  { path: "/api/v1/conflicts", roles: ["admin"] }, // INST-01: gov-authority surface
+  { path: "/api/v1/audit-logs", roles: ["admin"] }, // INST-01: gov-authority surface
+  { path: "/api/v1/trainees", roles: ["admin", "institute"], publicMethods: ["POST"] }, // GET center-scoped for institutes; POST = public self-signup
   { path: "/api/v1/cohorts", roles: ["admin", "institute"] },
   { path: "/api/v1/demo", roles: ["admin", "institute"] },
   { path: "/api/v1/employer/me", roles: ["employer", "admin"] },
@@ -50,4 +57,43 @@ export function isPathAllowedForRole(path: string, role: UserRole): boolean {
   const routeConfig = protectedRoutes.find((route) => path.startsWith(route.path));
   if (!routeConfig) return true;
   return routeConfig.roles.includes(role);
+}
+
+/**
+ * Known page routes a post-login redirect may target (#17) — a stale or bare
+ * prefix without a page (e.g. /institute, whose page is /institute/analytics)
+ * would 404 after login. Same matching style as the middleware: "/" exact,
+ * the rest startsWith; prefixes that have no page of their own ("/admin",
+ * "/cohorts", …) carry a trailing slash so only their real subpage
+ * destinations match.
+ */
+export const knownRoutes: string[] = [
+  // Public pages (mirrors auth.config.ts publicRoutes + the login footer).
+  "/login",
+  "/signup",
+  "/terms",
+  "/privacy",
+  "/consent",
+  "/data-retention",
+  "/accessibility",
+  "/simulator",
+  // Protected pages — bare prefixes have no index page, their sub-pages do.
+  "/admin/",
+  "/institute/",
+  "/employer/",
+  "/auth/", // /auth/trainee/sent + the token catch-all
+  "/trainees", // /trainees itself is a page (before "/trainee/", as above)
+  "/trainee/",
+  "/dashboard",
+  "/followups",
+  "/cohorts/",
+  "/conflicts",
+  "/audit-logs",
+];
+
+/** Whether `path` names an existing route — unknown redirects fall back to the role home (#17). */
+export function isKnownRoute(path: string): boolean {
+  // "/" must match exactly — startsWith("/") would make every path known.
+  if (path === "/") return true;
+  return knownRoutes.some((route) => path.startsWith(route));
 }

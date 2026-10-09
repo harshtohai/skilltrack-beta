@@ -1,7 +1,24 @@
 "use client";
 
-import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
+import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, ReferenceLine } from "recharts";
 import { cn } from "~/lib/utils";
+import { EmptyState } from "~/components/patterns/empty-state";
+
+/**
+ * Peer-comparison bar chart per design §4.11: current entry filled with the
+ * series color, peers in dot-empty grey, dashed peer-average ReferenceLine
+ * (fixes the previous zero-height fake Bar). Horizontal-only dashed grid,
+ * popover tooltip, legend above right.
+ */
+
+const TOOLTIP_STYLE: React.CSSProperties = {
+  backgroundColor: "var(--card)",
+  border: "1px solid var(--border)",
+  borderRadius: "8px",
+  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+  padding: "12px",
+  color: "var(--foreground)",
+};
 
 interface PeerData {
   name: string;
@@ -26,15 +43,17 @@ export function PeerComparisonChart({
   height = 300,
   yAxisLabel,
   className,
-  color = "#3b82f6",
+  color = "var(--chart-3)",
   showAverage = true,
   averageValue,
 }: PeerComparisonChartProps) {
   if (!data.length) {
     return (
-      <div className={cn("flex items-center justify-center h-64 text-muted-foreground", className)}>
-        <p>No data available</p>
-      </div>
+      <EmptyState
+        title="No data for this range"
+        description="Try changing the time window or filters."
+        className={cn("h-64 justify-center", className)}
+      />
     );
   }
 
@@ -45,73 +64,61 @@ export function PeerComparisonChart({
   return (
     <div className={cn("w-full", className)}>
       <ResponsiveContainer width="100%" height={height}>
-        <RechartsBarChart data={sortedData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+        <RechartsBarChart data={sortedData} margin={{ top: 8, right: 10, left: 0, bottom: 5 }} maxBarSize={32}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
           <XAxis
             dataKey={xKey}
-            tick={{ fontSize: 11, fill: "#6b7280" }}
-            axisLine={{ stroke: "#e5e7eb" }}
+            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+            axisLine={false}
             tickLine={false}
             interval={0}
           />
           <YAxis
-            tick={{ fontSize: 12, fill: "#6b7280" }}
+            tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
             axisLine={false}
             tickLine={false}
+            tickCount={5}
             domain={[0, maxValue > 0 ? maxValue * 1.3 : 100]}
-            label={yAxisLabel ? { value: yAxisLabel, angle: -90, position: "insideLeft", offset: 10, fill: "#6b7280", fontSize: 11 } : undefined}
+            label={yAxisLabel ? { value: yAxisLabel, angle: -90, position: "insideLeft", offset: 10, fill: "var(--muted-foreground)", fontSize: 11 } : undefined}
           />
           <Tooltip
-            contentStyle={{
-              backgroundColor: "white",
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-              padding: "12px",
-            }}
-            labelStyle={{ fontWeight: 600, color: "#111827" }}
+            contentStyle={TOOLTIP_STYLE}
+            labelStyle={{ fontWeight: 500, color: "var(--foreground)" }}
             itemStyle={{ padding: "4px 0" }}
+            cursor={{ fill: "var(--muted)", opacity: 0.5 }}
             formatter={(value: unknown) => [typeof value === "number" ? value.toFixed(1) : "0.0", ""]}
           />
           <Legend
-            wrapperStyle={{ paddingRight: 20 }}
-            layout="vertical"
+            layout="horizontal"
             align="right"
-            verticalAlign="middle"
-            iconSize={10}
-            iconType="square"
+            verticalAlign="top"
+            iconSize={8}
+            iconType="circle"
+            wrapperStyle={{ fontSize: 12, color: "var(--muted-foreground)", paddingBottom: 8 }}
           />
-          <Bar dataKey="value" name={showAverage ? "Institute" : "Value"} radius={[4, 4, 0, 0]}>
+          <Bar dataKey="value" name="Institute" radius={[4, 4, 0, 0]}>
             {sortedData.map((entry, index) => (
               <Cell
                 key={`${xKey}-${index}`}
-                fill={entry.isCurrent ? color : "#d1d5db"}
+                fill={entry.isCurrent ? color : "var(--dot-empty)"}
               />
             ))}
           </Bar>
           {showAverage && (
-            <>
-              <Bar dataKey="average" name="Average" radius={[4, 4, 0, 0]} fill="#f59e0b" opacity={0.3}>
-                {sortedData.map((_, index) => (
-                  <Cell key={`avg-${index}`} fill="#f59e0b" opacity={0.3} />
-                ))}
-              </Bar>
-            </>
+            <ReferenceLine
+              y={avg}
+              stroke="var(--muted-foreground)"
+              strokeDasharray="3 3"
+              label={{
+                value: `Peer avg ${avg.toFixed(1)}%`,
+                position: "insideTopRight",
+                fontSize: 11,
+                fill: "var(--muted-foreground)",
+              }}
+            />
           )}
         </RechartsBarChart>
       </ResponsiveContainer>
-      {showAverage && (
-        <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded" style={{ backgroundColor: color }} />
-            <span>Your Institute</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded" style={{ backgroundColor: "#f59e0b", opacity: 0.3 }} />
-            <span>Peer Average: {avg.toFixed(1)}%</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

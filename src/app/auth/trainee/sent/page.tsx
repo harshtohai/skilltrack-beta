@@ -1,23 +1,41 @@
 "use client";
 
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Suspense, useState } from "react";
-import { GraduationCap, CheckCircle, Clock, Loader2, Mail, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
+import { CheckCircle, Clock, Mail, RefreshCw, ShieldCheck } from "lucide-react";
+
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Alert, AlertDescription } from "~/components/ui/alert";
+
+/**
+ * Magic-link sent per design §9.2 — Shell S4. Sonner toasts for resend
+ * feedback (§4.9); info rows in a bg-muted panel (§4.4).
+ */
+
+/** Matches the server-side 30s token cooldown in the magic-link route. */
+const RESEND_COOLDOWN_S = 30;
 
 function MagicLinkSentContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "your email";
   const [resending, setResending] = useState(false);
-  const [resendError, setResendError] = useState("");
-  const [resendSuccess, setResendSuccess] = useState(false);
+  const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_S);
+
+  const cooldownActive = cooldown > 0;
+
+  // Live countdown; interval only runs while cooling down, cleanup on unmount.
+  useEffect(() => {
+    if (!cooldownActive) return;
+    const timer = setInterval(() => {
+      setCooldown((s) => Math.max(0, s - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldownActive]);
 
   const handleResend = async () => {
+    setCooldown(RESEND_COOLDOWN_S);
     setResending(true);
-    setResendError("");
     try {
       const res = await fetch("/api/v1/trainee/magic-link", {
         method: "POST",
@@ -25,103 +43,112 @@ function MagicLinkSentContent() {
         body: JSON.stringify({ email, channel: "EMAIL" }),
       });
       if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        throw new Error(data.error ?? "Failed to resend magic link");
+        const json = (await res.json()) as {
+          error?: { message?: string; retryAfter?: number };
+        };
+        if (res.status === 429 && typeof json.error?.retryAfter === "number") {
+          setCooldown(json.error.retryAfter);
+        }
+        throw new Error(json.error?.message ?? "Failed to resend magic link");
       }
-      setResendSuccess(true);
-      setTimeout(() => setResendSuccess(false), 3000);
+      toast.success("Magic link resent", {
+        description: "Check your inbox — it can take a minute to arrive.",
+      });
     } catch (err) {
-      setResendError(err instanceof Error ? err.message : "Failed to resend");
+      toast.error("Could not resend", {
+        description: err instanceof Error ? err.message : "Please try again in a moment.",
+      });
     } finally {
       setResending(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center py-12 px-4">
-      <div className="w-full">
-        <Link href="/" className="inline-flex items-center gap-2 mb-8">
-          <GraduationCap className="h-10 w-10 text-primary" />
-          <span className="text-2xl font-bold text-primary-foreground">OutcomeTrack</span>
-        </Link>
+    <div className="grid min-h-svh place-items-center bg-background p-4">
+      <div className="w-full max-w-sm">
+        {/* Logo above card (§9.2) */}
+        <div className="mb-8 flex justify-center">
+          <Link
+            href="/"
+            className="flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          >
+            <span className="grid size-7 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
+              <ShieldCheck className="size-4" aria-hidden />
+            </span>
+            <span className="text-title font-semibold text-foreground">
+              OutcomeTrack
+            </span>
+          </Link>
+        </div>
 
-        <Card className="w-full">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-              <CheckCircle className="h-8 w-8 text-green-600" />
+        <div className="rounded-2xl border bg-card p-8">
+          <div className="space-y-3 text-center">
+            <span className="mx-auto grid size-10 place-items-center rounded-full bg-success-soft text-success-text [&_svg]:size-5">
+              <CheckCircle aria-hidden />
+            </span>
+            <div className="space-y-1">
+              <h2 className="text-h2 font-semibold">Check your inbox</h2>
+              <p className="text-caption text-muted-foreground">
+                If an account exists for{" "}
+                <span className="font-mono text-foreground">{email}</span>,
+                we’ve sent a login link.
+              </p>
             </div>
-            <CardTitle>Magic Link Sent!</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="text-center space-y-2">
-              <p className="text-lg">We&apos;ve sent a magic link to</p>
-              <p className="font-mono text-primary">{email}</p>
-            </div>
+          </div>
 
-            <div className="rounded-lg bg-muted p-4 space-y-3 text-left">
-              <div className="flex items-center gap-3">
-                <Mail className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">Check your inbox</p>
-                  <p className="text-sm text-muted-foreground">Look for an email from OutcomeTrack</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Clock className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">Link expires in 30 minutes</p>
-                  <p className="text-sm text-muted-foreground">For security, the link is single-use</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Loader2 className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">No email?</p>
-                  <p className="text-sm text-muted-foreground">Check spam folder or request a new link</p>
-                </div>
+          {/* Info rows — bg-muted panel (§4.4) */}
+          <div className="mt-6 grid gap-3 rounded-lg bg-muted p-3 text-left">
+            <div className="flex items-start gap-3">
+              <Mail className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+              <div className="space-y-0.5">
+                <p className="text-body-sm font-medium">Check your inbox</p>
+                <p className="text-caption text-muted-foreground">
+                  Look for an email from OutcomeTrack
+                </p>
               </div>
             </div>
+            <div className="flex items-start gap-3">
+              <Clock className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+              <div className="space-y-0.5">
+                <p className="text-body-sm font-medium">Link expires in 30 minutes</p>
+                <p className="text-caption text-muted-foreground">
+                  For security, the link is single-use
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <RefreshCw className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+              <div className="space-y-0.5">
+                <p className="text-body-sm font-medium">No email?</p>
+                <p className="text-caption text-muted-foreground">
+                  Check the spam folder or request a new link
+                </p>
+              </div>
+            </div>
+          </div>
 
-            {resendError && (
-              <Alert className="mb-4" variant="destructive">
-                <AlertDescription>{resendError}</AlertDescription>
-              </Alert>
-            )}
-
-            {resendSuccess && (
-              <Alert className="mb-4" variant="default">
-                <AlertDescription>Magic link resent! Check your inbox.</AlertDescription>
-              </Alert>
-            )}
-
-            <Button className="w-full" onClick={handleResend} disabled={resending}>
-              {resending ? (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Resend Link
-                </>
-              )}
-            </Button>
-
-            <p className="text-sm text-muted-foreground text-center">
-              Didn&apos;t receive the email?{" "}
-              <Link href="/login" className="text-primary hover:underline font-medium">
-                Try a different email
-              </Link>
+          <Button
+            className="mt-6 w-full"
+            size="lg"
+            onClick={handleResend}
+            disabled={resending || cooldownActive}
+          >
+            <RefreshCw className={resending ? "animate-spin" : undefined} aria-hidden />
+            Resend link
+          </Button>
+          {cooldownActive ? (
+            <p className="mt-1.5 text-caption tabular-nums text-muted-foreground">
+              You can request a new link in {cooldown}s
             </p>
-          </CardContent>
-        </Card>
+          ) : null}
+        </div>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          By continuing, you agree to our{" "}
-          <Link href="/terms" className="text-primary hover:underline">Terms of Service</Link>{" "}
-          and{" "}
-          <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+        {/* Footer links below card (§9.2) */}
+        <p className="mt-6 text-center text-caption text-muted-foreground">
+          Didn’t receive the email?{" "}
+          <Link href="/login" className="text-primary-strong hover:underline">
+            Try a different email
+          </Link>
         </p>
       </div>
     </div>
@@ -130,7 +157,13 @@ function MagicLinkSentContent() {
 
 export default function MagicLinkSentPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="grid min-h-svh place-items-center bg-background">
+          <p className="text-body-sm text-muted-foreground">Loading...</p>
+        </div>
+      }
+    >
       <MagicLinkSentContent />
     </Suspense>
   );

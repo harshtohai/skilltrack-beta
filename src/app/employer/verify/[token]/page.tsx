@@ -2,16 +2,28 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ShieldCheck, XCircle, Loader2, AlertCircle, Info, Edit, Save, ChevronLeft } from "lucide-react";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "~/components/ui/card";
-import { Textarea } from "~/components/ui/textarea";
-import { toast } from "~/hooks/use-toast";
+import { toast } from "sonner";
+import { Edit, Save, ShieldCheck, XCircle } from "lucide-react";
 
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import { Textarea } from "~/components/ui/textarea";
+import { ErrorState } from "~/components/patterns/error-state";
+import { Spinner } from "~/components/ui/spinner";
+import { format } from "~/lib/format";
+
+/**
+ * Employer verification per design §9.2 — Shell S4 (centered card). The
+ * verifier is the employer: after submitting, return to the employer login
+ * (a /dashboard redirect would lock non-trainee roles out).
+ */
 
 interface ClaimData {
   id: string;
@@ -22,10 +34,23 @@ interface ClaimData {
   salaryBand: string | null;
 }
 
+interface VerificationResponse {
+  claim: ClaimData;
+  error?: { message?: string };
+}
+
+const salaryBandLabels: Record<string, string> = {
+  LT_10K: "< ₹10,000",
+  B_10_20K: "₹10,000 - ₹20,000",
+  B_20_35K: "₹20,000 - ₹35,000",
+  B_35_50K: "₹35,000 - ₹50,000",
+  GT_50K: "> ₹50,000",
+};
+
 export default function EmployerVerificationPage() {
   const params = useParams();
   const router = useRouter();
-  const token = params.token as string;
+  const token = typeof params.token === "string" ? params.token : "";
 
   const [claim, setClaim] = useState<ClaimData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,17 +68,17 @@ export default function EmployerVerificationPage() {
         if (!res.ok) throw new Error("Failed to load verification");
         return res.json();
       })
-      .then((data) => {
+      .then((data: VerificationResponse) => {
         setClaim(data.claim);
         setEditData({
-          employerName: data.claim.employerName || "",
-          role: data.claim.role || "",
-          salaryBand: data.claim.salaryBand || "",
+          employerName: data.claim.employerName ?? "",
+          role: data.claim.role ?? "",
+          salaryBand: data.claim.salaryBand ?? "",
         });
         setLoading(false);
       })
       .catch((err) => {
-        setError(err.message);
+        setError(err instanceof Error ? err.message : "Failed to load verification");
         setLoading(false);
       });
   }, [token]);
@@ -77,26 +102,18 @@ export default function EmployerVerificationPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error?.message || "Failed to submit");
+      const data = (await res.json()) as VerificationResponse;
+      if (!res.ok) throw new Error(data.error?.message ?? "Failed to submit");
 
-      toast({
-        title: action === "confirm" ? "Confirmed" : action === "reject" ? "Rejected" : "Updated",
-        description:
-          action === "confirm"
-            ? "Employment claim has been confirmed."
-            : action === "reject"
-            ? "Employment claim has been rejected."
-            : "Employment claim has been updated.",
-        variant: action === "confirm" ? "success" : action === "reject" ? "destructive" : "success",
-      });
+      toast.success(
+        action === "confirm" ? "Employment confirmed" : action === "reject" ? "Claim rejected" : "Claim updated",
+        { description: "Sign in to see the updated status." },
+      );
 
-      setTimeout(() => router.push("/dashboard"), 2000);
+      setTimeout(() => router.push("/employer/login"), 2000);
     } catch (err) {
-      toast({
-        title: "Error",
+      toast.error("Submission failed", {
         description: err instanceof Error ? err.message : "Something went wrong",
-        variant: "destructive",
       });
     } finally {
       setSubmitting(false);
@@ -105,202 +122,211 @@ export default function EmployerVerificationPage() {
 
   if (loading) {
     return (
-      <div className="container py-16 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="grid min-h-svh place-items-center bg-background p-4">
+        <Spinner className="size-6 text-primary-strong" />
       </div>
     );
   }
 
   if (error || !claim) {
     return (
-      <div className="container py-16 text-center">
-        <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-        <h1 className="text-2xl font-bold mb-2">Verification Link Invalid</h1>
-        <p className="text-muted-foreground mb-6">
-          {error || "This verification link is invalid, expired, or has already been used."}
-        </p>
-        <Button onClick={() => router.push("/dashboard")}>Back to Dashboard</Button>
+      <div className="grid min-h-svh place-items-center bg-background p-4">
+        <ErrorState
+          title="Verification link invalid"
+          description={
+            error ?? "This verification link is invalid, expired, or has already been used."
+          }
+          retryLabel="Back to sign in"
+          onRetry={() => router.push("/login")}
+        />
       </div>
     );
   }
 
-  const salaryBandLabels: Record<string, string> = {
-    LT_10K: "< ₹10,000",
-    B_10_20K: "₹10,000 - ₹20,000",
-    B_20_35K: "₹20,000 - ₹35,000",
-    B_35_50K: "₹35,000 - ₹50,000",
-    GT_50K: "> ₹50,000",
-  };
-
   return (
-    <div className="container py-8 max-w-md">
-      <div className="text-center mb-8">
-        <ShieldCheck className="h-12 w-12 text-primary mx-auto mb-4" />
-        <h1 className="text-3xl font-bold">Verify Employment</h1>
-        <p className="text-muted-foreground mt-2">
-          Please review the details below and confirm or reject this employment claim.
-        </p>
-      </div>
+    <div className="grid min-h-svh place-items-center bg-background p-4">
+      <div className="w-full max-w-sm">
+        {/* Logo above card (§9.2) */}
+        <div className="mb-8 flex justify-center">
+          <span className="flex items-center gap-2">
+            <span className="grid size-7 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
+              <ShieldCheck className="size-4" aria-hidden />
+            </span>
+            <span className="text-title font-semibold text-foreground">
+              OutcomeTrack
+            </span>
+          </span>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Employment Claim</CardTitle>
-          <CardDescription>Submitted by {claim.traineeFirstName}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {isEditing ? (
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <label htmlFor="edit-employerName" className="text-sm font-medium text-muted-foreground">Employer</label>
-                <input
-                  id="edit-employerName"
-                  type="text"
-                  value={editData.employerName}
-                  onChange={(e) => setEditData((prev) => ({ ...prev, employerName: e.target.value }))}
-                  className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-                  placeholder="Employer name"
-                />
-              </div>
-              <div className="space-y-1">
-                <label htmlFor="edit-role" className="text-sm font-medium text-muted-foreground">Role</label>
-                <input
-                  id="edit-role"
-                  type="text"
-                  value={editData.role}
-                  onChange={(e) => setEditData((prev) => ({ ...prev, role: e.target.value }))}
-                  className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-                  placeholder="Role/designation"
-                />
-              </div>
-              <div className="space-y-1">
-                <label htmlFor="edit-salaryBand" className="text-sm font-medium text-muted-foreground">Salary Band</label>
-                <select
-                  id="edit-salaryBand"
-                  value={editData.salaryBand}
-                  onChange={(e) => setEditData((prev) => ({ ...prev, salaryBand: e.target.value }))}
-                  className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+        <div className="rounded-2xl border bg-card p-8">
+          {/* Card header — center (§3.6 auth) */}
+          <div className="space-y-1 text-center">
+            <h2 className="text-h2 font-semibold">Verify employment</h2>
+            <p className="text-caption text-muted-foreground">
+              Review the details below, then confirm or reject this claim from{" "}
+              {claim.traineeFirstName}.
+            </p>
+          </div>
+
+          {/* Claim details — bg-muted panel (§4.4) */}
+          <div className="mt-6 grid gap-3 rounded-lg bg-muted p-3">
+            {isEditing ? (
+              <>
+                <div className="grid gap-1.5">
+                  <label htmlFor="edit-employerName" className="text-caption font-medium text-muted-foreground">
+                    Employer
+                  </label>
+                  <Input
+                    id="edit-employerName"
+                    type="text"
+                    value={editData.employerName}
+                    onChange={(e) => setEditData((prev) => ({ ...prev, employerName: e.target.value }))}
+                    placeholder="Employer name"
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <label htmlFor="edit-role" className="text-caption font-medium text-muted-foreground">
+                    Role
+                  </label>
+                  <Input
+                    id="edit-role"
+                    type="text"
+                    value={editData.role}
+                    onChange={(e) => setEditData((prev) => ({ ...prev, role: e.target.value }))}
+                    placeholder="Role/designation"
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <label htmlFor="edit-salaryBand" className="text-caption font-medium text-muted-foreground">
+                    Salary band
+                  </label>
+                  <Select
+                    value={editData.salaryBand}
+                    onValueChange={(v) => setEditData((prev) => ({ ...prev, salaryBand: v }))}
+                  >
+                    <SelectTrigger id="edit-salaryBand" className="w-full">
+                      <SelectValue placeholder="Select salary band" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="LT_10K">Less than ₹10,000</SelectItem>
+                      <SelectItem value="B_10_20K">₹10,000 - ₹20,000</SelectItem>
+                      <SelectItem value="B_20_35K">₹20,000 - ₹35,000</SelectItem>
+                      <SelectItem value="B_35_50K">₹35,000 - ₹50,000</SelectItem>
+                      <SelectItem value="GT_50K">More than ₹50,000</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-0.5">
+                  <p className="text-caption text-muted-foreground">Employer</p>
+                  <p className="text-body-sm font-medium">{claim.employerName ?? "Not provided"}</p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-caption text-muted-foreground">Role</p>
+                  <p className="text-body-sm font-medium">{claim.role ?? "Not provided"}</p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-caption text-muted-foreground">Start date</p>
+                  <p className="text-body-sm font-medium">
+                    {claim.startDate ? format.date(claim.startDate) : "Not provided"}
+                  </p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-caption text-muted-foreground">Salary band</p>
+                  <p className="text-body-sm font-medium">
+                    {claim.salaryBand ? salaryBandLabels[claim.salaryBand] : "Not provided"}
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+
+          <form onSubmit={handleSubmit} className="mt-6 grid gap-4">
+            {!isEditing ? (
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  type="button"
+                  variant={action === "confirm" ? "default" : "outline"}
+                  onClick={() => setAction("confirm")}
                 >
-                  <option value="">Select salary band</option>
-                  <option value="LT_10K">Less than ₹10,000</option>
-                  <option value="B_10_20K">₹10,000 - ₹20,000</option>
-                  <option value="B_20_35K">₹20,000 - ₹35,000</option>
-                  <option value="B_35_50K">₹35,000 - ₹50,000</option>
-                  <option value="GT_50K">More than ₹50,000</option>
-                </select>
+                  <ShieldCheck aria-hidden />
+                  Confirm
+                </Button>
+                <Button
+                  type="button"
+                  variant={action === "reject" ? "destructive" : "outline"}
+                  onClick={() => setAction("reject")}
+                >
+                  <XCircle aria-hidden />
+                  Reject
+                </Button>
+                <Button
+                  type="button"
+                  variant={action === "edit" ? "default" : "outline"}
+                  onClick={() => {
+                    setIsEditing(true);
+                    setAction("edit");
+                  }}
+                >
+                  <Edit aria-hidden />
+                  Edit
+                </Button>
               </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-muted-foreground">Employer</label>
-                <p className="font-medium">{claim.employerName || "Not provided"}</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
+                  Back
+                </Button>
+                <Button type="button" variant="default" onClick={() => setAction("edit")}>
+                  <Save aria-hidden />
+                  Save changes
+                </Button>
               </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-muted-foreground">Role</label>
-                <p className="font-medium">{claim.role || "Not provided"}</p>
+            )}
+
+            {action === "reject" ? (
+              <div className="grid gap-1.5">
+                <label htmlFor="reason" className="text-body-sm font-medium">
+                  Reason for rejection <span className="text-danger-text">*</span>
+                </label>
+                <Textarea
+                  id="reason"
+                  value={reason}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReason(e.target.value)}
+                  placeholder="Please provide a reason for rejecting this claim..."
+                  rows={3}
+                  required
+                  aria-required="true"
+                />
               </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-muted-foreground">Start Date</label>
-                <p className="font-medium">{claim.startDate ? new Date(claim.startDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "Not provided"}</p>
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-muted-foreground">Salary Band</label>
-                <p className="font-medium">{claim.salaryBand ? salaryBandLabels[claim.salaryBand] : "Not provided"}</p>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            ) : null}
 
-      <form onSubmit={handleSubmit} className="space-y-4 mt-6">
-        {!isEditing ? (
-          <div className="flex gap-4">
-            <Button
-              type="button"
-              variant={action === "confirm" ? "default" : "outline"}
-              className="flex-1"
-              onClick={() => setAction("confirm")}
-            >
-              <ShieldCheck className="h-4 w-4 mr-2" />
-              Confirm
-            </Button>
-            <Button
-              type="button"
-              variant={action === "reject" ? "destructive" : "outline"}
-              className="flex-1"
-              onClick={() => setAction("reject")}
-            >
-              <XCircle className="h-4 w-4 mr-2" />
-              Reject
-            </Button>
-            <Button
-              type="button"
-              variant={action === "edit" ? "default" : "outline"}
-              className="flex-1"
-              onClick={() => {
-                setIsEditing(true);
-                setAction("edit");
-              }}
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-          </div>
-        ) : (
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={() => setIsEditing(false)} className="flex-1">
-              <ChevronLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <Button
-              type="button"
-              variant={action === "edit" ? "default" : "outline"}
-              className="flex-1"
-              onClick={() => {
-                setAction("edit");
-              }}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Save Changes
-            </Button>
-          </div>
-        )}
+            {action ? (
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="w-full"
+                size="lg"
+                variant={action === "reject" ? "destructive" : "default"}
+              >
+                {submitting ? <Spinner className="size-4" /> : null}
+                {action === "confirm" ? "Confirm employment" : action === "edit" ? "Save changes" : "Reject claim"}
+              </Button>
+            ) : (
+              <p className="text-center text-caption text-muted-foreground">
+                Select an option above to proceed
+              </p>
+            )}
+          </form>
+        </div>
 
-        {action === "reject" && (
-          <div className="space-y-2">
-            <label htmlFor="reason" className="text-sm font-medium">
-              Reason for rejection (required)
-            </label>
-            <Textarea
-              id="reason"
-              value={reason}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReason(e.target.value)}
-              placeholder="Please provide a reason for rejecting this claim..."
-              rows={3}
-              required
-            />
-          </div>
-        )}
-
-        {action && (
-          <Button type="submit" disabled={submitting} className="w-full" variant={action === "confirm" ? "default" : action === "edit" ? "default" : "destructive"}>
-            {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            {action === "confirm" ? "Confirm Employment" : action === "edit" ? "Save Changes" : "Reject Claim"}
-          </Button>
-        )}
-
-        {!action && !isEditing && (
-          <p className="text-center text-sm text-muted-foreground">
-            Select an option above to proceed
-          </p>
-        )}
-      </form>
-
-      <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-        <Info className="h-4 w-4 text-muted-foreground mr-2" />
-        <span className="text-sm text-muted-foreground">
-          This is a one-time verification link. Once submitted, it cannot be used again.
-        </span>
+        {/* Footer note (§9.2 caption slot) */}
+        <p className="mt-6 flex items-start justify-center gap-1.5 text-center text-caption text-muted-foreground">
+          <ShieldCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+          This is a one-time verification link — once submitted, it cannot be used again.
+        </p>
       </div>
     </div>
   );

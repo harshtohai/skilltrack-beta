@@ -1,47 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
 import { signIn } from "next-auth/react";
-import { GraduationCap, Building2, User, Shield } from "lucide-react";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { isPathAllowedForRole } from "~/lib/protected-routes";
-import { Separator } from "~/components/ui/separator";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { Building2, Check, GraduationCap, Shield, User } from "lucide-react";
+
 import { Alert, AlertDescription } from "~/components/ui/alert";
+import { Button } from "~/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "~/components/ui/form";
+import { Input } from "~/components/ui/input";
+import { PasswordInput } from "~/components/ui/password-input";
+import { isKnownRoute, isPathAllowedForRole } from "~/lib/protected-routes";
+import { cn } from "~/lib/utils";
 
 type UserType = "trainee" | "employer" | "institute" | "admin";
 
-const userTypes: { value: UserType; label: string; description: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  {
-    value: "trainee",
-    label: "Trainee",
-    description: "Access your profile, update employment, upload certificates, view outcomes",
-    icon: User,
-  },
-  {
-    value: "employer",
-    label: "Employer",
-    description: "Verify employment claims, confirm trainee details, manage verification requests",
-    icon: Building2,
-  },
-  {
-    value: "institute",
-    label: "Training Institute",
-    description: "Manage cohorts, track placement rates, view analytics, export reports",
-    icon: GraduationCap,
-  },
-  {
-    value: "admin",
-    label: "Government Admin",
-    description: "District/state analytics, policy insights, provider accountability, SIDH exports",
-    icon: Shield,
-  },
+/** Card-style radio rows per §4.2 — icon chip + label, no long copy (CL-31). */
+const userTypes: {
+  value: UserType;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}[] = [
+  { value: "trainee", label: "Trainee", icon: User },
+  { value: "employer", label: "Employer", icon: Building2 },
+  { value: "institute", label: "Training Institute", icon: GraduationCap },
+  { value: "admin", label: "Government Admin", icon: Shield },
 ];
+
+const loginSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Enter a valid email"),
+  password: z.string().optional(),
+});
+
+type LoginValues = z.infer<typeof loginSchema>;
 
 const magicLinkEndpoint = "/api/v1/trainee/magic-link";
 
@@ -52,27 +55,45 @@ const roleRedirects: Record<UserType, string> = {
   admin: "/admin/analytics",
 };
 
+const demoCreds: Partial<Record<UserType, string>> = {
+  admin: "admin@maharashtra.gov.in / admin123",
+  institute: "institute@pmkvy.gov.in / institute123",
+  employer: "hr@company.com / employer123",
+};
+
 function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedType, setSelectedType] = useState<UserType>("trainee");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [formError, setFormError] = useState("");
+  // Unverified enrollment — inline guidance instead of the sent page.
+  const [needsVerification, setNeedsVerification] = useState(false);
 
   const redirect = searchParams.get("redirect") ?? "";
   const urlError = searchParams.get("error") ?? "";
+  const urlErrorMessage =
+    urlError === "unauthorized"
+      ? "Unauthorized access. Please log in with the correct role."
+      : urlError;
+  const bannerError = formError || urlErrorMessage;
 
-  if (urlError && !error) {
-    setError(urlError === "unauthorized" ? "Unauthorized access. Please log in with the correct role." : urlError);
-  }
+  const form = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
+    // Keep unmounted values (RHF's default, pinned for #21a): switching to
+    // trainee unmounts the password field — a typed password must survive
+    // the role switch.
+    shouldUnregister: false,
+  });
 
-  const currentType = userTypes.find((t) => t.value === selectedType)!;
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
+  const onSubmit = form.handleSubmit(async (data) => {
+    if (selectedType !== "trainee" && !data.password) {
+      form.setError("password", { message: "Password is required" });
+      return;
+    }
+    setFormError("");
+    setNeedsVerification(false);
     setLoading(true);
 
     try {
@@ -80,20 +101,27 @@ function LoginPageContent() {
         const res = await fetch(magicLinkEndpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, channel: "EMAIL" }),
+          body: JSON.stringify({ email: data.email, channel: "EMAIL" }),
         });
+        const json = (await res.json()) as {
+          needsVerification?: boolean;
+          error?: { message?: string };
+        };
+        if (res.ok && json.needsVerification) {
+          // Unverified enrollment — the link or code from the enrollment
+          // email is their verification path (CL-31: what happened + what to do).
+          setNeedsVerification(true);
+          setLoading(false);
+          return;
+        }
         if (!res.ok) {
-          const data = (await res.json()) as { error?: string };
-          throw new Error(data.error ?? "Failed to send magic link");
+          throw new Error(json.error?.message ?? "Failed to send magic link");
         }
-        router.push(`/auth/trainee/sent?email=${encodeURIComponent(email)}`);
+        router.push(`/auth/trainee/sent?email=${encodeURIComponent(data.email)}`);
       } else {
-        if (!password) {
-          throw new Error("Password is required");
-        }
         const result = await signIn("credentials", {
-          email,
-          password,
+          email: data.email,
+          password: data.password ?? "",
           role: selectedType,
           redirect: false,
         });
@@ -102,141 +130,219 @@ function LoginPageContent() {
           throw new Error(
             code === "CredentialsSignin" || code.includes("credentials")
               ? "Invalid email or password"
-              : "Login failed"
+              : "Login failed",
           );
         }
         // Only honor the redirect param if the logged-in role may access it —
         // otherwise a stale ?redirect=/trainee/profile bounces non-trainee
-        // roles back to /login forever (login lockout loop).
+        // roles back to /login forever (login lockout loop) — and only if it
+        // names a known route at all (#17): a bare prefix like /institute has
+        // no page and would 404 after login. Hard navigation re-reads the
+        // fresh session cookie server-side (§9.2 → S1).
         const targetUrl =
-          redirect && isPathAllowedForRole(redirect, selectedType)
+          redirect &&
+          isPathAllowedForRole(redirect, selectedType) &&
+          isKnownRoute(redirect)
             ? redirect
             : roleRedirects[selectedType];
-        router.push(targetUrl);
-        router.refresh();
+        window.location.assign(targetUrl);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
+      setFormError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);
     }
-  };
+  });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-4xl">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <GraduationCap className="h-10 w-10 text-primary" />
-            <span className="text-2xl font-bold text-primary-foreground">OutcomeTrack</span>
+    <div className="grid min-h-svh place-items-center bg-background p-4">
+      <div className="w-full max-w-sm">
+        {/* Logo above card (§9.2) */}
+        <div className="mb-8 flex justify-center">
+          <Link
+            href="/"
+            className="flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          >
+            <span className="grid size-7 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
+              <GraduationCap className="size-4" aria-hidden />
+            </span>
+            <span className="text-title font-semibold text-foreground">
+              OutcomeTrack
+            </span>
           </Link>
-          <h1 className="text-3xl font-bold tracking-tight">Sign In to OutcomeTrack</h1>
-          <p className="mt-2 text-muted-foreground">Choose your role to continue</p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          {userTypes.map((type) => (
-            <button
-              key={type.value}
-              onClick={() => setSelectedType(type.value)}
-              className={`relative p-4 rounded-xl border-2 transition-all text-left ${
-                selectedType === type.value
-                  ? "border-primary bg-primary/10 shadow-lg shadow-primary/10 ring-2 ring-primary/20"
-                  : "border-input hover:border-primary/50 hover:bg-accent hover:shadow-md"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                  selectedType === type.value ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"
-                }`}>
-                  <type.icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="font-medium">{type.label}</div>
-                  <div className="text-xs text-muted-foreground">{type.description}</div>
-                </div>
-              </div>
-              {selectedType === type.value && (
-                <div className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shadow-lg">
-                  ✓
-                </div>
-              )}
-            </button>
-          ))}
-        </div>
+        <div className="rounded-2xl border bg-card p-8">
+          {/* Card header — center (§3.6 auth) */}
+          <div className="mb-6 space-y-1 text-center">
+            <h2 className="text-h2 font-semibold">Welcome back</h2>
+            <p className="text-caption text-muted-foreground">
+              Sign in to continue
+            </p>
+          </div>
 
-        <div className="mb-6 p-3 rounded-lg bg-primary/5 border border-primary/20 text-center">
-          <p className="text-sm font-medium text-primary">
-            Selected: <span className="capitalize">{selectedType}</span>
-          </p>
-        </div>
+          {needsVerification ? (
+            <Alert className="mb-4">
+              <AlertDescription>
+                Verify your enrollment first — use the link or code from your
+                enrollment email. Contact your institute to resend the
+                enrollment email.
+              </AlertDescription>
+            </Alert>
+          ) : bannerError ? (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{bannerError}</AlertDescription>
+            </Alert>
+          ) : null}
 
-        <Card className="w-full">
-          <CardHeader className="text-center">
-            <CardTitle>{currentType.label} Sign In</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {error && (
-              <Alert className="mb-4" variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+          {/* Role picker — card-style radios (§4.2), chip + gap-3 rows */}
+          <div
+            role="radiogroup"
+            aria-label="Account type"
+            className="mb-6 grid gap-2"
+          >
+            {userTypes.map((type) => {
+              const selected = selectedType === type.value;
+              return (
+                <button
+                  key={type.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => setSelectedType(type.value)}
+                  className={cn(
+                    "flex h-11 cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40",
+                    selected
+                      ? "border-primary bg-primary-soft"
+                      : "hover:border-ring/50 hover:bg-accent",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "grid size-7 shrink-0 place-items-center rounded-md",
+                      selected
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-primary-soft text-primary-strong",
+                    )}
+                  >
+                    <type.icon className="size-4" aria-hidden />
+                  </span>
+                  <span className="flex-1 text-body-sm font-medium">
+                    {type.label}
+                  </span>
+                  {selected ? (
+                    <Check className="size-4 shrink-0 text-primary-strong" aria-hidden />
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder={selectedType === "trainee" ? "your@email.com" : "admin@organization.gov.in"}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-                {selectedType === "trainee" && (
-                  <p className="text-xs text-muted-foreground">
-                    We&apos;ll send a magic link to your email &mdash; no password needed.
-                  </p>
+          <Form {...form}>
+            <form onSubmit={onSubmit} className="grid gap-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field, fieldState }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Email <span className="text-danger-text">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder={
+                          selectedType === "trainee"
+                            ? "your@email.com"
+                            : "admin@organization.gov.in"
+                        }
+                        autoComplete="email"
+                        className="h-11"
+                        required
+                        disabled={loading}
+                        aria-required="true"
+                        {...field}
+                      />
+                    </FormControl>
+                    {fieldState.error ? null : (
+                      <FormDescription>
+                        {selectedType === "trainee"
+                          ? "We’ll send a magic link — no password needed."
+                          : "Use your work or government email."}
+                      </FormDescription>
+                    )}
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </div>
+              />
 
-              {selectedType !== "trainee" && (
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={loading}
-                  />
-                  <div className="text-xs text-muted-foreground font-mono bg-muted p-2 rounded">
-                    Demo: {selectedType === "admin" ? "admin@maharashtra.gov.in / admin123" : selectedType === "institute" ? "institute@pmkvy.gov.in / institute123" : "hr@company.com / employer123"}
-                  </div>
-                </div>
-              )}
+              {selectedType !== "trainee" ? (
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Password <span className="text-danger-text">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <PasswordInput
+                          placeholder="Enter your password"
+                          autoComplete="current-password"
+                          className="h-11"
+                          required
+                          disabled={loading}
+                          aria-required="true"
+                          {...field}
+                        />
+                      </FormControl>
+                      {fieldState.error ? (
+                        <FormMessage />
+                      ) : (
+                        <FormDescription>
+                          Demo:{" "}
+                          <span className="font-mono">
+                            {demoCreds[selectedType]}
+                          </span>
+                        </FormDescription>
+                      )}
+                    </FormItem>
+                  )}
+                />
+              ) : null}
 
-              <Button type="submit" className="w-full" size="lg" disabled={loading || !email}>
-                {loading ? "Sending..." : selectedType === "trainee" ? "Send Magic Link" : "Sign In"}
+              <Button
+                type="submit"
+                className="mt-2 w-full"
+                size="lg"
+                disabled={loading}
+              >
+                {loading
+                  ? "Sending..."
+                  : selectedType === "trainee"
+                    ? "Send magic link"
+                    : "Sign In"}
               </Button>
             </form>
-
-            <Separator className="my-6" />
-            <p className="text-center text-sm text-muted-foreground">
-              Don&apos;t have an account?{" "}
-              <Link href="/signup" className="text-primary hover:underline">
-                Sign up
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
-
-        <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p>By continuing, you agree to our <Link href="/terms" className="text-primary hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link></p>
+          </Form>
         </div>
+
+        {/* Footer links below card (§9.2) */}
+        <p className="mt-6 text-center text-caption text-muted-foreground">
+          Don’t have an account?{" "}
+          <Link href="/signup" className="text-primary-strong hover:underline">
+            Sign up
+          </Link>
+        </p>
+        <p className="mt-2 text-center text-caption text-muted-foreground">
+          By continuing, you agree to our{" "}
+          <Link href="/terms" className="text-primary-strong hover:underline">
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="text-primary-strong hover:underline">
+            Privacy Policy
+          </Link>
+        </p>
       </div>
     </div>
   );
@@ -244,7 +350,13 @@ function LoginPageContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="grid min-h-svh place-items-center bg-background">
+          <p className="text-body-sm text-muted-foreground">Loading...</p>
+        </div>
+      }
+    >
       <LoginPageContent />
     </Suspense>
   );

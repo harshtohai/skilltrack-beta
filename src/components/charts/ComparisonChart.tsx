@@ -1,7 +1,24 @@
 "use client";
 
-import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
+import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { cn } from "~/lib/utils";
+import { EmptyState } from "~/components/patterns/empty-state";
+
+/**
+ * Grouped actual-vs-expected bar chart per design §4.11: bars radius [4,4,0,0],
+ * width ≤ 32px, horizontal-only dashed grid, popover tooltip, legend above
+ * right. Colors default to tokens — actual = chart-1 (orange, primary series),
+ * expected = chart-2 (purple, secondary).
+ */
+
+const TOOLTIP_STYLE: React.CSSProperties = {
+  backgroundColor: "var(--card)",
+  border: "1px solid var(--border)",
+  borderRadius: "8px",
+  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+  padding: "12px",
+  color: "var(--foreground)",
+};
 
 interface ComparisonData {
   name: string;
@@ -17,6 +34,8 @@ interface ComparisonChartProps {
   yAxisLabel?: string;
   className?: string;
   colors?: { actual: string; expected: string };
+  /** Legend labels per series (e.g. { actual: "Signals", expected: "Open jobs" }). */
+  names?: { actual: string; expected: string };
 }
 
 export function ComparisonChart({
@@ -26,13 +45,16 @@ export function ComparisonChart({
   showLegend = true,
   yAxisLabel,
   className,
-  colors = { actual: "#3b82f6", expected: "#94a3b8" },
+  colors = { actual: "var(--chart-1)", expected: "var(--chart-2)" },
+  names = { actual: "Actual", expected: "Expected" },
 }: ComparisonChartProps) {
   if (!data.length) {
     return (
-      <div className={cn("flex items-center justify-center h-64 text-muted-foreground", className)}>
-        <p>No data available</p>
-      </div>
+      <EmptyState
+        title="No data for this range"
+        description="Try changing the time window or filters."
+        className={cn("h-64 justify-center", className)}
+      />
     );
   }
 
@@ -41,53 +63,41 @@ export function ComparisonChart({
   return (
     <div className={cn("w-full", className)}>
       <ResponsiveContainer width="100%" height={height}>
-        <RechartsBarChart data={data} margin={{ top: 5, right: showLegend ? 120 : 10, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+        <RechartsBarChart data={data} margin={{ top: 8, right: 10, left: 0, bottom: 5 }} barCategoryGap="25%" maxBarSize={32}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
           <XAxis
             dataKey={xKey}
-            tick={{ fontSize: 12, fill: "#6b7280" }}
-            axisLine={{ stroke: "#e5e7eb" }}
+            tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+            axisLine={false}
             tickLine={false}
           />
           <YAxis
-            tick={{ fontSize: 12, fill: "#6b7280" }}
+            tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
             axisLine={false}
             tickLine={false}
+            tickCount={5}
             domain={[0, maxValue > 0 ? maxValue * 1.2 : 100]}
-            label={yAxisLabel ? { value: yAxisLabel, angle: -90, position: "insideLeft", offset: 10, fill: "#6b7280", fontSize: 11 } : undefined}
+            label={yAxisLabel ? { value: yAxisLabel, angle: -90, position: "insideLeft", offset: 10, fill: "var(--muted-foreground)", fontSize: 11 } : undefined}
           />
           <Tooltip
-            contentStyle={{
-              backgroundColor: "white",
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-              padding: "12px",
-            }}
-            labelStyle={{ fontWeight: 600, color: "#111827" }}
+            contentStyle={TOOLTIP_STYLE}
+            labelStyle={{ fontWeight: 500, color: "var(--foreground)" }}
             itemStyle={{ padding: "4px 0" }}
+            cursor={{ fill: "var(--muted)", opacity: 0.5 }}
             formatter={(value: unknown) => [typeof value === "number" ? value.toFixed(1) : "0.0", ""]}
           />
           {showLegend && (
             <Legend
-              wrapperStyle={{ paddingRight: 20 }}
-              layout="vertical"
+              layout="horizontal"
               align="right"
-              verticalAlign="middle"
-              iconSize={10}
-              iconType="square"
+              verticalAlign="top"
+              iconSize={8}
+              iconType="circle"
+              wrapperStyle={{ fontSize: 12, color: "var(--muted-foreground)", paddingBottom: 8 }}
             />
           )}
-          <Bar dataKey="actual" name="Actual" radius={[4, 4, 0, 0]} fill={colors.actual}>
-            {data.map((_, index) => (
-              <Cell key={`actual-${index}`} fill={colors.actual} />
-            ))}
-          </Bar>
-          <Bar dataKey="expected" name="Expected" radius={[4, 4, 0, 0]} fill={colors.expected}>
-            {data.map((_, index) => (
-              <Cell key={`expected-${index}`} fill={colors.expected} />
-            ))}
-          </Bar>
+          <Bar dataKey="actual" name={names.actual} radius={[4, 4, 0, 0]} fill={colors.actual} />
+          <Bar dataKey="expected" name={names.expected} radius={[4, 4, 0, 0]} fill={colors.expected} />
         </RechartsBarChart>
       </ResponsiveContainer>
     </div>

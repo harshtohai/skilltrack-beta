@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "~/lib/auth";
 import { db } from "~/server/db";
 import { computeEmployerRetention, normalizeEmployerName, percentile75 } from "~/server/scoring";
@@ -32,7 +33,10 @@ function isVerifiedStatus(status: string): boolean {
 export async function GET(_request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.id || session.user.role !== "employer") {
+    // The admin is allowed on every surface (the middleware's role matrix).
+    // An admin session has no Employers row, so it lands in the demo-view
+    // fallback below — the employer sign-in redirect was a false denial.
+    if (!session?.user?.id || !["employer", "admin"].includes(session.user.role)) {
       return createErrorResponse("UNAUTHORIZED", "Employer session required", 401);
     }
 

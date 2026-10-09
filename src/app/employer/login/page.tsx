@@ -1,115 +1,186 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Building2 } from "lucide-react";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { Alert, AlertDescription } from "~/components/ui/alert";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { GraduationCap } from "lucide-react";
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+import { Alert, AlertDescription } from "~/components/ui/alert";
+import { Button } from "~/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "~/components/ui/form";
+import { Input } from "~/components/ui/input";
+import { PasswordInput } from "~/components/ui/password-input";
+
+/** Employer login per design §9.2 — Shell S4, single role (no role picker). */
+
+const employerLoginSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Enter a valid email"),
+  password: z.string().min(1, "Password is required"),
+});
+
+type EmployerLoginValues = z.infer<typeof employerLoginSchema>;
 
 function EmployerLoginPageContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [formError, setFormError] = useState("");
 
-  const redirect = searchParams.get("redirect") ?? "/employer/dashboard";
+  const redirect = searchParams.get("redirect") ?? "";
+  const urlError = searchParams.get("error") ?? "";
+  const urlErrorMessage =
+    urlError === "unauthorized"
+      ? "Unauthorized access. Please log in with an employer account."
+      : urlError;
+  const bannerError = formError || urlErrorMessage;
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
+  const form = useForm<EmployerLoginValues>({
+    resolver: zodResolver(employerLoginSchema),
+    defaultValues: { email: "", password: "" },
+  });
+
+  const onSubmit = form.handleSubmit(async (data) => {
+    setFormError("");
     setLoading(true);
 
     try {
-      if (!password) throw new Error("Password is required");
-      const result = await signIn("credentials", { email, password, role: "employer", redirect: false });
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        role: "employer",
+        redirect: false,
+      });
       if (!result?.ok) {
         throw new Error("Invalid email or password");
       }
-      router.push(redirect);
-      router.refresh();
+      // Only honor the redirect param if an employer may access it; otherwise
+      // fall back to the employer home (login lockout loop guard).
+      const targetUrl =
+        redirect?.startsWith("/employer")
+          ? redirect
+          : "/employer/dashboard";
+      window.location.assign(targetUrl);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
+      setFormError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);
     }
-  };
+  });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <Building2 className="h-10 w-10 text-primary" />
-            <span className="text-2xl font-bold text-primary-foreground">OutcomeTrack</span>
+    <div className="grid min-h-svh place-items-center bg-background p-4">
+      <div className="w-full max-w-sm">
+        {/* Logo above card (§9.2) */}
+        <div className="mb-8 flex justify-center">
+          <Link
+            href="/"
+            className="flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          >
+            <span className="grid size-7 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
+              <GraduationCap className="size-4" aria-hidden />
+            </span>
+            <span className="text-title font-semibold text-foreground">
+              OutcomeTrack
+            </span>
           </Link>
-          <h1 className="text-3xl font-bold tracking-tight">Employer Sign In</h1>
-          <p className="mt-2 text-muted-foreground">Verify employment claims and track retention</p>
         </div>
 
-        <Card className="w-full">
-          <CardHeader className="text-center">
-            <CardTitle>Employer Login</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {error && (
-              <Alert className="mb-4" variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+        <div className="rounded-2xl border bg-card p-8">
+          {/* Card header — center (§3.6 auth) */}
+          <div className="mb-6 space-y-1 text-center">
+            <h2 className="text-h2 font-semibold">Employer sign in</h2>
+            <p className="text-caption text-muted-foreground">
+              Verify employment claims and track retention
+            </p>
+          </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Work Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="hr@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-                <div className="text-xs text-muted-foreground font-mono bg-muted p-2 rounded">
-                  Demo: hr@company.com / employer123
-                </div>
-              </div>
+          {bannerError ? (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{bannerError}</AlertDescription>
+            </Alert>
+          ) : null}
 
-              <Button type="submit" className="w-full" size="lg" disabled={loading || !email}>
+          <Form {...form}>
+            <form onSubmit={onSubmit} className="grid gap-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Work email <span className="text-danger-text">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="hr@company.com"
+                        autoComplete="email"
+                        className="h-11"
+                        required
+                        disabled={loading}
+                        aria-required="true"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field, fieldState }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Password <span className="text-danger-text">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <PasswordInput
+                        placeholder="Enter your password"
+                        autoComplete="current-password"
+                        className="h-11"
+                        required
+                        disabled={loading}
+                        aria-required="true"
+                        {...field}
+                      />
+                    </FormControl>
+                    {fieldState.error ? (
+                      <FormMessage />
+                    ) : (
+                      <FormDescription>
+                        Demo: <span className="font-mono">hr@company.com / employer123</span>
+                      </FormDescription>
+                    )}
+                  </FormItem>
+                )}
+              />
+
+              <Button type="submit" className="mt-2 w-full" size="lg" disabled={loading}>
                 {loading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
+          </Form>
+        </div>
 
-            <p className="mt-6 text-center text-sm text-muted-foreground">
-              <Link href="/login" className="text-primary hover:underline">
-                Are you a trainee or institute?
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
+        {/* Footer links below card (§9.2) */}
+        <p className="mt-6 text-center text-caption text-muted-foreground">
+          Are you a trainee or institute?{" "}
+          <Link href="/login" className="text-primary-strong hover:underline">
+            Sign in here
+          </Link>
+        </p>
       </div>
     </div>
   );
@@ -117,7 +188,13 @@ function EmployerLoginPageContent() {
 
 export default function EmployerLoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="grid min-h-svh place-items-center bg-background">
+          <p className="text-body-sm text-muted-foreground">Loading...</p>
+        </div>
+      }
+    >
       <EmployerLoginPageContent />
     </Suspense>
   );
