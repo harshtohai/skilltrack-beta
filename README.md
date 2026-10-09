@@ -1,4 +1,4 @@
-# OutcomeTrack — Longitudinal Skilling Outcomes Platform
+# SkillsTrack — Longitudinal Skilling Outcomes Platform
 
 > Tracking what happens to trainees *after* certification: placement, retention, wages and career progression — captured over WhatsApp, verified by employers, and benchmarked across training centers for government accountability.
 
@@ -35,7 +35,7 @@ India's skilling ecosystem measures *inputs* (enrolments, certifications) but st
 
 ## Solution
 
-OutcomeTrack closes the loop with four mechanisms:
+SkillsTrack closes the loop with four mechanisms:
 
 1. **Longitudinal capture over WhatsApp** — automated follow-up conversations at 30/90-day checkpoints after certification, in English or Hindi, consent-first.
 2. **Evidence-graded outcomes** — every employment claim carries a verification status (`SELF_REPORTED` → `EMPLOYER_CONFIRMED` / `DOCUMENT_VERIFIED`) and evidence level. Scores are verified-weighted, so self-reported data can't inflate a provider's numbers.
@@ -46,10 +46,10 @@ OutcomeTrack closes the loop with four mechanisms:
 
 | Role | What they get |
 |---|---|
-| **Government admin** | Placement/retention/wage/verification trend graphs vs targets, training-agency leaderboard (overall = 50% placement + 30% academic + 20% volume), recent-activity timeline, trainee lookup by ID |
+| **Government admin** | Placement/retention/wage/verification trend graphs vs targets, training-agency leaderboard (overall = 50% placement + 30% academic + 20% volume), recent-activity timeline, trainee lookup by ID, **Conflict Resolution queue (Confirm/Reject with audit trail)** |
 | **Institute** | Peer-comparison graphs per category (your institute vs peer average vs top quartile vs state target), per-cohort performance table, gap analysis |
-| **Employer** | Dedicated login + dashboard: retention score (with numerator/denominator), claims timeline, verification history, wage-band distribution, retention rank vs peers, recent claims |
-| **Trainee** | Magic-link (passwordless) login, editable profile (name/email/district/language), prominent copyable Trainee ID, certificates, employment history, outcome checkpoints, course + employer recommendations matched to skill gaps |
+| **Employer** | Dedicated login + dashboard: retention score (with numerator/denominator), claims timeline, verification history, wage-band distribution, retention rank vs peers, recent claims, **Job Board: post jobs, manage applications (Applied → Shortlisted → Hired/Rejected), hire feeds outcomes pipeline** |
+| **Trainee** | Magic-link (passwordless) login, editable profile (name/email/district/language), prominent copyable Trainee ID, certificates, employment history, outcome checkpoints, course + employer recommendations matched to skill gaps, **Job Hunt: browse jobs, apply, track applications, employer contact on shortlist** |
 
 ## Tech Stack
 
@@ -63,7 +63,7 @@ OutcomeTrack closes the loop with four mechanisms:
 | WhatsApp | Kapso (Meta Cloud API) | Consent-first conversational state machine |
 | UI | Tailwind CSS + shadcn/radix + [Recharts](https://recharts.org) | Dashboard graphs |
 | Validation | Zod | Every route body/query validated |
-| Testing | Vitest | Pure-module unit tests (scoring, recommendations) |
+| Testing | Vitest | Pure-module unit tests (scoring, recommendations, analytics, auth) |
 
 ## Architecture
 
@@ -86,6 +86,7 @@ flowchart LR
         AGG[analytics.ts<br/>flat-query aggregations]
         BOT[conversation.ts<br/>WhatsApp state machine]
         MAIL[email.ts<br/>Brevo]
+        JOBS[jobs.ts<br/>job board pipeline]
     end
 
     DB[(PostgreSQL<br/>Prisma)]
@@ -97,6 +98,7 @@ flowchart LR
     AUTH --> DB
     API --> AGG --> SCORE
     API --> REC
+    API --> JOBS
     API --> MAIL --> MAILSRV
     WA <--> WH
     WH --> BOT --> DB
@@ -277,6 +279,24 @@ All routes under `/api/v1` are Zod-validated and JSON. List endpoints are pagina
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/employer/me` | Session-gated: retention score, claims timeline, verification history, wage bands, peer ranking |
+| GET | `/employer/jobs` | Paginated job listings for the employer |
+| POST | `/employer/jobs` | Create a new job posting |
+| PATCH | `/employer/jobs/[id]` | Update a job posting |
+| POST | `/employer/jobs/[id]/close` | Close a job posting |
+
+### Trainee (Job Hunt)
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/trainee/jobs` | Browse open jobs (filtered by district/work mode/type) |
+| POST | `/trainee/jobs/[id]/apply` | Apply to a job |
+| GET | `/trainee/applications` | My Applications with status + employer contact on shortlist |
+| POST | `/trainee/applications/[id]/withdraw` | Withdraw an application |
+
+### Conflict Resolution (Admin)
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/conflicts` | Paginated list of CONFLICT claims |
+| POST | `/conflicts/[id]/resolve` | Resolve conflict: CONFIRM → EMPLOYER_CONFIRMED or REJECT → UNKNOWN (writes CONFLICT_RESOLVED audit event) |
 
 ### Ops
 | Method | Path | Purpose |
@@ -321,9 +341,9 @@ WELCOME → CONSENT → IDENTITY_VERIFY → EMPLOYMENT_STATUS → EMPLOYER_DETAI
 
 ## Testing
 
-- **36 Vitest unit tests** over the pure modules: center scores (weights, verified-weighting, null-relevance fallback), peer percentiles, employer retention (evidence thresholds), course matching (skill gaps, employment status, district), employer exclusion (sub-50%, null, zero claims).
-- **Route-level loop-testing** was done manually against the dev server (auth matrix, pagination, idempotent webhooks, bot flow to completion).
-- `npm run lint` and `npm run typecheck` are enforced alongside the tests.
+- **109 Vitest unit tests** across 9 test files: pure modules (scoring, recommendations, analytics, auth) + route-level validation. Coverage: center scores (verified-weighting, null-relevance fallback), peer percentiles, employer retention (evidence thresholds), course matching (skill gaps, employment status, district), employer exclusion (sub-50%, null, zero claims), auth callbacks, API validation.
+- **Route-level loop-testing** done manually against the dev server (auth matrix, pagination, idempotent webhooks, bot flow to completion, conflict resolution, job board pipeline).
+- `npm run lint` and `npm run typecheck` enforced alongside tests.
 
 ## Deployment
 
@@ -389,14 +409,20 @@ Honest notes for reviewers and future maintainers:
 - **Email is free-tier.** Brevo sends 300/day from one verified sender; a production system needs a verified sending domain.
 - **Naming drift.** Older API fields are snake_case; newer responses use camelCase. Documented in [`CONTEXT.md`](CONTEXT.md); pick one before growing the API.
 - **Demo data is synthesized** (certificates/surveys are backfilled for score variance). Reset expectations accordingly.
+- **Supabase pooler flakiness.** The pooled connection (`:6543`) exhibits chronic P1001 outages; local dev uses a direct IPv6-only connection (`:5432`) for the query engine, but migrations still require the pooler. Production on Vercel serverless correctly uses the pooler with retry logic.
+- **No clean 503 on DB outage.** Prisma drops the connection instead of returning a handled error — wrap DB calls or add a health-check middleware before production.
+- **KPI overview hotspot.** 7 sequential full-table COUNTs + in-memory aggregation → 6–16s warm latency. Parallelize counts or add materialized daily snapshots (see [`CONTEXT.md`](CONTEXT.md) Enhancement Bag #1, #5).
+- **Date-time filter spin buttons.** Empty `datetime-local` inputs show native spin-button noise in Chromium; hidden via `::-webkit-inner/outer-spin-button` in globals.css (calendar indicator kept).
+- **Dropped trainee actions.** A dropped trainee's kebab rendered nothing — now shows disabled buttons with tooltip ("…is dropped out — they can't be moved to another cohort or dropped again").
 
 ## Further Documentation
 
 - [`CONTEXT.md`](CONTEXT.md) — domain glossary, frozen integration contracts, and current implementation state. Start here.
 - [`docs/agents/`](docs/agents/) — issue tracker and triage conventions used during development.
 - [`docs/adr/`](docs/adr/) — ADRs (add decisions here as the system evolves).
+- **Policy pages:** `/privacy`, `/consent`, `/data-retention`, `/accessibility`, `/terms` — all served from root layout with prose containers and "Back to home" links.
 - GitHub Issues — the parent spec (#23) and tracer-bullet tickets (#24–#31) document the feature batch end-to-end, including acceptance criteria per ticket.
 
 ---
 
-*Built for the Smart India Hackathon 2026. OutcomeTrack: measure what matters after the certificate.*
+*Built for the Smart India Hackathon 2026. SkillsTrack: measure what matters after the certificate.*
