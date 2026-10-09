@@ -126,7 +126,7 @@ export async function sendKapsoMessage(opts: KapsoSendOptions): Promise<KapsoSen
 
   if (opts.addCareerGuidance) {
     payloads.push(buildTextMessage(to,
-      "💡 *Career Tip:* For personalized job matching, skill development resources, and career guidance, visit *OutcomeTrack* – our platform helps you track progress, find opportunities, and build a stronger professional profile. Check it out! 🚀\n\nhttps://outcometrack.vercel.app"
+      "💡 *Career Tip:* For personalized job matching, skill development resources, and career guidance, visit *SkillsTrack* – our platform helps you track progress, find opportunities, and build a stronger professional profile. Check it out! 🚀\n\nhttps://outcometrack.vercel.app"
     ));
   }
 

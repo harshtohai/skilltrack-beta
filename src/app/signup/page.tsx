@@ -186,7 +186,7 @@ export default function SignupPage() {
                 </svg>
               </span>
               <span className="text-title font-semibold text-foreground">
-                OutcomeTrack
+                SkillsTrack
               </span>
             </Link>
             <div className="mt-6 space-y-1">
@@ -422,7 +422,7 @@ export default function SignupPage() {
                         <Link href="/privacy" className="text-primary-strong hover:underline">
                           Privacy Policy
                         </Link>
-                        . I consent to OutcomeTrack processing my personal data
+                        . I consent to SkillsTrack processing my personal data
                         for employment outcome tracking as described in the{" "}
                         <Link href="/consent" className="text-primary-strong hover:underline">
                           Consent Policy
@@ -464,7 +464,7 @@ export default function SignupPage() {
         </div>
         <figure className="mx-auto max-w-sm space-y-3">
           <blockquote className="text-h2 font-semibold tracking-tight text-foreground">
-            &ldquo;OutcomeTrack showed me exactly which skills get placed — I
+            &ldquo;SkillsTrack showed me exactly which skills get placed — I
             went from a six-month job hunt to an offer in three weeks.&rdquo;
           </blockquote>
           <figcaption className="text-caption text-muted-foreground">

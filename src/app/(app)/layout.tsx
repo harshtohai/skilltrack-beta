@@ -26,7 +26,7 @@ export default async function AppLayout({
         {/* Mobile/tablet trigger bar (§11 — sidebar is off-canvas <lg) */}
         <div className="flex h-12 shrink-0 items-center gap-3 border-b px-4 lg:hidden">
           <SidebarTrigger />
-          <span className="text-title font-semibold">OutcomeTrack</span>
+          <span className="text-title font-semibold">SkillsTrack</span>
         </div>
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </SidebarInset>

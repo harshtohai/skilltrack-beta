@@ -11,14 +11,14 @@ export default function TermsPage() {
       <main className="mx-auto max-w-2xl px-4 py-16">
         <h1 className="text-h1 font-semibold tracking-tight">Terms of use</h1>
         <p className="mt-3 text-body-sm text-muted-foreground">
-          These terms govern the use of OutcomeTrack — a platform for tracking
+          These terms govern the use of SkillsTrack — a platform for tracking
           employment outcomes in government skilling programmes. By creating an
           account or using the platform, you agree to them.
         </p>
 
         <h2 className="mt-10 text-h2 font-semibold tracking-tight">Who the platform serves</h2>
         <p className="mt-3 text-body-sm text-muted-foreground">
-          OutcomeTrack is used by four kinds of accounts, each with its own
+          SkillsTrack is used by four kinds of accounts, each with its own
           access: trainees enrolled via a training institute, training
           institutes managing their centre&rsquo;s batches, employers posting jobs
           and verifying employment, and government administrators overseeing

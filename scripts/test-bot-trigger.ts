@@ -55,7 +55,7 @@ async function main() {
     toPhoneE164: TEST_PHONE,
     text: `👋 *Hello ${user.fullName}!*
 
-Welcome to *OutcomeTrack* – the official placement tracking & career guidance platform by *Maharashtra State Skill Development Society (MSSDS)* under the *Pradhan Mantri Kaushal Vikas Yojana (PMKVY)*.
+Welcome to *SkillsTrack* – the official placement tracking & career guidance platform by *Maharashtra State Skill Development Society (MSSDS)* under the *Pradhan Mantri Kaushal Vikas Yojana (PMKVY)*.
 
 We're here to understand your career journey after training so we can:
 ✅ Improve training programs for future batches

@@ -1,4 +1,4 @@
-// OutcomeTrack Prisma Schema
+// SkillsTrack Prisma Schema
 // Longitudinal skilling outcomes platform
 
 generator client {

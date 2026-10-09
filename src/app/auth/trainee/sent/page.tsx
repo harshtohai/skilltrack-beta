@@ -76,7 +76,7 @@ function MagicLinkSentContent() {
               <ShieldCheck className="size-4" aria-hidden />
             </span>
             <span className="text-title font-semibold text-foreground">
-              OutcomeTrack
+              SkillsTrack
             </span>
           </Link>
         </div>
@@ -103,7 +103,7 @@ function MagicLinkSentContent() {
               <div className="space-y-0.5">
                 <p className="text-body-sm font-medium">Check your inbox</p>
                 <p className="text-caption text-muted-foreground">
-                  Look for an email from OutcomeTrack
+                  Look for an email from SkillsTrack
                 </p>
               </div>
             </div>

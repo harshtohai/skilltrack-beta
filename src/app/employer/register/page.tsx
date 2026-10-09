@@ -173,7 +173,7 @@ export default function EmployerRegisterPage() {
                 </svg>
               </span>
               <span className="text-title font-semibold text-foreground">
-                OutcomeTrack
+                SkillsTrack
               </span>
             </Link>
             <div className="mt-6 space-y-1">

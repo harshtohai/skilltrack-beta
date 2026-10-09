@@ -67,7 +67,7 @@ function MarketingHeader({
           <span className="grid size-8 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
             <GraduationCap className="size-5" />
           </span>
-          <span className="text-title font-semibold text-foreground">OutcomeTrack</span>
+          <span className="text-title font-semibold text-foreground">SkillsTrack</span>
         </Link>
 
         {/* Desktop nav (§11: inline at md+) */}
@@ -98,7 +98,7 @@ function MarketingHeader({
                   <span className="grid size-7 place-items-center rounded-md bg-primary text-primary-foreground">
                     <GraduationCap className="size-4" />
                   </span>
-                  OutcomeTrack
+                  SkillsTrack
                 </SheetTitle>
               </SheetHeader>
               <nav className="flex flex-col gap-1 px-4" aria-label="Mobile">

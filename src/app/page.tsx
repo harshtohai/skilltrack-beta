@@ -84,7 +84,7 @@ export default async function LandingPage() {
                 <span className="text-primary-strong">Transform lives.</span>
               </h1>
               <p className="mb-10 max-w-2xl text-title text-muted-foreground">
-                OutcomeTrack is a longitudinal skilling-outcomes platform that creates consent-based
+                SkillsTrack is a longitudinal skilling-outcomes platform that creates consent-based
                 trainee records, links training with employment signals, conducts automated
                 follow-ups, and provides cohort, course, provider, district, and demographic
                 analytics — all while protecting privacy.
@@ -193,7 +193,7 @@ export default async function LandingPage() {
                 Ready to transform skilling outcomes?
               </h2>
               <p className="mx-auto mb-10 max-w-2xl text-body text-background/80">
-                Join training providers, government agencies, and employers using OutcomeTrack to measure what matters.
+                Join training providers, government agencies, and employers using SkillsTrack to measure what matters.
               </p>
               <Button asChild size="lg">
                 <Link href={primaryHref}>

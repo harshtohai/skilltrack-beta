@@ -12,7 +12,7 @@ export default function DataRetentionPage() {
       <main className="mx-auto max-w-2xl px-4 py-16">
         <h1 className="text-h1 font-semibold tracking-tight">Data retention</h1>
         <p className="mt-3 text-body-sm text-muted-foreground">
-          This policy describes how long OutcomeTrack keeps each kind of data,
+          This policy describes how long SkillsTrack keeps each kind of data,
           what is deleted on request and what must be kept for the programme’s
           audit trail.
         </p>

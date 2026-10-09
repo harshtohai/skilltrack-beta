@@ -1,4 +1,4 @@
-# OutcomeTrack — Hackathon PRD & Feature Requirements (v1.0)
+# SkillsTrack — Hackathon PRD & Feature Requirements (v1.0)
 
 > Skilling Outcomes & Impact Intelligence Platform. Hackathon submission: **23 September 2026**.
 > This file is written to be grilled (`/grill-me`): decisions already made are in §12, open questions in §13.
@@ -8,7 +8,7 @@
 
 ## 1. One-paragraph pitch
 
-Training systems record enrolment and certification well, but nobody reliably knows what happens to trainees **after** training: did they get a job, keep it, earn more? OutcomeTrack is an **outcome-evidence layer**: it follows up with trainees on WhatsApp at 30/90/180/365 days, turns their answers into employment claims, lets employers verify those claims in one click, and shows programme owners **coverage, verified employment, retention and wage progression** with the evidence level behind every number.
+Training systems record enrolment and certification well, but nobody reliably knows what happens to trainees **after** training: did they get a job, keep it, earn more? SkillsTrack is an **outcome-evidence layer**: it follows up with trainees on WhatsApp at 30/90/180/365 days, turns their answers into employment claims, lets employers verify those claims in one click, and shows programme owners **coverage, verified employment, retention and wage progression** with the evidence level behind every number.
 
 Core loop: `Training → Certification → Outcome claim → Employer verification → Follow-up (30/90/180/365) → Retention/wage → Analytics`
 

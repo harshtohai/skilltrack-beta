@@ -36,7 +36,7 @@ export interface Messages {
 export const en: Messages = {
   welcome: `👋 *Hello {name}!*
 
-Welcome to *OutcomeTrack* – the official placement tracking & career guidance platform by the *Maharashtra State Skill Development Society (MSSDS)* under the *Pradhan Mantri Kaushal Vikas Yojana (PMKVY)*.
+Welcome to *SkillsTrack* – the official placement tracking & career guidance platform by the *Maharashtra State Skill Development Society (MSSDS)* under the *Pradhan Mantri Kaushal Vikas Yojana (PMKVY)*.
 
 We're here to understand your career journey after training so we can:
 ✅ Improve training programs for future batches
@@ -132,7 +132,7 @@ Your responses have been recorded and will help improve skill training for thous
 
 📊 *What happens next:*
 • Your feedback goes to MSSDS & NSDC for program improvements
-• You'll get personalized job alerts on OutcomeTrack
+• You'll get personalized job alerts on SkillsTrack
 • We may reach out for follow-up in 6 months
 
 🔗 *Stay Connected:*
@@ -141,7 +141,7 @@ Your responses have been recorded and will help improve skill training for thous
 
 *Together, building a skilled Maharashtra!* 🇮🇳
 
-— Team OutcomeTrack (MSSDS / PMKVY)`,
+— Team SkillsTrack (MSSDS / PMKVY)`,
   labels: {
     consent_yes: "✅ Yes, I consent",
     consent_no: "❌ No, thank you",

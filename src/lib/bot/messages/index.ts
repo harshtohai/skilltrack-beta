@@ -13,7 +13,7 @@ export interface Option {
   description?: string;
 }
 
-export const LANG_PROMPT = `🙏 *OutcomeTrack — Maharashtra Skill Development (MSSDS · PMKVY)*
+export const LANG_PROMPT = `🙏 *SkillsTrack — Maharashtra Skill Development (MSSDS · PMKVY)*
 
 *Choose your language / अपनी भाषा चुनें / तुमची भाषा निवडा:*`;
 

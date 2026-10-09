@@ -11,7 +11,7 @@ import { Providers } from "~/components/providers";
 import { type Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "OutcomeTrack — Skilling Outcomes Platform",
+  title: "SkillsTrack — Skilling Outcomes Platform",
   description: "Longitudinal skilling outcomes and impact measurement system",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };

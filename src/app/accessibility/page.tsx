@@ -16,7 +16,7 @@ export default function AccessibilityPage() {
           Accessibility statement
         </h1>
         <p className="mt-3 text-body-sm text-muted-foreground">
-          OutcomeTrack should be usable by everyone, including people who rely
+          SkillsTrack should be usable by everyone, including people who rely
           on assistive technology or the keyboard alone. This statement
           describes the patterns we follow, what we know is not yet right and
           how to tell us.
@@ -93,7 +93,7 @@ export default function AccessibilityPage() {
           <li>
             Follow-up conversations happen inside WhatsApp itself, where
             keyboard and screen-reader behaviour depends on WhatsApp, not
-            OutcomeTrack.
+            SkillsTrack.
           </li>
           <li>
             The dashboard interface is English-only at present; follow-up

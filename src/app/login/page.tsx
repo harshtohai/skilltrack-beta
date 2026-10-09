@@ -166,7 +166,7 @@ function LoginPageContent() {
               <GraduationCap className="size-4" aria-hidden />
             </span>
             <span className="text-title font-semibold text-foreground">
-              OutcomeTrack
+              SkillsTrack
             </span>
           </Link>
         </div>

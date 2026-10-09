@@ -86,7 +86,7 @@ function AppSidebar({ user }: { user: SidebarUser }) {
                   collapsed && "hidden",
                 )}
               >
-                OutcomeTrack
+                SkillsTrack
               </span>
             </Link>
             <SidebarTrigger />

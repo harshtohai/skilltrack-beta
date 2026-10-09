@@ -11,8 +11,8 @@ export default function PrivacyPolicyPage() {
       <main className="mx-auto max-w-2xl px-4 py-16">
         <h1 className="text-h1 font-semibold tracking-tight">Privacy policy</h1>
         <p className="mt-3 text-body-sm text-muted-foreground">
-          This policy describes what OutcomeTrack collects, how it is stored,
-          who can see it and what you can do about it. OutcomeTrack tracks
+          This policy describes what SkillsTrack collects, how it is stored,
+          who can see it and what you can do about it. SkillsTrack tracks
           employment outcomes for government skilling programmes; trainees
           enrol through a training institute.
         </p>
@@ -75,7 +75,7 @@ export default function PrivacyPolicyPage() {
         <p className="mt-3 text-body-sm text-muted-foreground">
           WhatsApp is the primary channel for follow-ups; email is used for
           enrolment verification and sign-in links. Messages are sent by the
-          OutcomeTrack bot to the contact details you registered with, and
+          SkillsTrack bot to the contact details you registered with, and
           your follow-up responses become part of your outcome record.
         </p>
 

@@ -12,7 +12,7 @@ export default function ConsentPolicyPage() {
       <main className="mx-auto max-w-2xl px-4 py-16">
         <h1 className="text-h1 font-semibold tracking-tight">Consent policy</h1>
         <p className="mt-3 text-body-sm text-muted-foreground">
-          This policy describes the consent OutcomeTrack asks for, what it
+          This policy describes the consent SkillsTrack asks for, what it
           covers and how to withdraw it. Consent is asked before any tracking
           begins — nothing is tracked without it.
         </p>
@@ -40,7 +40,7 @@ export default function ConsentPolicyPage() {
             part of the programme record.
           </li>
           <li>
-            WhatsApp follow-ups: the OutcomeTrack bot contacting you on your
+            WhatsApp follow-ups: the SkillsTrack bot contacting you on your
             registered mobile number at roughly 30 and 90 days after
             placement.
           </li>
