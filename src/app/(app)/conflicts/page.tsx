@@ -1,9 +1,21 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { AlertTriangle, Building2, User, MapPin, DollarSign, ChevronLeft, ChevronRight } from "lucide-react";
+import { AlertTriangle, Building2, User, MapPin, DollarSign, ChevronLeft, ChevronRight, CheckCircle2, XCircle } from "lucide-react";
+import Link from "next/link";
+import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "~/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
 import { Badge } from "~/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { PageHeader } from "~/components/patterns/page-header";
@@ -54,6 +66,11 @@ interface ConflictsResponse {
   pagination?: { page: number; limit: number; total: number; totalPages: number };
 }
 
+interface ResolveAction {
+  conflict: Conflict;
+  resolution: "CONFIRM" | "REJECT";
+}
+
 /**
  * Conflict queue per design §9.4 — Shell S1. Server-paginated table in a
  * ScrollArea; statuses and evidence render through StatusBadge (§4.10/CL-12).
@@ -65,6 +82,8 @@ export default function ConflictsPage() {
   const [selectedCohortId, setSelectedCohortId] = useState("");
   const [cohorts, setCohorts] = useState<Array<{ id: string; name: string }>>([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
+  const [resolveAction, setResolveAction] = useState<ResolveAction | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const fetchConflicts = useCallback(async () => {
     setLoading(true);
@@ -104,6 +123,38 @@ export default function ConflictsPage() {
   useEffect(() => {
     void fetchConflicts();
   }, [fetchConflicts]);
+
+  const resolveConflict = async () => {
+    if (!resolveAction) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/v1/conflicts/${resolveAction.conflict.id}/resolve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resolution: resolveAction.resolution }),
+      });
+      if (res.status === 409) {
+        toast.error("This claim was already resolved — refreshing the queue.");
+        setResolveAction(null);
+        void fetchConflicts();
+        return;
+      }
+      if (!res.ok) throw new Error("Failed to resolve conflict");
+      toast.success(
+        resolveAction.resolution === "CONFIRM"
+          ? "Claim confirmed — the trainee's placement is verified."
+          : "Claim rejected — removed from the conflict queue."
+      );
+      setResolveAction(null);
+      void fetchConflicts();
+    } catch (err) {
+      console.error("Failed to resolve conflict:", err);
+      toast.error("Failed to record the decision. Please retry.");
+      setResolveAction(null);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div>
@@ -181,6 +232,7 @@ export default function ConflictsPage() {
                     <TableHead className="w-col-2xl">Trainee says</TableHead>
                     <TableHead className="w-col-2xl">Employer says</TableHead>
                     <TableHead className="w-col-sm">Evidence</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -188,7 +240,12 @@ export default function ConflictsPage() {
                     <TableRow key={conflict.id} className="border-t hover:bg-muted/50">
                       <TableCell>
                         <div>
-                          <p className="font-medium">{conflict.trainee.fullName}</p>
+                          <Link
+                            href={`/trainees/${conflict.trainee.publicId}`}
+                            className="rounded-sm font-medium underline-offset-2 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+                          >
+                            {conflict.trainee.fullName}
+                          </Link>
                           <p className="text-caption text-muted-foreground">{conflict.trainee.publicId}</p>
                           <p className="text-caption text-muted-foreground flex items-center gap-1">
                             <MapPin className="size-3" /> {conflict.trainee.district}
@@ -261,6 +318,25 @@ export default function ConflictsPage() {
                           <StatusBadge status="CONFLICT" />
                         </div>
                       </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setResolveAction({ conflict, resolution: "CONFIRM" })}
+                          >
+                            <CheckCircle2 className="size-3.5" /> Confirm
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-danger-text"
+                            onClick={() => setResolveAction({ conflict, resolution: "REJECT" })}
+                          >
+                            <XCircle className="size-3.5" /> Reject
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -298,6 +374,50 @@ export default function ConflictsPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* CL-18: both resolutions are governance decisions — the confirm names
+          the trainee + consequence; overlay click can't dismiss it (§4.8).
+          The decision is recorded in the audit log. */}
+      <AlertDialog
+        open={resolveAction !== null}
+        onOpenChange={(open) => {
+          if (!open) setResolveAction(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {resolveAction?.resolution === "CONFIRM" ? "Confirm" : "Reject"}{" "}
+              {resolveAction?.conflict.trainee.fullName}
+              {"'s claim at "}
+              {resolveAction?.conflict.claim.employerName ?? "the employer"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {resolveAction?.resolution === "CONFIRM"
+                ? "The claim will be marked verified and leave the conflict queue."
+                : "The claim will be voided — it won’t count as placed or verified."}{" "}
+              The decision is recorded in the audit log.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant={resolveAction?.resolution === "CONFIRM" ? "default" : "destructive"}
+              disabled={submitting}
+              onClick={(e) => {
+                e.preventDefault();
+                void resolveConflict();
+              }}
+            >
+              {submitting
+                ? "Recording…"
+                : resolveAction?.resolution === "CONFIRM"
+                  ? "Confirm claim"
+                  : "Reject claim"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

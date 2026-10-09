@@ -139,7 +139,7 @@ export default async function TraineesListPage({
         })}
       </div>
 
-      <TraineesTable rows={rows} query={query} status={tab} />
+      <TraineesTable rows={rows} query={query} status={tab} total={total} />
 
       {/* Server-side pagination (§4.5 footer pattern — page numbers max 5) */}
       <div className="mt-4 flex items-center justify-between text-caption text-muted-foreground">

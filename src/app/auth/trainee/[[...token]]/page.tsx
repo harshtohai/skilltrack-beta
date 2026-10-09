@@ -207,6 +207,14 @@ export default function TraineeAuthPage() {
       setError("This link is incomplete — enter the code from your email.");
       return;
     }
+    if (!/^[a-f0-9]{64}$/i.test(token)) {
+      // Garbage token (can never match the sha256 token shape) — skip the API
+      // round-trip and its raw Zod error; go straight to the recovery form.
+      setLoading(false);
+      setRecoverable(true);
+      setError("This link is invalid or has expired.");
+      return;
+    }
     const key = `${token}:${verifyNonce}`;
     if (verifiedKeysRef.current.has(key)) return;
     verifiedKeysRef.current.add(key);
@@ -305,7 +313,7 @@ export default function TraineeAuthPage() {
             href="/login"
             className="text-body-sm text-muted-foreground underline hover:text-foreground"
           >
-            Request a new link
+            Back to login
           </Link>
         </div>
       </div>
@@ -400,7 +408,7 @@ export default function TraineeAuthPage() {
                 href="/login"
                 className="text-body-sm text-muted-foreground underline hover:text-foreground"
               >
-                Request a new link
+                Back to login
               </Link>
             </p>
           </CardContent>

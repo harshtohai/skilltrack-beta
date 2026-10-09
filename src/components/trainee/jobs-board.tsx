@@ -14,7 +14,7 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
@@ -325,6 +325,9 @@ export function TraineeJobsBoard() {
           )
         );
         toast.success("Application sent", { description: "The employer can now see your profile." });
+        // Refetch from the server's truth so the My Applications tab is fresh
+        // (the optimistic jobs update above only flips this job's badge).
+        void fetchAll();
       } else {
         const json = (await res.json()) as { error?: { code?: string; message?: string } };
         if (json.error?.code === "DUPLICATE_APPLICATION") {

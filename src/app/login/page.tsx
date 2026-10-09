@@ -22,7 +22,7 @@ import {
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { PasswordInput } from "~/components/ui/password-input";
-import { isPathAllowedForRole } from "~/lib/protected-routes";
+import { isKnownRoute, isPathAllowedForRole } from "~/lib/protected-routes";
 import { cn } from "~/lib/utils";
 
 type UserType = "trainee" | "employer" | "institute" | "admin";
@@ -81,6 +81,10 @@ function LoginPageContent() {
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
+    // Keep unmounted values (RHF's default, pinned for #21a): switching to
+    // trainee unmounts the password field — a typed password must survive
+    // the role switch.
+    shouldUnregister: false,
   });
 
   const onSubmit = form.handleSubmit(async (data) => {
@@ -131,10 +135,14 @@ function LoginPageContent() {
         }
         // Only honor the redirect param if the logged-in role may access it —
         // otherwise a stale ?redirect=/trainee/profile bounces non-trainee
-        // roles back to /login forever (login lockout loop). Hard navigation
-        // re-reads the fresh session cookie server-side (§9.2 → S1).
+        // roles back to /login forever (login lockout loop) — and only if it
+        // names a known route at all (#17): a bare prefix like /institute has
+        // no page and would 404 after login. Hard navigation re-reads the
+        // fresh session cookie server-side (§9.2 → S1).
         const targetUrl =
-          redirect && isPathAllowedForRole(redirect, selectedType)
+          redirect &&
+          isPathAllowedForRole(redirect, selectedType) &&
+          isKnownRoute(redirect)
             ? redirect
             : roleRedirects[selectedType];
         window.location.assign(targetUrl);

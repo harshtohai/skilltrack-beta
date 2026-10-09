@@ -66,7 +66,8 @@ interface InboundResponse {
 
 interface StartResponse {
   reply?: BotReply;
-  error?: string;
+  // API error responses are { error: { code, message } } — never a bare string.
+  error?: { code?: string; message?: string };
 }
 
 export default function SimulatorPage() {
@@ -235,8 +236,8 @@ export default function SimulatorPage() {
     setActivePhone("");
   };
 
-  const handleStartSimulation = async () => {
-    const phone = phoneInput.trim();
+  const handleStartSimulation = async (phoneOverride?: string) => {
+    const phone = (phoneOverride ?? phoneInput).trim();
     if (!phone || starting) return;
 
     setStarting(true);
@@ -258,7 +259,10 @@ export default function SimulatorPage() {
         const errorMessage: Message = {
           id: crypto.randomUUID(),
           role: "bot",
-          content: data.error ?? "Could not start simulation for this phone number.",
+          content:
+            typeof data.error === "string"
+              ? data.error
+              : data.error?.message ?? "Could not start simulation for this phone number.",
           timestamp: new Date(),
         };
         setMessages([errorMessage]);
@@ -427,13 +431,24 @@ export default function SimulatorPage() {
                   </Select>
 
                   {trainee && (
-                    <div className="space-y-1.5 rounded-xl bg-muted/50 p-4">
-                      <p className="text-body-sm font-medium">{trainee.fullName}</p>
-                      <p className="text-caption text-muted-foreground">ID: {trainee.publicId}</p>
-                      <p className="font-mono text-caption text-muted-foreground tabular-nums">
-                        Phone: {trainee.phoneE164.replace(/(\+91)(\d{5})(\d{5})/, "$1 XXXXX $3")}
-                      </p>
-                      <p className="text-caption text-muted-foreground">District: {trainee.district}</p>
+                    <div className="space-y-2 rounded-xl bg-muted/50 p-4">
+                      <div className="space-y-1.5">
+                        <p className="text-body-sm font-medium">{trainee.fullName}</p>
+                        <p className="text-caption text-muted-foreground">ID: {trainee.publicId}</p>
+                        <p className="font-mono text-caption text-muted-foreground tabular-nums">
+                          Phone: {trainee.phoneE164.replace(/(\+91)(\d{5})(\d{5})/, "$1 XXXXX $3")}
+                        </p>
+                        <p className="text-caption text-muted-foreground">District: {trainee.district}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => void handleStartSimulation(trainee.phoneE164)}
+                        disabled={starting}
+                        className="w-full gap-2"
+                      >
+                        {starting ? <Loader2 className="animate-spin" /> : <MessageSquare className="size-4" />}
+                        {starting ? "Starting…" : "Start conversation"}
+                      </Button>
                     </div>
                   )}
                 </>

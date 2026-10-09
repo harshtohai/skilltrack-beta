@@ -58,3 +58,42 @@ export function isPathAllowedForRole(path: string, role: UserRole): boolean {
   if (!routeConfig) return true;
   return routeConfig.roles.includes(role);
 }
+
+/**
+ * Known page routes a post-login redirect may target (#17) — a stale or bare
+ * prefix without a page (e.g. /institute, whose page is /institute/analytics)
+ * would 404 after login. Same matching style as the middleware: "/" exact,
+ * the rest startsWith; prefixes that have no page of their own ("/admin",
+ * "/cohorts", …) carry a trailing slash so only their real subpage
+ * destinations match.
+ */
+export const knownRoutes: string[] = [
+  // Public pages (mirrors auth.config.ts publicRoutes + the login footer).
+  "/login",
+  "/signup",
+  "/terms",
+  "/privacy",
+  "/consent",
+  "/data-retention",
+  "/accessibility",
+  "/simulator",
+  // Protected pages — bare prefixes have no index page, their sub-pages do.
+  "/admin/",
+  "/institute/",
+  "/employer/",
+  "/auth/", // /auth/trainee/sent + the token catch-all
+  "/trainees", // /trainees itself is a page (before "/trainee/", as above)
+  "/trainee/",
+  "/dashboard",
+  "/followups",
+  "/cohorts/",
+  "/conflicts",
+  "/audit-logs",
+];
+
+/** Whether `path` names an existing route — unknown redirects fall back to the role home (#17). */
+export function isKnownRoute(path: string): boolean {
+  // "/" must match exactly — startsWith("/") would make every path known.
+  if (path === "/") return true;
+  return knownRoutes.some((route) => path.startsWith(route));
+}

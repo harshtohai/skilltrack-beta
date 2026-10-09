@@ -94,7 +94,11 @@ function CommandPalette({ role }: { role: UserRole }) {
           <CommandItem
             onSelect={() =>
               run(() => {
-                void signOut({ callbackUrl: "/login" });
+                void signOut({ callbackUrl: "/login" }).then(() => {
+                  // Fallback: if the post-signout redirect doesn't fire (stale
+                  // client state), force a hard navigation to login.
+                  window.location.assign("/login");
+                });
               })
             }
           >
