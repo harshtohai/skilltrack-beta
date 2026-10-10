@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -24,6 +25,8 @@ import { datetime } from "~/lib/format";
 import { compact, number, percent, date as fmtDate } from "~/lib/format";
 import { PageHeader } from "~/components/patterns/page-header";
 import { StatCard } from "~/components/patterns/stat-card";
+import { DotSparkline } from "~/components/viz/dot-sparkline";
+import { kpiDelta, kpiSeries, type KpiMetric, type KpiSnapshotRow } from "~/lib/kpi-deltas";
 import { DataTable, rowActionsColumn } from "~/components/patterns/data-table";
 import { EmptyState } from "~/components/patterns/empty-state";
 import { ErrorState } from "~/components/patterns/error-state";
@@ -42,6 +45,8 @@ interface KPIData {
     verified: { count: number; label: string };
   };
   followupResponseRate: { rate: number; numerator: number; denominator: number };
+  /** Daily snapshot history (spec #80): oldest → newest, last row = today when present. */
+  history?: KpiSnapshotRow[];
   recentActivity?: Array<{
     type: "FOLLOWUP" | "CLAIM" | "VERIFICATION";
     date: string;
@@ -115,6 +120,40 @@ function ordinal(n: number): string {
   if (rem10 === 2 && rem100 !== 12) return `${n}nd`;
   if (rem10 === 3 && rem100 !== 13) return `${n}rd`;
   return `${n}th`;
+}
+
+/** Sparkline color per card chip (§4.14): chart-1 orange / chart-2 purple / chart-3 blue. */
+const SPARKLINE_COLOR = {
+  brand: "var(--chart-1)",
+  purple: "var(--chart-2)",
+  blue: "var(--chart-3)",
+} as const;
+
+/**
+ * Delta chip + sparkline wiring for a KPI card (spec #80). Deltas and the
+ * sparkline render only when real snapshot history exists (≥2 rows); day-one
+ * deploys show no fabricated deltas. Spread into a StatCard.
+ */
+function kpiTrend(
+  history: KpiSnapshotRow[] | undefined,
+  now: Date,
+  metric: KpiMetric,
+  chip: keyof typeof SPARKLINE_COLOR,
+  ariaLabel: string,
+): { delta?: number; deltaLabel?: string; sparkline?: React.ReactNode } {
+  if (!history || history.length < 2) return {};
+  const d = kpiDelta(history, now, metric);
+  return {
+    delta: d?.delta,
+    deltaLabel: d?.label,
+    sparkline: (
+      <DotSparkline
+        data={kpiSeries(history, metric)}
+        color={SPARKLINE_COLOR[chip]}
+        ariaLabel={ariaLabel}
+      />
+    ),
+  };
 }
 
 /** Shared loading skeleton (§9.1 layout: KPI row → analytics row → table). */
@@ -468,13 +507,25 @@ function AdminDashboard({ userName }: { userName: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (fresh = false) => {
     try {
       const [kpisRes, cohortsRes, districtsRes] = await Promise.all([
-        fetch("/api/v1/kpis/overview"),
+        // fresh=1 (Refresh button) skips today's snapshot read → live recompute
+        // + upsert, so the shared snapshot row refreshes for every viewer
+        fetch(`/api/v1/kpis/overview${fresh ? "?fresh=1" : ""}`),
         fetch("/api/v1/cohorts"),
         fetch("/api/v1/kpis/districts"),
       ]);
+      if (kpisRes.status === 429) {
+        // Refresh pressed inside the 30s cooldown (fresh=1 is the only 429
+        // path) — keep the current cards, nudge via toast instead of
+        // replacing the dashboard with an error state.
+        const body = (await kpisRes.json().catch(() => null)) as {
+          error?: { message?: string };
+        } | null;
+        toast.info(body?.error?.message ?? "KPI refresh is cooling down — try again shortly");
+        return;
+      }
       if (!kpisRes.ok || !cohortsRes.ok || !districtsRes.ok) throw new Error("Failed to fetch data");
 
       const kpisData = (await kpisRes.json()) as KPIData;
@@ -499,7 +550,7 @@ function AdminDashboard({ userName }: { userName: string }) {
 
   const refetch = async () => {
     setRefreshing(true);
-    await fetchData();
+    await fetchData(true);
     setRefreshing(false);
   };
 
@@ -515,6 +566,10 @@ function AdminDashboard({ userName }: { userName: string }) {
     );
   }
 
+  // "Today" for the delta guards (spec #80) — the browser clock, injected into
+  // the pure helpers so tests stay deterministic.
+  const now = new Date();
+
   return (
     <div>
       <PageHeader
@@ -528,7 +583,8 @@ function AdminDashboard({ userName }: { userName: string }) {
         }
       />
 
-      {/* KPI row (§9.1) — no delta/sparkline: the KPI API has no time-series history */}
+      {/* KPI row (§9.1) — delta chips + 7-day sparklines from the snapshot history
+          (spec #80); they render only once real history exists (≥2 rows) */}
       <div className="mb-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total trainees"
@@ -536,6 +592,7 @@ function AdminDashboard({ userName }: { userName: string }) {
           icon={<Users />}
           chip="brand"
           href="/trainees"
+          {...kpiTrend(kpis.history, now, "totalTrainees", "brand", "Total trainees, last 7 days")}
         />
         <StatCard
           title="Outcome coverage"
@@ -549,6 +606,13 @@ function AdminDashboard({ userName }: { userName: string }) {
           }
           icon={<TrendingUp />}
           chip="purple"
+          {...kpiTrend(
+            kpis.history,
+            now,
+            "outcomeCoverage",
+            "purple",
+            "Outcome coverage, last 7 days",
+          )}
         />
         <StatCard
           title="Verified employment"
@@ -562,6 +626,13 @@ function AdminDashboard({ userName }: { userName: string }) {
           }
           icon={<ShieldCheck />}
           chip="blue"
+          {...kpiTrend(
+            kpis.history,
+            now,
+            "verifiedEmployment",
+            "blue",
+            "Verified employment, last 7 days",
+          )}
         />
         <StatCard
           title="Conflicts"
@@ -570,6 +641,7 @@ function AdminDashboard({ userName }: { userName: string }) {
           chip="brand"
           goodDirection="down"
           href="/conflicts"
+          {...kpiTrend(kpis.history, now, "conflicts", "brand", "Conflicts, last 7 days")}
         />
       </div>
 
@@ -663,10 +735,10 @@ function InstituteDashboard({ userName }: { userName: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (fresh = false) => {
     try {
       const [kpisRes, standingRes] = await Promise.all([
-        fetch("/api/v1/kpis/overview"),
+        fetch(`/api/v1/kpis/overview${fresh ? "?fresh=1" : ""}`),
         fetch("/api/v1/kpis/center-standing"),
       ]);
       if (!kpisRes.ok || !standingRes.ok) throw new Error("Failed to fetch data");
@@ -692,7 +764,7 @@ function InstituteDashboard({ userName }: { userName: string }) {
 
   const refetch = async () => {
     setRefreshing(true);
-    await fetchData();
+    await fetchData(true);
     setRefreshing(false);
   };
 
@@ -715,6 +787,10 @@ function InstituteDashboard({ userName }: { userName: string }) {
       ? Math.round((kpis.funnel.employed.count / kpis.funnel.outcomeKnown.count) * 100)
       : 0;
 
+  // "Today" for the delta guards (spec #80) — the browser clock, injected into
+  // the pure helpers so tests stay deterministic.
+  const now = new Date();
+
   return (
     <div>
       <PageHeader
@@ -728,7 +804,9 @@ function InstituteDashboard({ userName }: { userName: string }) {
         }
       />
 
-      {/* KPI row (§9.1) — center-scoped numbers; no delta/sparkline: no time-series history */}
+      {/* KPI row (§9.1) — center-scoped numbers with delta chips + 7-day sparklines
+          from the snapshot history (spec #80); they render only once real history
+          exists (≥2 rows) */}
       <div className="mb-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Trainees produced"
@@ -736,18 +814,21 @@ function InstituteDashboard({ userName }: { userName: string }) {
           icon={<Users />}
           chip="brand"
           href="/trainees"
+          {...kpiTrend(kpis.history, now, "totalTrainees", "brand", "Trainees produced, last 7 days")}
         />
         <StatCard
           title="Certified"
           value={number(kpis.funnel.certified.count)}
           icon={<GraduationCap />}
           chip="purple"
+          {...kpiTrend(kpis.history, now, "certified", "purple", "Certified, last 7 days")}
         />
         <StatCard
           title="Placed"
           value={number(kpis.funnel.employed.count)}
           icon={<Briefcase />}
           chip="blue"
+          {...kpiTrend(kpis.history, now, "placed", "blue", "Placed, last 7 days")}
         />
         <StatCard
           title="Placement rate"
@@ -761,6 +842,7 @@ function InstituteDashboard({ userName }: { userName: string }) {
           }
           icon={<TrendingUp />}
           chip="brand"
+          {...kpiTrend(kpis.history, now, "placementRate", "brand", "Placement rate, last 7 days")}
         />
       </div>
 

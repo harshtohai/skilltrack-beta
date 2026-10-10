@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "~/lib/auth";
 import { db } from "~/server/db";
-import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+import { routeErrorResponse, createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 
 export const dynamic = "force-dynamic";
 
@@ -103,7 +103,7 @@ export async function GET() {
     });
   } catch (error) {
     console.error("GET /api/v1/trainee/me error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to fetch profile", 500);
+    return routeErrorResponse("Failed to fetch profile", error);
   }
 }
 
@@ -153,6 +153,6 @@ export async function PATCH(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) return handleZodError(error);
     console.error("PATCH /api/v1/trainee/me error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to update profile", 500);
+    return routeErrorResponse("Failed to update profile", error);
   }
 }

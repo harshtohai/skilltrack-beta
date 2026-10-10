@@ -5,7 +5,7 @@ import { z } from "zod";
 import { db } from "~/server/db";
 import { employerRegisterResponseSchema, employerRegisterSchema } from "~/lib/job-board-contracts";
 import { hashPassword } from "~/server/password-hash";
-import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+import { routeErrorResponse, createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +65,6 @@ export async function POST(request: NextRequest) {
       return createErrorResponse("CONFLICT", "An employer with this email already exists", 409);
     }
     console.error("POST /api/v1/employer/register error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to register employer", 500);
+    return routeErrorResponse("Failed to register employer", error);
   }
 }

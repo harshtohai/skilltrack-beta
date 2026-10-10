@@ -508,6 +508,29 @@ model JobSeekSignal {
   @@map("job_seek_signals")
 }
 
+// Materialized daily KPI snapshots (perf #1/#5): one row per
+// (snapshotDate, trainingCenterId). trainingCenterId null = org-wide
+// (admin scope); set = per-center (institute scope). The KPI overview
+// endpoint reads today's row instead of recomputing 7 COUNT queries.
+model KpiDailySnapshot {
+  id                 String   @id @default(uuid())
+  snapshotDate       DateTime @db.Date
+  trainingCenterId   String?  // null = org-wide (admin); set = per-center (institute)
+  totalTrainees      Int
+  certified          Int
+  outcomeKnown       Int
+  employed           Int
+  verified           Int
+  conflicts          Int
+  followupsSent      Int      // ever-sent denominator
+  followupsResponded Int
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([snapshotDate, trainingCenterId])
+  @@map("kpi_daily_snapshots")
+}
+
 // model Retention {
 //   // v_retention
 // }

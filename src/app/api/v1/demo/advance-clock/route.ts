@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "~/server/db";
-import { createErrorResponse, handleZodError, validateInternalApiKey } from "~/app/api/v1/_utils";
+import { routeErrorResponse, createErrorResponse, handleZodError, validateInternalApiKey } from "~/app/api/v1/_utils";
 
 export const dynamic = "force-dynamic";
 
@@ -88,6 +88,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) return handleZodError(error);
     console.error("POST /api/v1/demo/advance-clock error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to advance demo clock", 500);
+    return routeErrorResponse("Failed to advance demo clock", error);
   }
 }

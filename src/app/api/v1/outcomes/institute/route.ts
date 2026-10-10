@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "~/server/db";
 import { getMonthlyOutcomes, getGroupedRates, getPeerBenchmarks, EMPLOYED_STATUSES } from "~/server/analytics";
-import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+import { routeErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 
 export const dynamic = "force-dynamic";
 
@@ -104,6 +104,6 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) return handleZodError(error);
     console.error("GET /api/v1/outcomes/institute error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to fetch institute analytics", 500);
+    return routeErrorResponse("Failed to fetch institute analytics", error);
   }
 }

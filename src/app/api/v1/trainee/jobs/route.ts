@@ -6,7 +6,7 @@ import { computeEmployerRetention } from "~/server/scoring";
 import { sortJobsForTrainee, matchesFilters } from "~/server/job-relevance";
 import { EMPLOYED_STATUSES } from "~/server/analytics";
 import { traineeJobsQuerySchema } from "~/lib/job-board-contracts";
-import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+import { routeErrorResponse, createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 
 export const dynamic = "force-dynamic";
 
@@ -177,6 +177,6 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) return handleZodError(error);
     console.error("GET /api/v1/trainee/jobs error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to fetch jobs", 500);
+    return routeErrorResponse("Failed to fetch jobs", error);
   }
 }
