@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "~/server/db";
 import { getSessionScope } from "~/server/scope";
 import {
@@ -74,7 +74,7 @@ function overviewResponse(
   });
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     // INST-04: institutes see only their center's numbers, filtered through
     // cohorts (same center claim as the trainees route); admin stays unscoped.
@@ -144,19 +144,25 @@ export async function GET() {
 
     // Daily KPI snapshot (perf #1/#5): the first hit of the day computes and
     // stores; every later hit is an indexed read + history query instead of
-    // the COUNT storm. The snapshot read is wrapped so a missing/unapplied
-    // table or a pooler flake falls back to the live computation — the
-    // dashboard never breaks. trainingCenterId null matches the org-wide
-    // (admin) row; find-then-write also covers the admin scope on persist.
+    // the COUNT storm. `?fresh=1` (dashboard Refresh button) skips the
+    // snapshot read and recomputes live — the upsert then refreshes the shared
+    // row, so every subsequent viewer gets the fresh numbers too. The snapshot
+    // read is wrapped so a missing/unapplied table or a pooler flake falls
+    // back to the live computation — the dashboard never breaks.
+    // trainingCenterId null matches the org-wide (admin) row; find-then-write
+    // also covers the admin scope on persist.
+    const forceFresh = request.nextUrl.searchParams.get("fresh") === "1";
     const today = utcDay();
     let todaySnapshot: OverviewMetrics | null = null;
-    try {
-      todaySnapshot = await db.kpiDailySnapshot.findFirst({
-        where: { snapshotDate: today, trainingCenterId: scope.centerId },
-        orderBy: { updatedAt: "desc" },
-      });
-    } catch (error) {
-      console.error("Snapshot read failed — falling back to live computation:", error);
+    if (!forceFresh) {
+      try {
+        todaySnapshot = await db.kpiDailySnapshot.findFirst({
+          where: { snapshotDate: today, trainingCenterId: scope.centerId },
+          orderBy: { updatedAt: "desc" },
+        });
+      } catch (error) {
+        console.error("Snapshot read failed — falling back to live computation:", error);
+      }
     }
 
     if (todaySnapshot) {

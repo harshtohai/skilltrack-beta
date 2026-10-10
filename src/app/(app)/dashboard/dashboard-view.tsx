@@ -506,10 +506,12 @@ function AdminDashboard({ userName }: { userName: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (fresh = false) => {
     try {
       const [kpisRes, cohortsRes, districtsRes] = await Promise.all([
-        fetch("/api/v1/kpis/overview"),
+        // fresh=1 (Refresh button) skips today's snapshot read → live recompute
+        // + upsert, so the shared snapshot row refreshes for every viewer
+        fetch(`/api/v1/kpis/overview${fresh ? "?fresh=1" : ""}`),
         fetch("/api/v1/cohorts"),
         fetch("/api/v1/kpis/districts"),
       ]);
@@ -537,7 +539,7 @@ function AdminDashboard({ userName }: { userName: string }) {
 
   const refetch = async () => {
     setRefreshing(true);
-    await fetchData();
+    await fetchData(true);
     setRefreshing(false);
   };
 
@@ -722,10 +724,10 @@ function InstituteDashboard({ userName }: { userName: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (fresh = false) => {
     try {
       const [kpisRes, standingRes] = await Promise.all([
-        fetch("/api/v1/kpis/overview"),
+        fetch(`/api/v1/kpis/overview${fresh ? "?fresh=1" : ""}`),
         fetch("/api/v1/kpis/center-standing"),
       ]);
       if (!kpisRes.ok || !standingRes.ok) throw new Error("Failed to fetch data");
@@ -751,7 +753,7 @@ function InstituteDashboard({ userName }: { userName: string }) {
 
   const refetch = async () => {
     setRefreshing(true);
-    await fetchData();
+    await fetchData(true);
     setRefreshing(false);
   };
 
