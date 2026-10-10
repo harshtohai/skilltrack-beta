@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -515,6 +516,16 @@ function AdminDashboard({ userName }: { userName: string }) {
         fetch("/api/v1/cohorts"),
         fetch("/api/v1/kpis/districts"),
       ]);
+      if (kpisRes.status === 429) {
+        // Refresh pressed inside the 30s cooldown (fresh=1 is the only 429
+        // path) — keep the current cards, nudge via toast instead of
+        // replacing the dashboard with an error state.
+        const body = (await kpisRes.json().catch(() => null)) as {
+          error?: { message?: string };
+        } | null;
+        toast.info(body?.error?.message ?? "KPI refresh is cooling down — try again shortly");
+        return;
+      }
       if (!kpisRes.ok || !cohortsRes.ok || !districtsRes.ok) throw new Error("Failed to fetch data");
 
       const kpisData = (await kpisRes.json()) as KPIData;

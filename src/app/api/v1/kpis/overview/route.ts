@@ -154,18 +154,36 @@ export async function GET(request: NextRequest) {
     const forceFresh = request.nextUrl.searchParams.get("fresh") === "1";
     const today = utcDay();
     let todaySnapshot: OverviewMetrics | null = null;
-    if (!forceFresh) {
-      try {
-        todaySnapshot = await db.kpiDailySnapshot.findFirst({
-          where: { snapshotDate: today, trainingCenterId: scope.centerId },
-          orderBy: { updatedAt: "desc" },
-        });
-      } catch (error) {
-        console.error("Snapshot read failed — falling back to live computation:", error);
+    let lastComputedAt: Date | null = null;
+    try {
+      const row = await db.kpiDailySnapshot.findFirst({
+        where: { snapshotDate: today, trainingCenterId: scope.centerId },
+        orderBy: { updatedAt: "desc" },
+      });
+      if (row) {
+        todaySnapshot = row;
+        lastComputedAt = row.updatedAt;
       }
+    } catch (error) {
+      console.error("Snapshot read failed — falling back to live computation:", error);
     }
 
-    if (todaySnapshot) {
+    // Refresh-button guard: `?fresh=1` costs the full COUNT recompute, so it
+    // is limited to one per 30s per scope. State = the shared snapshot row's
+    // updatedAt — no in-memory state, survives restarts, shared across server
+    // instances. Normal snapshot reads are never limited.
+    const FRESH_COOLDOWN_MS = 30_000;
+    if (forceFresh && lastComputedAt && Date.now() - lastComputedAt.getTime() < FRESH_COOLDOWN_MS) {
+      const retryAfter = Math.ceil(
+        (FRESH_COOLDOWN_MS - (Date.now() - lastComputedAt.getTime())) / 1000,
+      );
+      return NextResponse.json(
+        { error: { code: "RATE_LIMITED", message: `KPI refresh available in ${retryAfter}s` } },
+        { status: 429, headers: { "Retry-After": String(retryAfter) } },
+      );
+    }
+
+    if (todaySnapshot && !forceFresh) {
       // Snapshot present: serve the stored row + last 7 days of history
       // (single indexed findMany, oldest → newest, today included). Recent
       // activity stays live — cheap take-8 queries, contract unchanged.

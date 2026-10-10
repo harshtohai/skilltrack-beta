@@ -87,10 +87,17 @@ export async function GET(request: NextRequest) {
     const [trainees, total] = await Promise.all([
       db.trainee.findMany({
         where,
-        include: {
-          enrolments: {
-            include: { cohort: { include: { programme: true } } },
-          },
+        // Simulator-scoped select (the only GET consumer — the dev-tool picker
+        // uses exactly these 5 fields; perf #2): instead of the full row +
+        // deep enrolment/cohort/programme includes that shipped every column
+        // of 4 tables for up to 500 trainees. Also trims the PII surface
+        // (phoneEncrypted/phoneHash/email never leave the server).
+        select: {
+          id: true,
+          publicId: true,
+          fullName: true,
+          phoneE164: true,
+          district: true,
         },
         orderBy: { createdAt: "desc" },
         skip: (query.page - 1) * query.limit,
