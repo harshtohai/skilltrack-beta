@@ -9,7 +9,7 @@ import {
   employerJobsResponseSchema,
 } from "~/lib/job-board-contracts";
 import { toEmployerJob } from "~/server/employer-jobs";
-import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+import { routeErrorResponse, createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 
 export const dynamic = "force-dynamic";
 
@@ -66,7 +66,7 @@ export async function GET() {
     return NextResponse.json(response);
   } catch (error) {
     console.error("GET /api/v1/employer/jobs error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to fetch job postings", 500);
+    return routeErrorResponse("Failed to fetch job postings", error);
   }
 }
 
@@ -126,6 +126,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) return handleZodError(error);
     console.error("POST /api/v1/employer/jobs error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to create job posting", 500);
+    return routeErrorResponse("Failed to create job posting", error);
   }
 }

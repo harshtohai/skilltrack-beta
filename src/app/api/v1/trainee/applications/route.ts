@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "~/lib/auth";
 import { db } from "~/server/db";
-import { createErrorResponse } from "~/app/api/v1/_utils";
+import { routeErrorResponse, createErrorResponse } from "~/app/api/v1/_utils";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +45,6 @@ export async function GET(_request: NextRequest) {
     });
   } catch (error) {
     console.error("GET /api/v1/trainee/applications error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to fetch applications", 500);
+    return routeErrorResponse("Failed to fetch applications", error);
   }
 }

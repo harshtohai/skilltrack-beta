@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "~/server/db";
-import { createErrorResponse } from "../../_utils";
+import { routeErrorResponse } from "../../_utils";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +21,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("GET /api/v1/kpis/districts error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to fetch district distribution", 500);
+    return routeErrorResponse("Failed to fetch district distribution", error);
   }
 }

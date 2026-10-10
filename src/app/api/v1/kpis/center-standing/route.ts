@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "~/server/db";
 import { getGroupedRates, getTrainingCenterScores } from "~/server/analytics";
 import { getSessionScope } from "~/server/scope";
-import { createErrorResponse } from "../../_utils";
+import { routeErrorResponse, createErrorResponse } from "../../_utils";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +64,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("GET /api/v1/kpis/center-standing error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to fetch center standing", 500);
+    return routeErrorResponse("Failed to fetch center standing", error);
   }
 }

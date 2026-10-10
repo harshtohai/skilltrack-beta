@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { auth } from "~/lib/auth";
 import { db } from "~/server/db";
 import { jobIdParamSchema } from "~/lib/job-board-contracts";
-import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+import { routeErrorResponse, createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 
 export const dynamic = "force-dynamic";
 
@@ -97,6 +97,6 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) return handleZodError(error);
     console.error("POST /api/v1/trainee/jobs/[id]/apply error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to apply", 500);
+    return routeErrorResponse("Failed to apply", error);
   }
 }

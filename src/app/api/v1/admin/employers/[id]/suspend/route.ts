@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "~/lib/auth";
 import { db } from "~/server/db";
-import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+import { routeErrorResponse, createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 import { employerIdParamSchema, suspendEmployerSchema } from "~/lib/job-board-contracts";
 
 export const dynamic = "force-dynamic";
@@ -74,6 +74,6 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) return handleZodError(error);
     console.error("POST /api/v1/admin/employers/[id]/suspend error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to suspend employer", 500);
+    return routeErrorResponse("Failed to suspend employer", error);
   }
 }

@@ -9,7 +9,7 @@ import {
   utcDay,
   type SnapshotRow,
 } from "~/server/kpi-snapshots";
-import { createErrorResponse } from "../../_utils";
+import { routeErrorResponse } from "../../_utils";
 
 export const dynamic = "force-dynamic";
 
@@ -312,6 +312,6 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     console.error("GET /api/v1/kpis/overview error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to fetch KPIs", 500);
+    return routeErrorResponse("Failed to fetch KPIs", error);
   }
 }

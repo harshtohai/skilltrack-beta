@@ -8,7 +8,7 @@ import {
   applicationActionResponseSchema,
 } from "~/lib/job-board-contracts";
 import { canApplyAction } from "~/server/job-application-state";
-import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+import { routeErrorResponse, createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 
 export const dynamic = "force-dynamic";
 
@@ -90,6 +90,6 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) return handleZodError(error);
     console.error("POST /api/v1/employer/jobs/[id]/applicants/[appId]/reject error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to reject applicant", 500);
+    return routeErrorResponse("Failed to reject applicant", error);
   }
 }

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { db } from "~/server/db";
 import { getSessionScope } from "~/server/scope";
 import { auth } from "~/lib/auth";
-import { createErrorResponse, handleZodError } from "../_utils";
+import { routeErrorResponse, createErrorResponse, handleZodError } from "../_utils";
 import { encryptPhone, hashPhone } from "~/lib/phone-encrypt";
 import { mintAndSendLoginToken } from "~/server/magic-link";
 
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) return handleZodError(error);
     console.error("GET /api/v1/trainees error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to fetch trainees", 500);
+    return routeErrorResponse("Failed to fetch trainees", error);
   }
 }
 
@@ -241,6 +241,6 @@ export async function POST(request: NextRequest) {
       return createErrorResponse("PHONE_EXISTS", "An account with this phone number already exists", 409);
     }
     console.error("POST /api/v1/trainees error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to create trainee", 500);
+    return routeErrorResponse("Failed to create trainee", error);
   }
 }

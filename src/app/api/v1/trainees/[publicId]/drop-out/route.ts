@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "~/lib/auth";
 import { db } from "~/server/db";
 import { getSessionScope } from "~/server/scope";
-import { createErrorResponse } from "~/app/api/v1/_utils";
+import { routeErrorResponse, createErrorResponse } from "~/app/api/v1/_utils";
 
 export const dynamic = "force-dynamic";
 
@@ -80,6 +80,6 @@ export async function POST(
     return NextResponse.json({ droppedOut: updated.count });
   } catch (error) {
     console.error("POST /api/v1/trainees/[publicId]/drop-out error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to mark trainee as dropped out", 500);
+    return routeErrorResponse("Failed to mark trainee as dropped out", error);
   }
 }

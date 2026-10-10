@@ -5,7 +5,7 @@ import { auth } from "~/lib/auth";
 import { db } from "~/server/db";
 import { employerJobSchema, jobIdParamSchema, updateJobSchema } from "~/lib/job-board-contracts";
 import { toEmployerJob } from "~/server/employer-jobs";
-import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+import { routeErrorResponse, createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +71,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   } catch (error) {
     if (error instanceof z.ZodError) return handleZodError(error);
     console.error("PATCH /api/v1/employer/jobs/[id] error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to update job posting", 500);
+    return routeErrorResponse("Failed to update job posting", error);
   }
 }

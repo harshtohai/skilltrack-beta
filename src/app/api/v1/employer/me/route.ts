@@ -4,7 +4,7 @@ import { auth } from "~/lib/auth";
 import { db } from "~/server/db";
 import { computeEmployerRetention, normalizeEmployerName, percentile75 } from "~/server/scoring";
 import { EMPLOYED_STATUSES, VERIFIED_STATUSES } from "~/server/analytics";
-import { createErrorResponse } from "~/app/api/v1/_utils";
+import { routeErrorResponse, createErrorResponse } from "~/app/api/v1/_utils";
 
 export const dynamic = "force-dynamic";
 
@@ -240,6 +240,6 @@ export async function GET(_request: NextRequest) {
     });
   } catch (error) {
     console.error("GET /api/v1/employer/me error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to fetch employer analytics", 500);
+    return routeErrorResponse("Failed to fetch employer analytics", error);
   }
 }

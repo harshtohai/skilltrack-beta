@@ -5,7 +5,7 @@ import { auth } from "~/lib/auth";
 import { db } from "~/server/db";
 import { applicantsResponseSchema, jobIdParamSchema } from "~/lib/job-board-contracts";
 import { maskPhone } from "~/server/phone-mask";
-import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+import { routeErrorResponse, createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 
 export const dynamic = "force-dynamic";
 
@@ -87,6 +87,6 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   } catch (error) {
     if (error instanceof z.ZodError) return handleZodError(error);
     console.error("GET /api/v1/employer/jobs/[id]/applicants error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to fetch applicants", 500);
+    return routeErrorResponse("Failed to fetch applicants", error);
   }
 }

@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "~/server/db";
-import { createErrorResponse, handleZodError } from "../../../../_utils";
+import { routeErrorResponse, createErrorResponse, handleZodError } from "../../../../_utils";
 
 export const dynamic = "force-dynamic";
 
@@ -119,6 +119,6 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) return handleZodError(error);
     console.error("POST /api/v1/cohorts/[id]/followups/trigger error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to trigger follow-ups", 500);
+    return routeErrorResponse("Failed to trigger follow-ups", error);
   }
 }

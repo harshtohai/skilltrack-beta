@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "~/server/db";
-import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+import { routeErrorResponse, createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 import { EmailSendError, mintAndSendLoginToken } from "~/server/magic-link";
 
 export const dynamic = "force-dynamic";
@@ -79,6 +79,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) return handleZodError(error);
     console.error("POST /api/v1/trainee/magic-link error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to send magic link", 500);
+    return routeErrorResponse("Failed to send magic link", error);
   }
 }

@@ -5,7 +5,7 @@ import { db } from "~/server/db";
 import { getMonthlyOutcomes, getTrainingCenterScores, EMPLOYED_STATUSES } from "~/server/analytics";
 import { aggregateDemandGaps, aggregateEmployerReliability } from "~/server/job-marketplace";
 import { computeEmployerRetention } from "~/server/scoring";
-import { createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+import { routeErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 import type { JobMarketplace } from "~/lib/job-board-contracts";
 
 export const dynamic = "force-dynamic";
@@ -124,6 +124,6 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) return handleZodError(error);
     console.error("GET /api/v1/outcomes/government error:", error);
-    return createErrorResponse("INTERNAL_ERROR", "Failed to fetch government analytics", 500);
+    return routeErrorResponse("Failed to fetch government analytics", error);
   }
 }
