@@ -106,9 +106,9 @@ export default function PrivacyPolicyPage() {
         <h2 className="mt-10 text-h2 font-semibold tracking-tight">Contact</h2>
         <p className="mt-3 text-body-sm text-muted-foreground">
           Trainees: start with your training institute. Institutes, employers
-          and government administrators: route questions through the programme
-          coordinator. Data protection concerns can be raised with the
-          programme team at the Maharashtra State Innovation Society.
+          and administrators: route questions through the programme
+          coordinator. Data protection concerns can be raised through the
+          programme team.
         </p>
 
         <div className="mt-12 border-t pt-6">

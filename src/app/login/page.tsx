@@ -56,8 +56,8 @@ const roleRedirects: Record<UserType, string> = {
 };
 
 const demoCreds: Partial<Record<UserType, string>> = {
-  admin: "admin@maharashtra.gov.in / admin123",
-  institute: "institute@pmkvy.gov.in / institute123",
+  admin: "admin@skilltrack.in / admin123",
+  institute: "institute@skilltrack.in / institute123",
   employer: "hr@company.com / employer123",
 };
 

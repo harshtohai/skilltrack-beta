@@ -18,7 +18,7 @@ function MarketingFooter() {
               <span className="text-title font-semibold text-foreground">SkillsTrack</span>
             </div>
             <p className="max-w-prose text-body-sm text-muted-foreground">
-              Longitudinal skilling outcomes platform for Maharashtra. Built for SIH 2026 PS-26135.
+              Longitudinal skilling outcomes platform — from training to verified employment.
             </p>
           </div>
           <div>
@@ -50,7 +50,7 @@ function MarketingFooter() {
         </div>
         <div className="mt-8 border-t pt-8 text-center">
           <p className="text-caption text-muted-foreground">
-            © 2026 SkillsTrack. Government of Maharashtra — Maharashtra State Innovation Society.
+            © 2026 SkillsTrack.
           </p>
         </div>
       </div>

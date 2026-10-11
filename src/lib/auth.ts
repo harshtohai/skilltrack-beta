@@ -4,9 +4,9 @@ import { db } from "~/server/db";
 import { verifyPassword } from "~/server/password-hash";
 import { authConfig, type UserRole } from "~/lib/auth.config";
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@maharashtra.gov.in";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@skilltrack.in";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "admin123";
-const INSTITUTE_EMAIL = process.env.INSTITUTE_EMAIL ?? "institute@pmkvy.gov.in";
+const INSTITUTE_EMAIL = process.env.INSTITUTE_EMAIL ?? "institute@skilltrack.in";
 const INSTITUTE_PASSWORD = process.env.INSTITUTE_PASSWORD ?? "institute123";
 const EMPLOYER_EMAIL = process.env.EMPLOYER_EMAIL ?? "hr@company.com";
 

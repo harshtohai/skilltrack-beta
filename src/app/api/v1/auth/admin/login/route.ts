@@ -9,7 +9,7 @@ const adminLoginSchema = z.object({
   password: z.string().min(1),
 });
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@maharashtra.gov.in";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@skilltrack.in";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "admin123";
 
 export async function POST(request: NextRequest) {

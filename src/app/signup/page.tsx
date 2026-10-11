@@ -57,7 +57,7 @@ export default function SignupPage() {
       {/* Right: brand panel with dot-matrix art + testimonial (§9.3) */}
       <AuthBrandPanel
         quote="SkillsTrack showed me exactly which skills get placed — I went from a six-month job hunt to an offer in three weeks."
-        attribution="Priya Sharma · PMKVY trainee · Pune"
+        attribution="Priya Sharma · SkillsTrack trainee · Pune"
       />
     </div>
   );

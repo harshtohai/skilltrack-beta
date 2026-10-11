@@ -415,8 +415,8 @@ Seeded demo accounts (override via env; defaults live in code):
 
 | Role | Email | Password |
 |---|---|---|
-| Government admin | `admin@maharashtra.gov.in` | `admin123` |
-| Institute | `institute@pmkvy.gov.in` | `institute123` |
+| Government admin | `admin@skilltrack.in` | `admin123` |
+| Institute | `institute@skilltrack.in` | `institute123` |
 | Employer (demo) | `hr@company.com` | `employer123` |
 | Trainee | any seeded trainee email → magic link (no password) |
 
