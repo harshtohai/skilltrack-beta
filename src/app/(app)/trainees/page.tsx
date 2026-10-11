@@ -151,7 +151,7 @@ export default async function TraineesListPage({
             <Link
               href={pageHref(currentPage - 1)}
               aria-label="Previous page"
-              className="inline-flex size-8 items-center justify-center rounded-lg border bg-card transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+              className="inline-flex size-11 lg:size-8 items-center justify-center rounded-lg border bg-card transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
             >
               <ChevronLeft className="size-4" />
             </Link>
@@ -160,7 +160,7 @@ export default async function TraineesListPage({
             <Link
               href={pageHref(currentPage + 1)}
               aria-label="Next page"
-              className="inline-flex size-8 items-center justify-center rounded-lg border bg-card transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+              className="inline-flex size-11 lg:size-8 items-center justify-center rounded-lg border bg-card transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
             >
               <ChevronRight className="size-4" />
             </Link>

@@ -5,7 +5,6 @@ import { Building2, Download, Target, TrendingUp, Users } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
-import { Badge } from "~/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { LineChart } from "~/components/charts/LineChart";
@@ -20,6 +19,7 @@ import { EmptyState } from "~/components/patterns/empty-state";
 import { ErrorState } from "~/components/patterns/error-state";
 import { Skeleton } from "~/components/patterns/skeleton";
 import { FilterBar } from "~/components/patterns/filter-bar";
+import { ScoreBadge } from "~/components/patterns/status-badge";
 import { number, percent } from "~/lib/format";
 import type { JobMarketplace } from "~/lib/job-board-contracts";
 
@@ -96,13 +96,6 @@ const DISTRICTS = [
   "Wardha", "Chandrapur", "Yavatmal", "Buldhana", "Hingoli",
 ];
 
-/** Overall-score pill per the formula note: ≥75 good, ≥50 warn, else bad. */
-function scoreBadge(score: number) {
-  if (score >= 75) return <Badge variant="success">{score}</Badge>;
-  if (score >= 50) return <Badge variant="warning">{score}</Badge>;
-  return <Badge variant="destructive">{score}</Badge>;
-}
-
 /** Client-side CSV export (idea bag #6 — real action, no backend route). */
 function downloadCsv(data: GovernmentAnalyticsData, timeWindow: string) {
   const header = [
@@ -140,7 +133,7 @@ const leaderboardColumns: ColumnDef<TrainingCenterScore, unknown>[] = [
     id: "overallScore",
     accessorFn: (row) => row.overallScore,
     header: "Overall",
-    cell: ({ row }) => scoreBadge(row.original.overallScore),
+    cell: ({ row }) => <ScoreBadge score={row.original.overallScore} />,
   },
   {
     accessorKey: "placementScore",

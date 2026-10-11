@@ -88,14 +88,20 @@ const EVIDENCE_MAP: Record<number, { label: string; badge: keyof typeof BADGE_VA
   5: { label: "System verified", badge: "success" },
 };
 
+/** Evidence ladder 0–5 (verification model). -1 = sources disagree (CONFLICT);
+ *  render that via status, not evidence. Deliberately a plain number alias —
+ *  values cross the API untyped; a branded type would force casts at call sites. */
+export type EvidenceLevel = number;
+export const EVIDENCE_CONFLICT = -1;
+
 function StatusBadge({
   status,
   evidence,
   className,
 }: {
   status?: StatusKey;
-  /** Evidence level 0–5, or -1 sentinel for CONFLICT (handled via status). */
-  evidence?: number;
+  /** Evidence level 0–5, or EVIDENCE_CONFLICT (-1) sentinel for CONFLICT (handled via status). */
+  evidence?: EvidenceLevel;
   className?: string;
 }) {
   const config = evidence !== undefined
@@ -112,4 +118,15 @@ function StatusBadge({
   );
 }
 
-export { StatusBadge, STATUS_MAP, EVIDENCE_MAP };
+/** Overall-score pill (same §4.10 treatment as StatusBadge): ≥75 → success, ≥50 → warning, else danger. */
+function ScoreBadge({ score, className }: { score: number; className?: string }) {
+  const badge = score >= 75 ? "success" : score >= 50 ? "warning" : "danger";
+  return (
+    <Badge variant="default" className={cn("px-2.5", BADGE_VARIANT[badge], className)}>
+      <span className="status-dot size-1.5 shrink-0 rounded-full" aria-hidden />
+      {score}
+    </Badge>
+  );
+}
+
+export { StatusBadge, ScoreBadge, STATUS_MAP, EVIDENCE_MAP };

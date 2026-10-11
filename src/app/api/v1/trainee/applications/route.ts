@@ -37,6 +37,7 @@ export async function GET(_request: NextRequest) {
         district: app.jobPosting.district,
         status: app.status,
         appliedAt: app.createdAt.toISOString(),
+        viewedAt: app.viewedAt?.toISOString() ?? null,
         employerContactEmail:
           app.status === "SHORTLISTED" || app.status === "HIRED"
             ? app.jobPosting.employer.contactEmail

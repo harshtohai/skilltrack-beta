@@ -91,6 +91,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 25 open postings max — generous spam control, not a product limit.
+    const openCount = await db.jobPosting.count({
+      where: { employerId: employer.id, status: "OPEN" },
+    });
+    if (openCount >= 25) {
+      return createErrorResponse(
+        "TOO_MANY_OPEN_JOBS",
+        "You have 25 open job postings — close one before posting another",
+        409
+      );
+    }
+
     const body = (await request.json()) as unknown;
     const data = createJobSchema.parse(body);
 
