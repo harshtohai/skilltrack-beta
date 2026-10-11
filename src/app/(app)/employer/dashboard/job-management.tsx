@@ -2,62 +2,31 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Briefcase, Plus, Users } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+import { Briefcase, Plus } from "lucide-react";
+import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "~/components/ui/dialog";
 import { EmptyState } from "~/components/patterns/empty-state";
 import { ErrorState } from "~/components/patterns/error-state";
 import { Skeleton } from "~/components/patterns/skeleton";
 import { StatusBadge } from "~/components/patterns/status-badge";
-import { ConfirmDialog } from "~/components/patterns/confirm-dialog";
-import { date } from "~/lib/format";
+import { EmployerVerificationBanner } from "~/components/employer/verification-banner";
+import { EmployerJobCard } from "~/components/employer/employer-job-card";
+import { ApplicantsPanel } from "~/components/employer/applicants-panel";
+import {
+  RejectApplicantDialog,
+  type RejectTarget,
+} from "~/components/employer/reject-applicant-dialog";
 import type {
   Applicant,
   EmployerJobsResponse,
   EmployerVerificationStatus,
 } from "~/lib/job-board-contracts";
 
-const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
-  FULL_TIME: "Full-time",
-  PART_TIME: "Part-time",
-  INTERNSHIP: "Internship",
-  CONTRACT: "Contract",
-  FREELANCE: "Freelance",
-};
-
-const WORK_MODE_LABELS: Record<string, string> = {
-  ONSITE: "On-site",
-  REMOTE: "Remote",
-  HYBRID: "Hybrid",
-};
-
-const SALARY_BAND_LABELS: Record<string, string> = {
-  LT_10K: "< ₹10K",
-  B_10_20K: "₹10-20K",
-  B_20_35K: "₹20-35K",
-  B_35_50K: "₹35-50K",
-  GT_50K: "> ₹50K",
-};
-
 interface FeedbackState {
   jobId: string;
   message: string;
   ok: boolean;
-}
-
-interface RejectTarget {
-  jobId: string;
-  applicationId: string;
-  name: string;
 }
 
 /**
@@ -78,7 +47,9 @@ export function JobManagement() {
   // Applicants panels + pipeline actions
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const [applicants, setApplicants] = useState<Record<string, Applicant[]>>({});
-  const [applicantsLoading, setApplicantsLoading] = useState<string | null>(null);
+  const [applicantsLoading, setApplicantsLoading] = useState<string | null>(
+    null,
+  );
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [rejectTarget, setRejectTarget] = useState<RejectTarget | null>(null);
@@ -99,7 +70,7 @@ export function JobManagement() {
         setError(
           res.status === 404
             ? "No employer profile is linked to this session — job posting is unavailable"
-            : "Failed to load job postings"
+            : "Failed to load job postings",
         );
         return;
       }
@@ -156,12 +127,17 @@ export function JobManagement() {
         const json = (await res.json()) as { error?: { message?: string } };
         throw new Error(json.error?.message ?? "Failed to update job posting");
       }
-      setFeedback({ jobId, message: status === "CLOSED" ? "Job closed" : "Job re-opened", ok: true });
+      setFeedback({
+        jobId,
+        message: status === "CLOSED" ? "Job closed" : "Job re-opened",
+        ok: true,
+      });
       await loadJobs();
     } catch (err) {
       setFeedback({
         jobId,
-        message: err instanceof Error ? err.message : "Failed to update job posting",
+        message:
+          err instanceof Error ? err.message : "Failed to update job posting",
         ok: false,
       });
     } finally {
@@ -172,14 +148,17 @@ export function JobManagement() {
   const applyAction = async (
     jobId: string,
     appId: string,
-    action: "shortlist" | "hire" | "reject"
+    action: "shortlist" | "hire" | "reject",
   ) => {
     setActionBusy(`${appId}:${action}`);
     setFeedback(null);
     try {
-      const res = await fetch(`/api/v1/employer/jobs/${jobId}/applicants/${appId}/${action}`, {
-        method: "POST",
-      });
+      const res = await fetch(
+        `/api/v1/employer/jobs/${jobId}/applicants/${appId}/${action}`,
+        {
+          method: "POST",
+        },
+      );
       const json = (await res.json()) as {
         error?: { message?: string };
         application?: { id: string; status: string };
@@ -192,12 +171,18 @@ export function JobManagement() {
           : action === "hire"
             ? "Applicant hired"
             : "Applicant rejected";
-      const closedNote = json.jobClosed ? " · job auto-closed (all openings filled)" : "";
+      const closedNote = json.jobClosed
+        ? " · job auto-closed (all openings filled)"
+        : "";
       setFeedback({ jobId, message: `${label}${closedNote}`, ok: true });
       // Refetch applicants (status + contact reveal changed) and job counts.
       await Promise.all([loadApplicants(jobId), loadJobs()]);
     } catch (err) {
-      setFeedback({ jobId, message: err instanceof Error ? err.message : "Action failed", ok: false });
+      setFeedback({
+        jobId,
+        message: err instanceof Error ? err.message : "Action failed",
+        ok: false,
+      });
     } finally {
       setActionBusy(null);
     }
@@ -235,53 +220,31 @@ export function JobManagement() {
     if (unavailable) {
       return (
         <Alert variant="info">
-          <AlertDescription>{error || "Job postings are unavailable for this session."}</AlertDescription>
+          <AlertDescription>
+            {error || "Job postings are unavailable for this session."}
+          </AlertDescription>
         </Alert>
       );
     }
     return (
       <ErrorState
         title="Couldn't load job postings"
-        description={error || "The data didn't arrive. Check your connection and retry."}
+        description={
+          error || "The data didn't arrive. Check your connection and retry."
+        }
         onRetry={() => void loadJobs()}
       />
     );
   }
 
   // The verification banner drives the whole section: PENDING/SUSPENDED/
-  // REJECTED employers see no job management UI.
-  if (verificationStatus === "PENDING") {
-    return (
-      <Alert variant="warning">
-        <AlertTitle>Verification pending</AlertTitle>
-        <AlertDescription>
-          Your registration is under review. You can log in, and will be able to post jobs once an
-          admin verifies your account.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  if (verificationStatus === "SUSPENDED") {
-    return (
-      <Alert variant="destructive">
-        <AlertTitle>Account suspended</AlertTitle>
-        <AlertDescription>
-          Job posting is disabled. Contact the skill mission team to reinstate your account.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  if (verificationStatus === "REJECTED") {
-    return (
-      <Alert variant="destructive">
-        <AlertTitle>Registration rejected</AlertTitle>
-        <AlertDescription>
-          Your employer registration was not approved. Contact the skill mission team for details.
-        </AlertDescription>
-      </Alert>
-    );
+  // REJECTED employers see no job management UI (shared with the post-job page).
+  if (
+    verificationStatus === "PENDING" ||
+    verificationStatus === "SUSPENDED" ||
+    verificationStatus === "REJECTED"
+  ) {
+    return <EmployerVerificationBanner status={verificationStatus} />;
   }
 
   const jobs = data.jobs;
@@ -322,213 +285,45 @@ export function JobManagement() {
             />
           ) : (
             jobs.map((job) => (
-              <div key={job.id} className="rounded-lg border p-4 space-y-3">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium">{job.title}</h3>
-                      <StatusBadge status={job.status} />
-                    </div>
-                    <p className="mt-1 text-body-sm text-muted-foreground">
-                      {EMPLOYMENT_TYPE_LABELS[job.employmentType] ?? job.employmentType} ·{" "}
-                      {WORK_MODE_LABELS[job.workMode] ?? job.workMode} · {job.district} ·{" "}
-                      {job.openings} opening{job.openings === 1 ? "" : "s"}
-                      {job.salaryBand ? ` · ${SALARY_BAND_LABELS[job.salaryBand] ?? job.salaryBand}` : ""}
-                    </p>
-                    <p className="mt-1 text-caption text-muted-foreground">
-                      {job.applicationCount} application{job.applicationCount === 1 ? "" : "s"} ·{" "}
-                      {job.hireCount} hired
-                      {job.applicationDeadline
-                        ? ` · applies by ${date(job.applicationDeadline)}`
-                        : ""}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                      onClick={() => toggleApplicants(job.id)}
-                    >
-                      <Users />
-                      Applicants ({job.applicationCount})
-                    </Button>
-                    {job.status === "OPEN" ? (
-                      <ConfirmDialog
-                        trigger={
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={actionBusy === `${job.id}:status`}
-                          >
-                            Close
-                          </Button>
-                        }
-                        title={`Close "${job.title}"?`}
-                        description="The job becomes hidden from trainees and stops accepting applications. You can re-open it any time."
-                        confirmLabel="Close job"
-                        onConfirm={() => void setStatus(job.id, "CLOSED")}
-                      />
-                    ) : (
-                      <Button
-                        size="sm"
-                        onClick={() => void setStatus(job.id, "OPEN")}
-                        disabled={actionBusy === `${job.id}:status`}
-                      >
-                        {actionBusy === `${job.id}:status` && "Re-opening…"}
-                        {actionBusy !== `${job.id}:status` && "Re-open"}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                <p className="text-body-sm text-muted-foreground">{job.description}</p>
-
+              <EmployerJobCard
+                key={job.id}
+                job={job}
+                statusBusy={actionBusy === `${job.id}:status`}
+                onToggleApplicants={() => toggleApplicants(job.id)}
+                onSetStatus={(status) => void setStatus(job.id, status)}
+              >
                 {expandedJobId === job.id && (
-                  <div className="border-t pt-3 space-y-2">
-                    <p className="text-caption font-medium uppercase tracking-wide text-muted-foreground">
-                      Applicants
-                    </p>
-                    {applicantsLoading === job.id ? (
-                      <div className="space-y-2">
-                        {Array.from({ length: 2 }, (_, i) => (
-                          <Skeleton key={i} className="h-16 w-full" />
-                        ))}
-                      </div>
-                    ) : (applicants[job.id]?.length ?? 0) === 0 ? (
-                      <p className="text-body-sm text-muted-foreground">No applications yet.</p>
-                    ) : (
-                      (applicants[job.id] ?? []).map((applicant) => (
-                        <div key={applicant.applicationId} className="rounded-md bg-muted/50 p-3 space-y-2">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="text-body-sm font-medium">
-                                {applicant.name}{" "}
-                                <span className="font-mono text-caption text-muted-foreground">{applicant.publicId}</span>
-                              </p>
-                              <p className="text-caption text-muted-foreground">{applicant.district}</p>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <StatusBadge status={applicant.status} />
-                              {applicant.status === "APPLIED" && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => void applyAction(job.id, applicant.applicationId, "shortlist")}
-                                    disabled={actionBusy === `${applicant.applicationId}:shortlist`}
-                                  >
-                                    {actionBusy === `${applicant.applicationId}:shortlist` && "Shortlisting…"}
-                                    {actionBusy !== `${applicant.applicationId}:shortlist` && "Shortlist"}
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="border-destructive text-danger-text hover:bg-danger-soft"
-                                    onClick={() =>
-                                      setRejectTarget({
-                                        jobId: job.id,
-                                        applicationId: applicant.applicationId,
-                                        name: applicant.name,
-                                      })
-                                    }
-                                    disabled={actionBusy === `${applicant.applicationId}:reject`}
-                                  >
-                                    Reject
-                                  </Button>
-                                </>
-                              )}
-                              {applicant.status === "SHORTLISTED" && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => void applyAction(job.id, applicant.applicationId, "hire")}
-                                    disabled={actionBusy === `${applicant.applicationId}:hire`}
-                                  >
-                                    {actionBusy === `${applicant.applicationId}:hire` && "Hiring…"}
-                                    {actionBusy !== `${applicant.applicationId}:hire` && "Hire"}
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="border-destructive text-danger-text hover:bg-danger-soft"
-                                    onClick={() =>
-                                      setRejectTarget({
-                                        jobId: job.id,
-                                        applicationId: applicant.applicationId,
-                                        name: applicant.name,
-                                      })
-                                    }
-                                    disabled={actionBusy === `${applicant.applicationId}:reject`}
-                                  >
-                                    Reject
-                                  </Button>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                          {(applicant.skills.length > 0 || applicant.certificates.length > 0) && (
-                            <div className="text-caption text-muted-foreground space-y-1">
-                              {applicant.skills.length > 0 && <p>Skills: {applicant.skills.join(", ")}</p>}
-                              {applicant.certificates.length > 0 && (
-                                <p>
-                                  Certificates:{" "}
-                                  {applicant.certificates.map((c) => `${c.name} (${c.issuer})`).join(", ")}
-                                </p>
-                              )}
-                            </div>
-                          )}
-                          <p className="text-caption text-muted-foreground">
-                            {applicant.phone ? (
-                              <span>
-                                <span className="font-medium text-success-text">Contact:</span>{" "}
-                                <span className="font-mono">{applicant.phone}</span>
-                                {applicant.email ? ` · ${applicant.email}` : ""}
-                              </span>
-                            ) : (
-                              <span className="font-mono">
-                                {applicant.phoneMasked}{" "}
-                                <span className="font-normal">· masked until shortlisted</span>
-                              </span>
-                            )}
-                            <span> · applied {date(applicant.appliedAt)}</span>
-                          </p>
-                        </div>
-                      ))
-                    )}
-                  </div>
+                  <ApplicantsPanel
+                    applicants={applicants[job.id] ?? []}
+                    loading={applicantsLoading === job.id}
+                    actionBusy={actionBusy}
+                    onAction={(applicant, action) =>
+                      void applyAction(job.id, applicant.applicationId, action)
+                    }
+                    onReject={(applicant) =>
+                      setRejectTarget({
+                        jobId: job.id,
+                        applicationId: applicant.applicationId,
+                        name: applicant.name,
+                      })
+                    }
+                  />
                 )}
-              </div>
+              </EmployerJobCard>
             ))
           )}
         </CardContent>
       </Card>
 
-      {/* Reject is destructive — confirmed with the object + consequence named (CL-18) */}
-      <Dialog open={rejectTarget !== null} onOpenChange={(open) => !open && setRejectTarget(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reject {rejectTarget?.name}?</DialogTitle>
-            <DialogDescription>
-              Their application will be marked rejected and they will no longer be considered for
-              this opening. This cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRejectTarget(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={rejectTarget !== null && actionBusy === `${rejectTarget.applicationId}:reject`}
-              onClick={() => void confirmReject()}
-            >
-              {rejectTarget !== null && actionBusy === `${rejectTarget.applicationId}:reject`
-                ? "Rejecting…"
-                : "Reject applicant"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <RejectApplicantDialog
+        target={rejectTarget}
+        busy={
+          rejectTarget !== null &&
+          actionBusy === `${rejectTarget.applicationId}:reject`
+        }
+        onCancel={() => setRejectTarget(null)}
+        onConfirm={() => void confirmReject()}
+      />
     </div>
   );
 }
