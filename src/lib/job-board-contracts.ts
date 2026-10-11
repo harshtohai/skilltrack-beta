@@ -273,6 +273,8 @@ export const myApplicationSchema = z.object({
   district: z.string(),
   status: jobApplicationStatusSchema,
   appliedAt: isoDatetimeSchema,
+  // Set once the employer opens the applicants panel (admin peeks excluded).
+  viewedAt: isoDatetimeSchema.nullable(),
   // Symmetric contact reveal: employer email appears once SHORTLISTED.
   employerContactEmail: z.string().email().nullable(),
 });

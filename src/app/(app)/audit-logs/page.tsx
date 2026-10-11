@@ -272,6 +272,7 @@ export default function AuditLogsPage() {
                     onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                     disabled={pagination.page === 1}
                     aria-label="Previous page"
+                    className="size-11 lg:size-8"
                   >
                     <ChevronLeft />
                   </Button>
@@ -281,6 +282,7 @@ export default function AuditLogsPage() {
                     onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                     disabled={pagination.page === pagination.totalPages}
                     aria-label="Next page"
+                    className="size-11 lg:size-8"
                   >
                     <ChevronRight />
                   </Button>

@@ -226,6 +226,7 @@ function ApplicationRow({
             <Badge variant={APPLICATION_STATUS_VARIANTS[app.status] ?? "secondary"}>
               {APPLICATION_STATUS_LABELS[app.status] ?? app.status}
             </Badge>
+            {app.viewedAt && <Badge variant="outline">Viewed</Badge>}
             {(app.status === "APPLIED" || app.status === "SHORTLISTED") && (
               <Button variant="outline" size="sm" onClick={() => onWithdraw(app)}>
                 Withdraw

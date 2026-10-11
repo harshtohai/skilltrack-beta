@@ -172,6 +172,7 @@ function DataTable<TData>({
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
                 aria-label="Previous page"
+                className="size-11 lg:size-8"
               >
                 <ChevronLeft />
               </Button>
@@ -181,6 +182,7 @@ function DataTable<TData>({
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
                 aria-label="Next page"
+                className="size-11 lg:size-8"
               >
                 <ChevronRight />
               </Button>
@@ -308,6 +310,7 @@ function DataTable<TData>({
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
                 aria-label="Previous page"
+                className="size-11 lg:size-8"
               >
                 <ChevronLeft />
               </Button>
@@ -319,7 +322,7 @@ function DataTable<TData>({
                   onClick={() => table.setPageIndex(p)}
                   aria-label={`Page ${p + 1}`}
                   aria-current={p === pageIndex ? "page" : undefined}
-                  className="tabular-nums"
+                  className="tabular-nums size-11 lg:size-8"
                 >
                   {p + 1}
                 </Button>
@@ -330,6 +333,7 @@ function DataTable<TData>({
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
                 aria-label="Next page"
+                className="size-11 lg:size-8"
               >
                 <ChevronRight />
               </Button>

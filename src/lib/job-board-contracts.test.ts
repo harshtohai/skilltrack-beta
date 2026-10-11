@@ -217,6 +217,7 @@ describe("contact reveal contracts", () => {
       district: "Chandrapur",
       status: "APPLIED",
       appliedAt: new Date().toISOString(),
+      viewedAt: null,
       employerContactEmail: null,
     };
     expect(myApplicationSchema.parse(app).employerContactEmail).toBeNull();

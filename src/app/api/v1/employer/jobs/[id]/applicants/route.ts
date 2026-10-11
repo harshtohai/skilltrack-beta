@@ -54,6 +54,14 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       }
     }
 
+    // Panel expand = employer has seen the applications; admin views don't count.
+    if (session.user.role === "employer") {
+      await db.jobApplication.updateMany({
+        where: { jobPostingId: id, viewedAt: null },
+        data: { viewedAt: new Date() },
+      });
+    }
+
     const applicants = job.applications.map((application) => {
       const revealed = application.status === "SHORTLISTED" || application.status === "HIRED";
       return {
