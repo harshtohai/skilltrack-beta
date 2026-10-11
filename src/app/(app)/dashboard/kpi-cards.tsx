@@ -9,42 +9,27 @@ import {
   Users,
 } from "lucide-react";
 import { StatCard } from "~/components/patterns/stat-card";
-import { DotSparkline } from "~/components/viz/dot-sparkline";
-import { kpiDelta, kpiSeries, type KpiMetric, type KpiSnapshotRow } from "~/lib/kpi-deltas";
+import { kpiDelta, type KpiMetric, type KpiSnapshotRow } from "~/lib/kpi-deltas";
 import { number, percent } from "~/lib/format";
 import type { KPIData } from "./types";
 
-/** Sparkline color per card chip (§4.14): chart-1 orange / chart-2 purple / chart-3 blue. */
-const SPARKLINE_COLOR = {
-  brand: "var(--chart-1)",
-  purple: "var(--chart-2)",
-  blue: "var(--chart-3)",
-} as const;
-
 /**
- * Delta chip + sparkline wiring for a KPI card (spec #80). Deltas and the
- * sparkline render only when real snapshot history exists (≥2 rows); day-one
- * deploys show no fabricated deltas. Spread into a StatCard.
+ * Delta chip wiring for a KPI card (spec #80). Deltas render only when real
+ * snapshot history exists (≥2 rows); day-one deploys show no fabricated
+ * deltas. Spread into a StatCard. (The §4.14 dot sparkline was removed from
+ * these cards — fixed-pitch dots overlapped at the 4-up card width.)
  */
 function kpiTrend(
   history: KpiSnapshotRow[] | undefined,
   now: Date,
   metric: KpiMetric,
-  chip: keyof typeof SPARKLINE_COLOR,
   ariaLabel: string,
-): { delta?: number; deltaLabel?: string; sparkline?: React.ReactNode } {
+): { delta?: number; deltaLabel?: string } {
   if (!history || history.length < 2) return {};
   const d = kpiDelta(history, now, metric);
   return {
     delta: d?.delta,
     deltaLabel: d?.label,
-    sparkline: (
-      <DotSparkline
-        data={kpiSeries(history, metric)}
-        color={SPARKLINE_COLOR[chip]}
-        ariaLabel={ariaLabel}
-      />
-    ),
   };
 }
 
@@ -52,15 +37,15 @@ function kpiTrend(
 export function AdminKpiCards({ kpis, now }: { kpis: KPIData; now: Date }) {
   return (
     <div className="mb-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {/* KPI row (§9.1) — delta chips + 7-day sparklines from the snapshot history
-          (spec #80); they render only once real history exists (≥2 rows) */}
+      {/* KPI row (§9.1) — delta chips from the snapshot history (spec #80);
+          they render only once real history exists (≥2 rows) */}
       <StatCard
         title="Total trainees"
         value={number(kpis.trainees.total)}
         icon={<Users />}
         chip="brand"
         href="/trainees"
-        {...kpiTrend(kpis.history, now, "totalTrainees", "brand", "Total trainees, last 7 days")}
+        {...kpiTrend(kpis.history, now, "totalTrainees", "Total trainees, last 7 days")}
       />
       <StatCard
         title="Outcome coverage"
@@ -78,7 +63,6 @@ export function AdminKpiCards({ kpis, now }: { kpis: KPIData; now: Date }) {
           kpis.history,
           now,
           "outcomeCoverage",
-          "purple",
           "Outcome coverage, last 7 days",
         )}
       />
@@ -98,7 +82,6 @@ export function AdminKpiCards({ kpis, now }: { kpis: KPIData; now: Date }) {
           kpis.history,
           now,
           "verifiedEmployment",
-          "blue",
           "Verified employment, last 7 days",
         )}
       />
@@ -109,7 +92,7 @@ export function AdminKpiCards({ kpis, now }: { kpis: KPIData; now: Date }) {
         chip="brand"
         goodDirection="down"
         href="/conflicts"
-        {...kpiTrend(kpis.history, now, "conflicts", "brand", "Conflicts, last 7 days")}
+        {...kpiTrend(kpis.history, now, "conflicts", "Conflicts, last 7 days")}
       />
     </div>
   );
@@ -126,8 +109,8 @@ export function InstituteKpiCards({ kpis, now }: { kpis: KPIData; now: Date }) {
 
   return (
     <div className="mb-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {/* KPI row (§9.1) — center-scoped numbers with delta chips + 7-day sparklines
-          from the snapshot history (spec #80); they render only once real history
+      {/* KPI row (§9.1) — center-scoped numbers with delta chips from the
+          snapshot history (spec #80); they render only once real history
           exists (≥2 rows) */}
       <StatCard
         title="Trainees produced"
@@ -135,21 +118,21 @@ export function InstituteKpiCards({ kpis, now }: { kpis: KPIData; now: Date }) {
         icon={<Users />}
         chip="brand"
         href="/trainees"
-        {...kpiTrend(kpis.history, now, "totalTrainees", "brand", "Trainees produced, last 7 days")}
+        {...kpiTrend(kpis.history, now, "totalTrainees", "Trainees produced, last 7 days")}
       />
       <StatCard
         title="Certified"
         value={number(kpis.funnel.certified.count)}
         icon={<GraduationCap />}
         chip="purple"
-        {...kpiTrend(kpis.history, now, "certified", "purple", "Certified, last 7 days")}
+        {...kpiTrend(kpis.history, now, "certified", "Certified, last 7 days")}
       />
       <StatCard
         title="Placed"
         value={number(kpis.funnel.employed.count)}
         icon={<Briefcase />}
         chip="blue"
-        {...kpiTrend(kpis.history, now, "placed", "blue", "Placed, last 7 days")}
+        {...kpiTrend(kpis.history, now, "placed", "Placed, last 7 days")}
       />
       <StatCard
         title="Placement rate"
@@ -163,7 +146,7 @@ export function InstituteKpiCards({ kpis, now }: { kpis: KPIData; now: Date }) {
         }
         icon={<TrendingUp />}
         chip="brand"
-        {...kpiTrend(kpis.history, now, "placementRate", "brand", "Placement rate, last 7 days")}
+        {...kpiTrend(kpis.history, now, "placementRate", "Placement rate, last 7 days")}
       />
     </div>
   );
