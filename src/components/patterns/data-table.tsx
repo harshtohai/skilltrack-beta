@@ -23,6 +23,13 @@ import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Checkbox } from "~/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 import { Skeleton } from "~/components/patterns/skeleton";
 import { EmptyState } from "~/components/patterns/empty-state";
 
@@ -48,6 +55,8 @@ function DataTable<TData>({
   mobileCard,
   emptyState,
   pageSize = 10,
+  /** Rows-per-page choices (§4.5). Shown with the client pager; server-paginated tables page through the URL instead. */
+  pageSizeOptions = [10, 25, 50],
   serverTotal,
   className,
 }: {
@@ -62,6 +71,7 @@ function DataTable<TData>({
   mobileCard?: (row: TData) => React.ReactNode;
   emptyState?: React.ReactNode;
   pageSize?: number;
+  pageSizeOptions?: number[];
   /**
    * True row count when the caller pages server-side (rows hold one page).
    * Makes the count honest ("of 504") and hides the client pager — it would
@@ -303,7 +313,25 @@ function DataTable<TData>({
               Showing {from}–{to} of {serverTotal ?? rowCount}
             </span>
             {serverTotal === undefined ? (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-3">
+              {pageSizeOptions.length > 0 ? (
+                <Select
+                  value={String(table.getState().pagination.pageSize)}
+                  onValueChange={(v) => table.setPageSize(Number(v))}
+                >
+                  <SelectTrigger className="h-8 w-[76px]" aria-label="Rows per page">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pageSizeOptions.map((n) => (
+                      <SelectItem key={n} value={String(n)}>
+                        {n} / page
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : null}
+              <div className="flex items-center gap-1">
               <Button
                 variant="outline"
                 size="icon-sm"
@@ -337,6 +365,7 @@ function DataTable<TData>({
               >
                 <ChevronRight />
               </Button>
+              </div>
             </div>
             ) : null}
           </div>

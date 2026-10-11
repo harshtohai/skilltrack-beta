@@ -7,8 +7,6 @@ import { TraineesTable, type TraineeListRow } from "./trainees-table";
 
 export const dynamic = "force-dynamic";
 
-const PAGE_SIZE = 25;
-
 /**
  * Lifecycle tabs (INST-03): the default view is Active; "all" lists every
  * status. Values map straight onto the EnrolmentStatus enum.
@@ -41,12 +39,15 @@ function lifecycleStatus(statuses: string[]): TraineeListRow["lifecycleStatus"] 
 export default async function TraineesListPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; q?: string; status?: string }>;
+  searchParams: Promise<{ page?: string; q?: string; status?: string; view?: string; perPage?: string }>;
 }) {
-  const { page, q, status } = await searchParams;
+  const { page, q, status, view: rawView, perPage: rawPerPage } = await searchParams;
   const currentPage = Math.max(1, Number(page) || 1);
   const query = (q ?? "").trim();
   const tab = parseLifecycleTab(status);
+  const view = rawView === "grid" ? "grid" : "list";
+  // §4.5 page-size choices; anything else falls back to the default.
+  const perPage = [10, 25, 50].includes(Number(rawPerPage)) ? Number(rawPerPage) : 25;
   // "all" lists every status; the other tabs filter by EnrolmentStatus.
   const statusFilter = tab === "all" ? null : tab;
   const scope = await getSessionScope();
@@ -89,8 +90,8 @@ export default async function TraineesListPage({
         consentGiven: true,
         enrolments: { select: { status: true } },
       },
-      skip: (currentPage - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
+      skip: (currentPage - 1) * perPage,
+      take: perPage,
     }),
     db.trainee.count({ where: traineeWhere }),
   ]);
@@ -104,14 +105,22 @@ export default async function TraineesListPage({
     lifecycleStatus: lifecycleStatus(t.enrolments.map((e) => e.status)),
   }));
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const buildHref = (params: Record<string, string>) => {
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const buildHref = (
+    params: Record<string, string>,
+    overrides?: { view?: string; perPage?: number },
+  ) => {
     const search = new URLSearchParams(params);
     if (query) search.set("q", query);
+    const v = overrides?.view ?? view;
+    if (v !== "list") search.set("view", v);
+    const pp = overrides?.perPage ?? perPage;
+    if (pp !== 25) search.set("perPage", String(pp));
     return `/trainees?${search.toString()}`;
   };
   const pageHref = (p: number) => buildHref({ page: String(p), status: tab });
   const tabHref = (value: LifecycleTab) => buildHref({ status: value });
+  const perPageHref = (n: number) => buildHref({ status: tab, page: String(currentPage) }, { perPage: n });
 
   return (
     <div>
@@ -139,13 +148,34 @@ export default async function TraineesListPage({
         })}
       </div>
 
-      <TraineesTable rows={rows} query={query} status={tab} total={total} />
+      <TraineesTable rows={rows} query={query} status={tab} total={total} view={view} perPage={perPage} />
 
       {/* Server-side pagination (§4.5 footer pattern — page numbers max 5) */}
       <div className="mt-4 flex items-center justify-between text-caption text-muted-foreground">
-        <span className="tabular-nums">
-          Page {currentPage} of {totalPages}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="tabular-nums">
+            Page {currentPage} of {totalPages}
+          </span>
+          <span aria-hidden className="text-border">
+            |
+          </span>
+          <span>Per page</span>
+          <div className="flex items-center gap-2">
+            {[10, 25, 50].map((n) => (
+              <Link
+                key={n}
+                href={perPageHref(n)}
+                aria-label={`${n} rows per page`}
+                aria-current={n === perPage ? "true" : undefined}
+                className={`tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40 ${
+                  n === perPage ? "font-medium text-foreground" : "hover:text-foreground"
+                }`}
+              >
+                {n}
+              </Link>
+            ))}
+          </div>
+        </div>
         <div className="flex items-center gap-1">
           {currentPage > 1 ? (
             <Link
