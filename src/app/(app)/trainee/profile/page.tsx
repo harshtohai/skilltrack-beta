@@ -8,9 +8,9 @@ import {
   ProfileSkeleton,
   ProfileSubNav,
   TraineeIdCard,
-  VerifiedInfoCard,
   type TraineeProfile,
 } from "./profile-sections";
+import { VerifiedInfoCard } from "./profile-verified-info";
 import { CertificatesCard, EmploymentHistoryCard, OutcomeCheckpointsCard } from "./profile-record-cards";
 import { ProfileDetailsForm } from "./profile-details-form";
 
@@ -174,13 +174,16 @@ export default function TraineeProfilePage() {
           onSave={() => void handleSave()}
         />
 
-        {/* Locked fields (§9.7 rows pattern) */}
+        {/* Locked fields (§9.7 rows pattern) — email changes via the
+            OTP-verified ChangeEmailDialog (T5), everything else locked */}
         <VerifiedInfoCard
+          email={trainee.email}
           phoneE164={trainee.phoneE164}
           consentGiven={trainee.consentGiven}
           consentGivenAt={trainee.consentGivenAt}
           gender={trainee.gender}
           genderSelfDescribed={trainee.genderSelfDescribed}
+          onEmailChanged={() => void loadProfile()}
         />
 
         {/* Certificates (§9.7 rows pattern) */}

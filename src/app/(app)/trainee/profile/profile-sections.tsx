@@ -1,22 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, Lock } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { StatusBadge } from "~/components/patterns/status-badge";
 import { Skeleton } from "~/components/patterns/skeleton";
 import { cn } from "~/lib/utils";
-import { datetime } from "~/lib/format";
-import { maskPhoneE164 } from "~/lib/utils";
 
 /**
  * Trainee profile sections (§9.7 settings pattern): sub-nav, loading skeleton,
- * trainee ID card with copy, and the verified-information card with lock +
- * consent, all as border-b rows where applicable. The editable form lives in
- * profile-details-form.tsx; certificates/employment/outcome cards in
- * profile-record-cards.tsx. Statuses via StatusBadge only (§4.10/CL-12).
+ * and the trainee ID card with copy. The editable form lives in
+ * profile-details-form.tsx; the verified-info card (email change + lock +
+ * consent) in profile-verified-info.tsx; certificates/employment/outcome
+ * cards in profile-record-cards.tsx. Statuses via StatusBadge only
+ * (§4.10/CL-12).
  */
 
 export interface TraineeProfile {
@@ -44,14 +42,6 @@ const SUB_NAV = [
   { label: "Employment", href: "#employment" },
   { label: "Outcomes", href: "#outcomes" },
 ] as const;
-
-const GENDER_LABELS: Record<string, string> = {
-  FEMALE: "Female",
-  MALE: "Male",
-  NON_BINARY: "Non-binary",
-  SELF_DESCRIBED: "Prefer to self-describe",
-  PREFER_NOT_TO_SAY: "Prefer not to say",
-};
 
 export function ProfileSkeleton() {
   return (
@@ -130,53 +120,3 @@ export function TraineeIdCard({ publicId }: { publicId: string }) {
   );
 }
 
-/** Locked fields (§9.7 rows pattern). */
-export function VerifiedInfoCard({
-  phoneE164,
-  consentGiven,
-  consentGivenAt,
-  gender,
-  genderSelfDescribed,
-}: {
-  phoneE164: string;
-  consentGiven: boolean;
-  consentGivenAt: string | null;
-  gender: string;
-  genderSelfDescribed: string | null;
-}) {
-  // Self-reported gender for the info list; "—" when prefer-not-to-say/unset.
-  const genderDisplay =
-    gender === "SELF_DESCRIBED" && genderSelfDescribed
-      ? genderSelfDescribed
-      : gender && gender !== "PREFER_NOT_TO_SAY"
-        ? (GENDER_LABELS[gender] ?? "—")
-        : "—";
-
-  return (
-    <Card id="verified-info" className="scroll-mt-6">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Verified Information</CardTitle>
-        <Lock className="size-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent className="pt-0">
-        <div className="flex items-center justify-between gap-4 border-b py-4">
-          <span className="text-body-sm text-muted-foreground">Phone (verified via WhatsApp)</span>
-          <span className="font-mono text-body-sm font-medium tabular-nums">{maskPhoneE164(phoneE164)}</span>
-        </div>
-        <div className="flex items-center justify-between gap-4 border-b py-4">
-          <span className="text-body-sm text-muted-foreground">Consent</span>
-          <div className="flex items-center gap-3">
-            <StatusBadge status={consentGiven ? "GIVEN" : "PENDING_CONSENT"} />
-            {consentGiven && consentGivenAt ? (
-              <span className="text-caption text-muted-foreground">{datetime(consentGivenAt)}</span>
-            ) : null}
-          </div>
-        </div>
-        <div className="flex items-center justify-between gap-4 border-b py-4">
-          <span className="text-body-sm text-muted-foreground">Gender</span>
-          <span className="text-body-sm font-medium">{genderDisplay}</span>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
