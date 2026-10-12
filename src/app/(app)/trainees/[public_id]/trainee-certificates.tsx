@@ -42,8 +42,12 @@ export function TraineeCertificates({ publicId, canManage }: { publicId: string;
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/v1/trainees/${publicId}/certificates`);
-    if (res.ok) setCerts((await res.json()).certificates as CertificateRow[]);
-    else setCerts([]);
+    if (res.ok) {
+      const body = (await res.json()) as { certificates: CertificateRow[] };
+      setCerts(body.certificates);
+    } else {
+      setCerts([]);
+    }
   }, [publicId]);
 
   useEffect(() => {
@@ -213,8 +217,9 @@ export function TraineeCertificates({ publicId, canManage }: { publicId: string;
             className="space-y-3"
             onSubmit={(e) => {
               e.preventDefault();
-              const reason = new FormData(e.currentTarget).get("reason");
-              if (rejectTarget) void handleReview(rejectTarget, "REJECTED", String(reason ?? ""));
+              const rawReason = new FormData(e.currentTarget).get("reason");
+              const reason = typeof rawReason === "string" ? rawReason : "";
+              if (rejectTarget) void handleReview(rejectTarget, "REJECTED", reason);
             }}
           >
             <div className="space-y-1">

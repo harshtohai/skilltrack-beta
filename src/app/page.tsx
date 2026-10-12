@@ -56,7 +56,7 @@ const AUDIENCES: { title: string; items: string[] }[] = [
   },
   {
     title: "For trainees",
-    items: ["Own your employment timeline", "Upload certificates securely", "Self-assess skills", "Privacy-controlled data sharing"],
+    items: ["Own your employment timeline", "Upload certificates securely", "Get matched courses & employers", "Privacy-controlled data sharing"],
   },
 ];
 

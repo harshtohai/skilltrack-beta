@@ -35,11 +35,20 @@ export interface TraineeProfile {
   certificates: Array<{ id: string; name: string; issuer: string; issueDate: string; expiryDate: string | null; fileUrl: string | null }>;
   employmentHistory: Array<{ id: string; employer: string; role: string | null; salaryBand: string | null; startDate: string; endDate: string | null; isCurrent: boolean }>;
   outcomeEvents: Array<{ id: string; checkpointDays: number; outcomeStatus: string; verificationStatus: string; createdAt: string }>;
+  training: Array<{
+    id: string;
+    status: string;
+    certificationDate: string | null;
+    cohort: { id: string; name: string };
+    programme: { id: string; name: string };
+    trainingCenter: { id: string; name: string; district: string } | null;
+  }>;
 }
 
 const SUB_NAV = [
   { label: "Profile details", href: "#profile-details" },
   { label: "Verified info", href: "#verified-info" },
+  { label: "My training", href: "#my-training" },
   { label: "Certificates", href: "#certificates" },
   { label: "Employment", href: "#employment" },
   { label: "Outcomes", href: "#outcomes" },
@@ -125,6 +134,49 @@ export function TraineeIdCard({ publicId }: { publicId: string }) {
         <p className="mt-2 text-caption text-muted-foreground">
           Share this ID with your training center or employer for verification.
         </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** My Training (T8, spec #102): read-only enrolment chain — programme,
+ * cohort, training center, status, certification date. */
+export function MyTrainingCard({
+  training,
+}: {
+  training: TraineeProfile["training"];
+}) {
+  return (
+    <Card id="my-training" className="scroll-mt-6">
+      <CardHeader>
+        <CardTitle>My Training</CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {training.length === 0 ? (
+          <p className="text-body-sm text-muted-foreground">
+            Not enrolled yet — your training center adds you to a cohort.
+          </p>
+        ) : (
+          training.map((enrolment) => (
+            <div key={enrolment.id} className="border-b py-4 first:pt-0 last:border-b-0 last:pb-0">
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-body font-medium">{enrolment.programme.name}</span>
+                <StatusBadge
+                  status={enrolment.status === "ACTIVE" ? "ACTIVE" : enrolment.status === "COMPLETED" ? "COMPLETED" : "DROPPED_OUT"}
+                />
+              </div>
+              <p className="mt-1 text-caption text-muted-foreground">
+                Cohort {enrolment.cohort.name}
+                {enrolment.trainingCenter ? ` · ${enrolment.trainingCenter.name} (${enrolment.trainingCenter.district})` : ""}
+              </p>
+              <p className="text-caption text-muted-foreground">
+                {enrolment.certificationDate
+                  ? `Certified ${datetime(enrolment.certificationDate)}`
+                  : "Certification pending"}
+              </p>
+            </div>
+          ))
+        )}
       </CardContent>
     </Card>
   );

@@ -35,6 +35,11 @@ async function requireTrainee() {
         include: { employmentClaim: true },
       },
       followupEvents: { orderBy: { checkpointDays: "asc" } },
+      enrolments: {
+        include: {
+          cohort: { include: { programme: true, trainingCenter: true } },
+        },
+      },
     },
   });
   return trainee;
@@ -97,6 +102,16 @@ export async function GET() {
           channel: f.channel,
           sentAt: f.sentAt?.toISOString() ?? null,
           respondedAt: f.respondedAt?.toISOString() ?? null,
+        })),
+        training: trainee.enrolments.map((e) => ({
+          id: e.id,
+          status: e.status,
+          certificationDate: e.certificationDate?.toISOString() ?? null,
+          cohort: { id: e.cohort.id, name: e.cohort.name },
+          programme: { id: e.cohort.programme.id, name: e.cohort.programme.name },
+          trainingCenter: e.cohort.trainingCenter
+            ? { id: e.cohort.trainingCenter.id, name: e.cohort.trainingCenter.name, district: e.cohort.trainingCenter.district }
+            : null,
         })),
       },
       districts: DISTRICTS,

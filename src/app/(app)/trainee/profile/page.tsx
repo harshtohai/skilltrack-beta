@@ -9,6 +9,7 @@ import {
   ProfileSubNav,
   TraineeIdCard,
   VerifiedInfoCard,
+  MyTrainingCard,
   type TraineeProfile,
 } from "./profile-sections";
 import { CertificatesCard, EmploymentHistoryCard, OutcomeCheckpointsCard } from "./profile-record-cards";
@@ -182,6 +183,9 @@ export default function TraineeProfilePage() {
           gender={trainee.gender}
           genderSelfDescribed={trainee.genderSelfDescribed}
         />
+
+        {/* My Training (T8): read-only enrolment chain */}
+        <MyTrainingCard training={trainee.training ?? []} />
 
         {/* Certificates (§9.7 rows pattern) */}
         <CertificatesCard certificates={trainee.certificates} />

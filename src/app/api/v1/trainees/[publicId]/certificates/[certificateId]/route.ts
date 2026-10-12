@@ -6,7 +6,6 @@ import { db } from "~/server/db";
 import { getSessionScope } from "~/server/scope";
 import { createErrorResponse, routeErrorResponse } from "~/app/api/v1/_utils";
 import { CertificateActionError, reviewCertificate } from "~/server/certificate-actions";
-
 export const dynamic = "force-dynamic";
 
 const reviewSchema = z.object({
