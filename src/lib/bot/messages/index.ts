@@ -1,11 +1,36 @@
 import { en, type Messages } from "./en";
 import { hi } from "./hi";
 import { mr } from "./mr";
+import { branding } from "~/lib/branding";
 
 export type { Messages };
 export type Lang = "en" | "hi" | "mr";
 
-export const T: Record<Lang, Messages> = { en, hi, mr };
+/**
+ * Flavor patches (branding.ts): exact substring replacements for the
+ * maharashtra flavor. A replacement that matches nothing means the neutral
+ * template drifted — say so loudly instead of silently leaking neutral copy.
+ */
+function applyBotReplacements(m: Messages, reps: Array<[string, string]>): Messages {
+  const out = m as unknown as Record<string, string>;
+  for (const [find, rep] of reps) {
+    let hit = false;
+    for (const key of Object.keys(out)) {
+      if (typeof out[key] === "string" && out[key].includes(find)) {
+        out[key] = out[key].replaceAll(find, rep);
+        hit = true;
+      }
+    }
+    if (!hit) console.warn(`[branding] bot replacement matched nothing: "${find.slice(0, 40)}…"`);
+  }
+  return out as unknown as Messages;
+}
+
+export const T: Record<Lang, Messages> = {
+  en: branding.botReplacements.en ? applyBotReplacements(en, branding.botReplacements.en) : en,
+  hi: branding.botReplacements.hi ? applyBotReplacements(hi, branding.botReplacements.hi) : hi,
+  mr: branding.botReplacements.mr ? applyBotReplacements(mr, branding.botReplacements.mr) : mr,
+};
 
 export interface Option {
   label: string;
@@ -13,7 +38,7 @@ export interface Option {
   description?: string;
 }
 
-export const LANG_PROMPT = `🙏 *SkillsTrack*
+export const LANG_PROMPT = `${branding.langPromptTitle}
 
 *Choose your language / अपनी भाषा चुनें / तुमची भाषा निवडा:*`;
 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AuthBrandPanel } from "~/components/auth/auth-brand-panel";
+import { branding } from "~/lib/branding";
 import { AuthLogo } from "~/components/auth/auth-logo";
 import { AuthSuccessCard } from "~/components/auth/auth-success-card";
 import { SignupForm } from "./signup-form";
@@ -57,7 +58,7 @@ export default function SignupPage() {
       {/* Right: brand panel with dot-matrix art + testimonial (§9.3) */}
       <AuthBrandPanel
         quote="SkillsTrack showed me exactly which skills get placed — I went from a six-month job hunt to an offer in three weeks."
-        attribution="Priya Sharma · SkillsTrack trainee · Pune"
+        attribution={branding.signupAttribution}
       />
     </div>
   );

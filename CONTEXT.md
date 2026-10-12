@@ -250,6 +250,12 @@ Skipped from the same review as shadcn-standard or already-documented: avatar `d
 - No phone encryption at rest (mask in UI only)
 - No email channel (WhatsApp only)
 
+### Branding flavors (Oct 12)
+One codebase, two faces — `src/lib/branding.ts` + `NEXT_PUBLIC_BRANDING` env:
+- **`maharashtra`** → SIH 2026 / Government of Maharashtra / MSSDS-PMKVY attribution on landing, footer, privacy, signup quote, login demo hints (`maharashtra.gov.in`), and WhatsApp bot copy (en/hi/mr substring patches over the neutral templates, `applyBotReplacements` in messages/index.ts warns on a missed match).
+- **`default`** (unset) → neutral SkillsTrack copy.
+Deployment plan: current Vercel project = `maharashtra` flavor; a second project linked to the same repo with unset branding = the public version. Both auto-deploy on every push to main — features land once, appear on both. Bot message edits must keep both flavors' patch pairs in sync (branding.test.ts covers it).
+
 ### Bug Bag — full-app QA walkthrough (Oct 4)
 Context: 4-agent role-by-role walkthrough (trainee, institute ×2, employer, admin) + coordinator code-fix pass. Full report + latency table at `shots/walkthrough/QA-REPORT.md`. Statuses: FIXED-this-changeset / CLEARED-not-reproducible / OPEN-needs-decision.
 1. **(High) Placement rate 134% — claim-vs-trainee unit mismatch in kpis/overview** — FIXED-this-changeset: verifiedEmployed/employed counted CLAIMS (a trainee with several claims counted twice) while certified/outcome-known counted TRAINEES → both now trainee-based; verified live: Placed 74, rate 90% (was 110/134%). Evidence: shots/walkthrough/admin/01-dashboard-funnel-bug.png, shots/walkthrough/institute/dashboard.png.
