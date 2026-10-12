@@ -12,6 +12,9 @@ import { Building2, Check, GraduationCap, Shield, User } from "lucide-react";
 
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
+import { PhoneLoginForm } from "~/components/auth/phone-login-form";
+import { TraineeProfileView } from "~/app/auth/trainee/[[...token]]/trainee-profile-view";
+import type { TraineeProfile } from "~/app/auth/trainee/[[...token]]/profile-types";
 import {
   Form,
   FormControl,
@@ -70,6 +73,10 @@ function LoginPageContent() {
   const [formError, setFormError] = useState("");
   // Unverified enrollment — inline guidance instead of the sent page.
   const [needsVerification, setNeedsVerification] = useState(false);
+  // T7: WhatsApp OTP alternate path beside the email magic link — email
+  // stays the default; a verified phone login lands on the profile portal.
+  const [phoneMode, setPhoneMode] = useState(false);
+  const [phoneProfile, setPhoneProfile] = useState<TraineeProfile | null>(null);
 
   const redirect = searchParams.get("redirect") ?? "";
   const urlError = searchParams.get("error") ?? "";
@@ -87,6 +94,11 @@ function LoginPageContent() {
     // the role switch.
     shouldUnregister: false,
   });
+
+  const togglePhoneMode = () => {
+    setPhoneMode((mode) => !mode);
+    setFormError("");
+  };
 
   const onSubmit = form.handleSubmit(async (data) => {
     if (selectedType !== "trainee" && !data.password) {
@@ -153,6 +165,16 @@ function LoginPageContent() {
       setLoading(false);
     }
   });
+
+  // Phone-OTP login verified — the API set the session cookie; show the same
+  // profile portal the email OTP recovery flow lands on (§9.10).
+  if (phoneProfile) {
+    return (
+      <div className="grid min-h-svh place-items-center bg-background p-4">
+        <TraineeProfileView profile={phoneProfile} />
+      </div>
+    );
+  }
 
   return (
     <div className="grid min-h-svh place-items-center bg-background p-4">
@@ -238,7 +260,10 @@ function LoginPageContent() {
             })}
           </div>
 
-          <Form {...form}>
+          {selectedType === "trainee" && phoneMode ? (
+            <PhoneLoginForm onVerified={setPhoneProfile} />
+          ) : (
+            <Form {...form}>
             <form onSubmit={onSubmit} className="grid gap-4">
               <FormField
                 control={form.control}
@@ -325,6 +350,18 @@ function LoginPageContent() {
               </Button>
             </form>
           </Form>
+          )}
+
+          {/* T7: alternate phone-OTP path for trainees — email stays default */}
+          {selectedType === "trainee" ? (
+            <button
+              type="button"
+              onClick={togglePhoneMode}
+              className="mt-4 w-full text-center text-caption text-muted-foreground underline-offset-2 hover:underline"
+            >
+              {phoneMode ? "Use email instead" : "Use phone number instead"}
+            </button>
+          ) : null}
         </div>
 
         {/* Footer links below card (§9.2) */}
