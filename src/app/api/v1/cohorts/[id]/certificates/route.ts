@@ -28,7 +28,7 @@ const issueSchema = z.object({
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ cohortId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -40,7 +40,7 @@ export async function POST(
       return createErrorResponse("FORBIDDEN", "Admin or institute role required", 403);
     }
 
-    const { cohortId } = await params;
+    const { id: cohortId } = await params;
     const cohort = await db.cohort.findUnique({
       where: { id: cohortId },
       include: { programme: true, trainingCenter: true },
