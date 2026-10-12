@@ -10,6 +10,7 @@ import { Skeleton } from "~/components/patterns/skeleton";
 import { cn } from "~/lib/utils";
 import { datetime } from "~/lib/format";
 import { maskPhoneE164 } from "~/lib/utils";
+import { ChangePhoneDialog } from "~/components/trainee/change-phone-dialog";
 
 /**
  * Trainee profile sections (§9.7 settings pattern): sub-nav, loading skeleton,
@@ -189,12 +190,14 @@ export function VerifiedInfoCard({
   consentGivenAt,
   gender,
   genderSelfDescribed,
+  onPhoneChanged,
 }: {
   phoneE164: string;
   consentGiven: boolean;
   consentGivenAt: string | null;
   gender: string;
   genderSelfDescribed: string | null;
+  onPhoneChanged?: () => void;
 }) {
   // Self-reported gender for the info list; "—" when prefer-not-to-say/unset.
   const genderDisplay =
@@ -213,7 +216,10 @@ export function VerifiedInfoCard({
       <CardContent className="pt-0">
         <div className="flex items-center justify-between gap-4 border-b py-4">
           <span className="text-body-sm text-muted-foreground">Phone (verified via WhatsApp)</span>
-          <span className="font-mono text-body-sm font-medium tabular-nums">{maskPhoneE164(phoneE164)}</span>
+          <div className="flex items-center gap-1">
+            <span className="font-mono text-body-sm font-medium tabular-nums">{maskPhoneE164(phoneE164)}</span>
+            <ChangePhoneDialog currentPhoneE164={phoneE164} onChanged={onPhoneChanged} />
+          </div>
         </div>
         <div className="flex items-center justify-between gap-4 border-b py-4">
           <span className="text-body-sm text-muted-foreground">Consent</span>

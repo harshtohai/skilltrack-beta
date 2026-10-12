@@ -182,6 +182,7 @@ export default function TraineeProfilePage() {
           consentGivenAt={trainee.consentGivenAt}
           gender={trainee.gender}
           genderSelfDescribed={trainee.genderSelfDescribed}
+          onPhoneChanged={() => void loadProfile()}
         />
 
         {/* My Training (T8): read-only enrolment chain */}
