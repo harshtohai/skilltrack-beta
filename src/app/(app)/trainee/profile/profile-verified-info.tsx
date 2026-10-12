@@ -6,13 +6,15 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { StatusBadge } from "~/components/patterns/status-badge";
 import { ChangeEmailDialog } from "./change-email-dialog";
+import { ChangePhoneDialog } from "~/components/trainee/change-phone-dialog";
 import { datetime } from "~/lib/format";
 import { maskPhoneE164 } from "~/lib/utils";
 
 /**
  * Verified-information card (§9.7 rows pattern): email (with the T5
- * change-email dialog), masked phone, consent and gender. Locked except the
- * email, which changes only through the OTP-verified flow — never here.
+ * change-email dialog), masked phone (with the T6 change-phone dialog),
+ * consent and gender. Locked except email/phone, which change only through
+ * the OTP-verified flows — never here.
  */
 const GENDER_LABELS: Record<string, string> = {
   FEMALE: "Female",
@@ -30,6 +32,7 @@ export function VerifiedInfoCard({
   gender,
   genderSelfDescribed,
   onEmailChanged,
+  onPhoneChanged,
 }: {
   email: string | null;
   phoneE164: string;
@@ -38,6 +41,7 @@ export function VerifiedInfoCard({
   gender: string;
   genderSelfDescribed: string | null;
   onEmailChanged: () => void;
+  onPhoneChanged?: () => void;
 }) {
   const [changeOpen, setChangeOpen] = useState(false);
 
@@ -67,7 +71,10 @@ export function VerifiedInfoCard({
         </div>
         <div className="flex items-center justify-between gap-4 border-b py-4">
           <span className="text-body-sm text-muted-foreground">Phone (verified via WhatsApp)</span>
-          <span className="font-mono text-body-sm font-medium tabular-nums">{maskPhoneE164(phoneE164)}</span>
+          <div className="flex items-center gap-1">
+            <span className="font-mono text-body-sm font-medium tabular-nums">{maskPhoneE164(phoneE164)}</span>
+            <ChangePhoneDialog currentPhoneE164={phoneE164} onChanged={onPhoneChanged} />
+          </div>
         </div>
         <div className="flex items-center justify-between gap-4 border-b py-4">
           <span className="text-body-sm text-muted-foreground">Consent</span>
