@@ -8,6 +8,7 @@ import { StatusBadge } from "~/components/patterns/status-badge";
 import { CurrentStatusCard, IdentityCard } from "./trainee-detail-cards";
 import { getTrainee, TimelineSkeleton, TraineeTimeline } from "./trainee-timeline";
 import { TraineeActions } from "./trainee-actions";
+import { TraineeCertificates } from "./trainee-certificates";
 
 export const dynamic = "force-dynamic";
 
@@ -112,6 +113,9 @@ export default async function TraineeDetailPage({ params }: { params: Promise<{ 
           consentMethod={trainee.consentMethod}
           consentRevokedAt={trainee.consentRevokedAt}
         />
+
+        {/* Certificates (T3): institute/admin issue + review — ADR-002 */}
+        <TraineeCertificates publicId={trainee.publicId} canManage={scope.role === "admin" || inScope} />
 
         {/* aside (col-span-1): current status + timeline (§9.5 Details + Activity) */}
         <div className="space-y-4">
