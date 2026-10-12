@@ -23,7 +23,6 @@ function kpiTrend(
   history: KpiSnapshotRow[] | undefined,
   now: Date,
   metric: KpiMetric,
-  ariaLabel: string,
 ): { delta?: number; deltaLabel?: string } {
   if (!history || history.length < 2) return {};
   const d = kpiDelta(history, now, metric);
@@ -45,7 +44,7 @@ export function AdminKpiCards({ kpis, now }: { kpis: KPIData; now: Date }) {
         icon={<Users />}
         chip="brand"
         href="/trainees"
-        {...kpiTrend(kpis.history, now, "totalTrainees", "Total trainees, last 7 days")}
+        {...kpiTrend(kpis.history, now, "totalTrainees")}
       />
       <StatCard
         title="Outcome coverage"
@@ -62,8 +61,7 @@ export function AdminKpiCards({ kpis, now }: { kpis: KPIData; now: Date }) {
         {...kpiTrend(
           kpis.history,
           now,
-          "outcomeCoverage",
-          "Outcome coverage, last 7 days",
+          "outcomeCoverage"
         )}
       />
       <StatCard
@@ -81,8 +79,7 @@ export function AdminKpiCards({ kpis, now }: { kpis: KPIData; now: Date }) {
         {...kpiTrend(
           kpis.history,
           now,
-          "verifiedEmployment",
-          "Verified employment, last 7 days",
+          "verifiedEmployment"
         )}
       />
       <StatCard
@@ -92,7 +89,7 @@ export function AdminKpiCards({ kpis, now }: { kpis: KPIData; now: Date }) {
         chip="brand"
         goodDirection="down"
         href="/conflicts"
-        {...kpiTrend(kpis.history, now, "conflicts", "Conflicts, last 7 days")}
+        {...kpiTrend(kpis.history, now, "conflicts")}
       />
     </div>
   );
@@ -118,21 +115,21 @@ export function InstituteKpiCards({ kpis, now }: { kpis: KPIData; now: Date }) {
         icon={<Users />}
         chip="brand"
         href="/trainees"
-        {...kpiTrend(kpis.history, now, "totalTrainees", "Trainees produced, last 7 days")}
+        {...kpiTrend(kpis.history, now, "totalTrainees")}
       />
       <StatCard
         title="Certified"
         value={number(kpis.funnel.certified.count)}
         icon={<GraduationCap />}
         chip="purple"
-        {...kpiTrend(kpis.history, now, "certified", "Certified, last 7 days")}
+        {...kpiTrend(kpis.history, now, "certified")}
       />
       <StatCard
         title="Placed"
         value={number(kpis.funnel.employed.count)}
         icon={<Briefcase />}
         chip="blue"
-        {...kpiTrend(kpis.history, now, "placed", "Placed, last 7 days")}
+        {...kpiTrend(kpis.history, now, "placed")}
       />
       <StatCard
         title="Placement rate"
@@ -146,7 +143,7 @@ export function InstituteKpiCards({ kpis, now }: { kpis: KPIData; now: Date }) {
         }
         icon={<TrendingUp />}
         chip="brand"
-        {...kpiTrend(kpis.history, now, "placementRate", "Placement rate, last 7 days")}
+        {...kpiTrend(kpis.history, now, "placementRate")}
       />
     </div>
   );
