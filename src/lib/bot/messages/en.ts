@@ -36,7 +36,7 @@ export interface Messages {
 export const en: Messages = {
   welcome: `👋 *Hello {name}!*
 
-Welcome to *SkillsTrack* – the official placement tracking & career guidance platform by the *Maharashtra State Skill Development Society (MSSDS)* under the *Pradhan Mantri Kaushal Vikas Yojana (PMKVY)*.
+Welcome to *SkillsTrack* – the official placement tracking & career guidance platform.
 
 We're here to understand your career journey after training so we can:
 ✅ Improve training programs for future batches
@@ -94,10 +94,10 @@ What is your approximate monthly income (including incentives)?`,
 How satisfied are you with your current role?`,
   relevanceJob: `🎓 *Training Relevance*
 
-How relevant was your PMKVY training to your current job?`,
+How relevant was your training to your current job?`,
   relevanceSituation: `🎓 *Training Relevance*
 
-How relevant is your PMKVY training to your current situation and job search?`,
+How relevant is your training to your current situation and job search?`,
   skillGapsJob: `📉 *Skill Gaps*
 
 What skills did you *lack* when starting this job that training didn't cover?`,
@@ -116,7 +116,7 @@ What are you aiming for?`,
   challenges: `🚧 *Biggest Career Challenges*
 
 What's holding you back?`,
-  recommendations: `💡 *Your Suggestions for PMKVY*
+  recommendations: `💡 *Your Suggestions for the Programme*
 
 How can we improve the training program for future students?`,
   selectHint: "Select all that apply (up to 3). Type *DONE* when finished, or *SKIP* to pass.",
@@ -128,10 +128,10 @@ How can we improve the training program for future students?`,
   fallbackName: "there",
   complete: `🎉 *Thank You, {name}!*
 
-Your responses have been recorded and will help improve skill training for thousands of students across Maharashtra.
+Your responses have been recorded and will help improve skill training for thousands of students.
 
 📊 *What happens next:*
-• Your feedback goes to MSSDS & NSDC for program improvements
+• Your feedback goes to the programme team for improvements
 • You'll get personalized job alerts on SkillsTrack
 • We may reach out for follow-up in 6 months
 
@@ -139,9 +139,9 @@ Your responses have been recorded and will help improve skill training for thous
 • Visit: https://outcometrack.vercel.app
 • Job alerts | Skill courses | Career guidance
 
-*Together, building a skilled Maharashtra!* 🇮🇳
+*Together, building a skilled future!* 🇮🇳
 
-— Team SkillsTrack (MSSDS / PMKVY)`,
+— Team SkillsTrack`,
   labels: {
     consent_yes: "✅ Yes, I consent",
     consent_no: "❌ No, thank you",
