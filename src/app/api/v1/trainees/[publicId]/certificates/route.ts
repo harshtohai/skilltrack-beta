@@ -95,11 +95,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const form = await request.formData();
+    const expiryRaw = form.get("expiryDate");
     const parsed = issueSchema.safeParse({
       name: form.get("name"),
       issuer: form.get("issuer"),
       issueDate: form.get("issueDate"),
-      expiryDate: form.get("expiryDate") || undefined,
+      expiryDate: typeof expiryRaw === "string" && expiryRaw.length > 0 ? expiryRaw : undefined,
     });
     if (!parsed.success) {
       return createErrorResponse("VALIDATION_ERROR", parsed.error.issues[0]?.message ?? "Invalid input", 400);
