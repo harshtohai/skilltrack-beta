@@ -9,6 +9,8 @@ export const env = createEnv({
     BACKEND_BASE_URL: z.string().url().optional(),
     APP_BASE_URL: z.string().url().optional(),
     BOT_MODE: z.enum(["real", "mock"]).default("mock"),
+    SUPABASE_URL: z.string().url().optional(),
+    SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -25,6 +27,8 @@ export const env = createEnv({
     BACKEND_BASE_URL: process.env.BACKEND_BASE_URL,
     APP_BASE_URL: process.env.APP_BASE_URL,
     BOT_MODE: process.env.BOT_MODE,
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   },
