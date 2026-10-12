@@ -6,7 +6,7 @@ import { MailCheck } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
-import { OtpSlots } from "./otp-slots";
+import { OtpSlots } from "~/components/auth/otp-slots";
 import type { TraineeProfile } from "./profile-types";
 
 /**
