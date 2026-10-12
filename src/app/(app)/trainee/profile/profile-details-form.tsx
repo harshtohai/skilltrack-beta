@@ -16,8 +16,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 export function ProfileDetailsForm({
   fullName,
   onFullNameChange,
-  email,
-  onEmailChange,
   district,
   onDistrictChange,
   language,
@@ -33,8 +31,6 @@ export function ProfileDetailsForm({
 }: {
   fullName: string;
   onFullNameChange: (value: string) => void;
-  email: string;
-  onEmailChange: (value: string) => void;
   district: string;
   onDistrictChange: (value: string) => void;
   language: string;
@@ -58,10 +54,6 @@ export function ProfileDetailsForm({
           <div className="space-y-2">
             <Label htmlFor="fullName">Full Name</Label>
             <Input id="fullName" value={fullName} onChange={(e) => onFullNameChange(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => onEmailChange(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="district">District</Label>

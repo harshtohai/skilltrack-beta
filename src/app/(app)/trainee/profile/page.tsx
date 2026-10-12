@@ -42,7 +42,6 @@ export default function TraineeProfilePage() {
   const [error, setError] = useState("");
 
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
   const [district, setDistrict] = useState("");
   const [language, setLanguage] = useState("");
   const [gender, setGender] = useState("PREFER_NOT_TO_SAY");
@@ -60,7 +59,6 @@ export default function TraineeProfilePage() {
       const json = (await res.json()) as MeResponse;
       setData(json);
       setFullName(json.trainee.fullName);
-      setEmail(json.trainee.email ?? "");
       setDistrict(json.trainee.district);
       setLanguage(json.trainee.language);
       setGender(json.trainee.gender ?? "PREFER_NOT_TO_SAY");
@@ -89,7 +87,6 @@ export default function TraineeProfilePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fullName,
-          email: email.trim() || null,
           district,
           language,
           gender,
@@ -111,7 +108,6 @@ export default function TraineeProfilePage() {
 
   const dirty = data
     ? fullName !== data.trainee.fullName ||
-      email !== (data.trainee.email ?? "") ||
       district !== data.trainee.district ||
       language !== data.trainee.language ||
       gender !== data.trainee.gender ||
@@ -161,8 +157,6 @@ export default function TraineeProfilePage() {
         <ProfileDetailsForm
           fullName={fullName}
           onFullNameChange={setFullName}
-          email={email}
-          onEmailChange={setEmail}
           district={district}
           onDistrictChange={setDistrict}
           language={language}

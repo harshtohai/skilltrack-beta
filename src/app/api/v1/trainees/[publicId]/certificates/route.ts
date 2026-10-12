@@ -5,7 +5,7 @@ import { auth } from "~/lib/auth";
 import { db } from "~/server/db";
 import { getSessionScope } from "~/server/scope";
 import { createErrorResponse, routeErrorResponse } from "~/app/api/v1/_utils";
-import { CertificateActionError, issueCertificate } from "~/server/certificate-actions";
+import { CertificateActionError, issueCertificate, getTraineeInCertificateScope } from "~/server/certificate-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -34,15 +34,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     }
 
     const { publicId } = await params;
-    const trainee = await db.trainee.findUnique({
-      where: { publicId },
-      include: { enrolments: { include: { cohort: true } } },
-    });
-    if (!trainee) return createErrorResponse("NOT_FOUND", "Trainee not found", 404);
-    if (scope.role === "institute") {
-      const inScope = trainee.enrolments.some((e) => e.cohort.trainingCenterId === scope.centerId);
-      if (!inScope) return createErrorResponse("FORBIDDEN", "This trainee is not enrolled in your center's cohorts", 403);
-    }
+    const trainee = await getTraineeInCertificateScope(publicId, scope.role, scope.centerId);
 
     const certificates = await db.certificate.findMany({
       where: { traineeId: trainee.id },
@@ -65,10 +57,13 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         rejectionReason: c.rejectionReason,
         reviewedAt: c.reviewedAt,
         fileUrl: c.fileUrl,
-        hasFile: Boolean(c.fileKey),
+        hasFile: c.fileKey !== null || c.fileUrl !== null,
       })),
     });
   } catch (error) {
+    if (error instanceof CertificateActionError) {
+      return createErrorResponse(error.code, error.message, error.status);
+    }
     console.error("GET /api/v1/trainees/[publicId]/certificates error:", error);
     return routeErrorResponse("Failed to load certificates", error);
   }
@@ -84,15 +79,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const { publicId } = await params;
-    const trainee = await db.trainee.findUnique({
-      where: { publicId },
-      include: { enrolments: { include: { cohort: true } } },
-    });
-    if (!trainee) return createErrorResponse("NOT_FOUND", "Trainee not found", 404);
-    if (scope.role === "institute") {
-      const inScope = trainee.enrolments.some((e) => e.cohort.trainingCenterId === scope.centerId);
-      if (!inScope) return createErrorResponse("FORBIDDEN", "This trainee is not enrolled in your center's cohorts", 403);
-    }
+    const trainee = await getTraineeInCertificateScope(publicId, scope.role, scope.centerId);
 
     const form = await request.formData();
     const rawExpiry = form.get("expiryDate");

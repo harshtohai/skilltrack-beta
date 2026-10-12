@@ -7,19 +7,18 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
-import { Input } from "~/components/ui/input";
 import { OtpSlots } from "~/components/auth/otp-slots";
 import { maskPhoneE164 } from "~/lib/utils";
+import { ChangePhonePhoneStep } from "./change-phone-phone-step";
 
 /**
  * "Change phone" (T6, spec #102) — self-contained dialog so VerifiedInfoCard
  * only renders a trigger (the email side evolves that card in parallel).
- * Step 1 collects the new number (paste friendly per Bug Bag #7), step 2
+ * Step 1 (change-phone-phone-step.tsx) collects the new number, step 2
  * auto-submits the 6-digit WhatsApp OTP (§4.2); the 30s resend cooldown
  * follows the server's retryAfter.
  */
@@ -66,7 +65,6 @@ export function ChangePhoneDialog({
   }, [cooldown]);
 
   const digits = phone.replace(/\D/g, "");
-  const phoneValid = /^\d{10}$/.test(digits);
 
   /** Fresh state every time the dialog opens. */
   function reset() {
@@ -93,7 +91,7 @@ export function ChangePhoneDialog({
   }
 
   async function submitPhone() {
-    if (!phoneValid) return setError("Enter a valid 10-digit Indian mobile number");
+    if (!/^\d{10}$/.test(digits)) return setError("Enter a valid 10-digit Indian mobile number");
     if (`+91${digits}` === currentPhoneE164) {
       return setError("That is already your current number");
     }
@@ -147,38 +145,17 @@ export function ChangePhoneDialog({
         </DialogHeader>
 
         {step === "phone" ? (
-          <form onSubmit={(e) => { e.preventDefault(); void submitPhone(); }} className="grid gap-4">
-            <div className="grid gap-1.5">
-              <label htmlFor="change-phone-new" className="text-body-sm font-medium">
-                New mobile number <span className="text-danger-text">*</span>
-              </label>
-              <Input
-                id="change-phone-new"
-                type="tel"
-                inputMode="numeric"
-                placeholder="9876543210"
-                autoComplete="tel-national"
-                aria-invalid={error ? true : undefined}
-                aria-required="true"
-                required
-                disabled={submitting}
-                value={phone}
-                // No maxLength (Bug Bag #7): strip the +91 country code off a
-                // paste instead of truncating it into a wrong-looking number.
-                onChange={(e) => {
-                  const raw = e.target.value.replace(/\D/g, "");
-                  setPhone(raw.length === 12 && raw.startsWith("91") ? raw.slice(2) : e.target.value);
-                  if (error) setError("");
-                }}
-              />
-              {errorLine}
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={submitting || !phoneValid}>
-                {submitting ? "Sending code..." : "Send code"}
-              </Button>
-            </DialogFooter>
-          </form>
+          <ChangePhonePhoneStep
+            phone={phone}
+            onPhoneChange={(value) => {
+              setPhone(value);
+              if (error) setError("");
+            }}
+            onSubmit={() => void submitPhone()}
+            error={error}
+            onClearError={() => setError("")}
+            submitting={submitting}
+          />
         ) : (
           <div className="grid gap-4">
             <OtpSlots

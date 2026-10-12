@@ -15,12 +15,14 @@ const DISTRICTS = [
 
 const patchSchema = z.object({
   fullName: z.string().min(2).max(100).optional(),
-  email: z.string().email().max(200).nullable().optional(),
   district: z.string().max(60).optional(),
   language: z.enum(["EN", "HI", "MR"]).optional(),
   gender: z.enum(["FEMALE", "MALE", "NON_BINARY", "SELF_DESCRIBED", "PREFER_NOT_TO_SAY"]).optional(),
   genderSelfDescribed: z.string().max(100).nullable().optional(),
 });
+// NOTE: email is deliberately NOT editable here (spec #102 / T5) — it is the
+// login identity and changes only through the OTP-verified email-change flow
+// (POST /api/v1/trainee/me/email-change + /verify). Phone is likewise locked.
 
 async function requireTrainee() {
   const session = await auth();
@@ -132,18 +134,16 @@ export async function PATCH(request: NextRequest) {
     const body = (await request.json()) as unknown;
     const data = patchSchema.parse(body);
 
-    // Only name/email/district/language/gender are editable; phone, consent,
-    // publicId and outcome data are locked.
+    // Only name/district/language/gender are editable; email (login identity),
+    // phone, consent, publicId and outcome data are locked.
     const update: {
       fullName?: string;
-      email?: string | null;
       district?: string;
       language?: "EN" | "HI" | "MR";
       gender?: "FEMALE" | "MALE" | "NON_BINARY" | "SELF_DESCRIBED" | "PREFER_NOT_TO_SAY";
       genderSelfDescribed?: string | null;
     } = {};
     if (data.fullName !== undefined) update.fullName = data.fullName.trim();
-    if (data.email !== undefined) update.email = data.email?.toLowerCase().trim() ?? null;
     if (data.district !== undefined) update.district = data.district.trim();
     if (data.language !== undefined) update.language = data.language;
     if (data.gender !== undefined) {

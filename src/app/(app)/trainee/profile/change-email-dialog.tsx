@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -177,7 +178,7 @@ export function ChangeEmailDialog({
               </p>
             ) : null}
             <Button onClick={() => void verifyOtp(otp)} disabled={submitting || otp.length !== 6}>
-              {submitting ? "Verifying..." : "Verify"}
+              {submitting && <Loader2 className="size-4 animate-spin" />} Verify
             </Button>
             <Button
               variant="outline"

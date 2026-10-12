@@ -76,7 +76,7 @@ export function ForYouTab() {
   return (
     <div className="space-y-6">
       <section>
-        <h2 className="mb-3 text-h3 font-medium">Courses for your skill gaps</h2>
+        <h2 className="mb-3 text-title font-medium">Courses for your skill gaps</h2>
         {data.courses.length === 0 ? (
           <Card className="p-5">
             <p className="text-body-sm text-muted-foreground">
@@ -90,7 +90,7 @@ export function ForYouTab() {
                 <CardHeader className="flex flex-row items-start gap-3 space-y-0 p-0">
                   <BookOpen className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
                   <div className="min-w-0">
-                    <CardTitle className="text-body font-medium">{course.courseName}</CardTitle>
+                    <CardTitle className="text-title font-medium">{course.courseName}</CardTitle>
                     <p className="text-caption text-muted-foreground">
                       {course.category} · {course.provider} · {course.durationWeeks} weeks
                     </p>
@@ -108,7 +108,7 @@ export function ForYouTab() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-h3 font-medium">Employers with strong retention</h2>
+        <h2 className="mb-3 text-title font-medium">Employers with strong retention</h2>
         {data.employers.length === 0 ? (
           <Card className="p-5">
             <p className="text-body-sm text-muted-foreground">

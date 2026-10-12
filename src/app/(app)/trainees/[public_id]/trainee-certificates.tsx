@@ -1,19 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { Textarea } from "~/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-} from "~/components/ui/dialog";
+import { Skeleton } from "~/components/patterns/skeleton";
+import { ErrorState } from "~/components/patterns/error-state";
+import { EmptyState } from "~/components/patterns/empty-state";
 import { StatusBadge } from "~/components/patterns/status-badge";
-import { CERT_ALLOWED_MIME, CERT_MAX_BYTES } from "~/server/certificates";
+import { date } from "~/lib/format";
+import { IssueCertificateDialog, RejectCertificateDialog } from "./trainee-certificate-dialogs";
 
-interface CertificateRow {
+export interface CertificateRow {
   id: string;
   name: string;
   issuer: string;
@@ -30,24 +29,25 @@ interface CertificateRow {
  * T3 (spec #102 / ADR-002): certificates on the trainee detail page.
  * Institute (own center's trainees) and admin can issue ad-hoc certificates
  * (born VERIFIED) and review self-reported ones — verify, or reject with a
- * reason. Decisions are append-only; the trainee sees the result immediately
- * on their profile.
+ * reason (dialogs in trainee-certificate-dialogs.tsx). Decisions are
+ * append-only; the trainee sees the result immediately on their profile.
  */
 export function TraineeCertificates({ publicId, canManage }: { publicId: string; canManage: boolean }) {
   const [certs, setCerts] = useState<CertificateRow[] | null>(null);
+  const [error, setError] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
   const [rejectTarget, setRejectTarget] = useState<CertificateRow | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const res = await fetch(`/api/v1/trainees/${publicId}/certificates`);
-    if (res.ok) {
+    setError(false);
+    try {
+      const res = await fetch(`/api/v1/trainees/${publicId}/certificates`);
+      if (!res.ok) throw new Error(String(res.status));
       const body = (await res.json()) as { certificates: CertificateRow[] };
       setCerts(body.certificates);
-    } else {
-
-      setCerts([]);
+    } catch {
+      setError(true);
     }
   }, [publicId]);
 
@@ -55,63 +55,30 @@ export function TraineeCertificates({ publicId, canManage }: { publicId: string;
     void load();
   }, [load]);
 
-  async function handleIssue(form: HTMLFormElement) {
-    const data = new FormData(form);
-    const file = fileRef.current?.files?.[0];
-    if (file) {
-      if (!CERT_ALLOWED_MIME.includes(file.type as never)) {
-        toast.error("Only PDF, JPG or PNG files are allowed.");
-        return;
-      }
-      if (file.size > CERT_MAX_BYTES) {
-        toast.error("The file is larger than 1 MB.");
-        return;
-      }
-      data.set("file", file);
-    }
-    setBusy("issue");
-    try {
-      const res = await fetch(`/api/v1/trainees/${publicId}/certificates`, { method: "POST", body: data });
-      const body = (await res.json()) as { error?: { message?: string } };
-      if (!res.ok) {
-        toast.error(body.error?.message ?? "Could not issue the certificate.");
-        return;
-      }
-      toast.success("Certificate issued and verified.");
-      setIssueOpen(false);
-      form.reset();
-      if (fileRef.current) fileRef.current.value = "";
-      await load();
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function handleReview(cert: CertificateRow, decision: "VERIFIED" | "REJECTED", reason?: string) {
-    setBusy(cert.id);
+  async function handleVerify(cert: CertificateRow) {
+    setVerifyingId(cert.id);
     try {
       const res = await fetch(`/api/v1/trainees/${publicId}/certificates/${cert.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision, rejectionReason: reason }),
+        body: JSON.stringify({ decision: "VERIFIED" }),
       });
       const body = (await res.json()) as { error?: { message?: string } };
       if (!res.ok) {
         toast.error(body.error?.message ?? "Could not record the review.");
         return;
       }
-      toast.success(decision === "VERIFIED" ? "Certificate verified." : "Certificate rejected.");
-      setRejectTarget(null);
+      toast.success("Certificate verified.");
       await load();
     } finally {
-      setBusy(null);
+      setVerifyingId(null);
     }
   }
 
   return (
     <Card className="p-5 lg:col-span-2">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0">
-        <CardTitle className="text-h3">Certificates</CardTitle>
+        <CardTitle className="text-title">Certificates</CardTitle>
         {canManage ? (
           <Button size="sm" variant="outline" onClick={() => setIssueOpen(true)}>
             Issue certificate
@@ -120,9 +87,18 @@ export function TraineeCertificates({ publicId, canManage }: { publicId: string;
       </CardHeader>
       <CardContent className="p-0">
         {certs === null ? (
-          <p className="text-body-sm text-muted-foreground">Loading…</p>
+          <div className="space-y-2" aria-busy>
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+          </div>
+        ) : error ? (
+          <ErrorState
+            title="Couldn't load certificates"
+            description="Check your connection and retry."
+            onRetry={() => void load()}
+          />
         ) : certs.length === 0 ? (
-          <p className="text-body-sm text-muted-foreground">No certificates yet.</p>
+          <EmptyState title="No certificates yet" description="Issued and trainee-uploaded certificates appear here." />
         ) : (
           <ul className="divide-y">
             {certs.map((cert) => (
@@ -135,8 +111,8 @@ export function TraineeCertificates({ publicId, canManage }: { publicId: string;
                     </span>
                   </p>
                   <p className="text-caption text-muted-foreground">
-                    {cert.issuer} · {new Date(cert.issueDate).toLocaleDateString()}
-                    {cert.expiryDate ? ` · expires ${new Date(cert.expiryDate).toLocaleDateString()}` : ""}
+                    {cert.issuer} · {date(cert.issueDate)}
+                    {cert.expiryDate ? ` · expires ${date(cert.expiryDate)}` : ""}
                   </p>
                   {cert.status === "REJECTED" && cert.rejectionReason ? (
                     <p className="text-caption text-destructive">Reason: {cert.rejectionReason}</p>
@@ -144,12 +120,22 @@ export function TraineeCertificates({ publicId, canManage }: { publicId: string;
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <StatusBadge status={cert.status} />
+                  {cert.hasFile ? (
+                    <a
+                      href={`/api/v1/trainees/${publicId}/certificates/${cert.id}/file`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-body-sm text-primary-strong hover:underline"
+                    >
+                      View proof
+                    </a>
+                  ) : null}
                   {canManage && cert.status === "PENDING" ? (
                     <>
-                      <Button size="sm" variant="outline" disabled={busy === cert.id} onClick={() => void handleReview(cert, "VERIFIED")}>
-                        Verify
+                      <Button size="sm" variant="outline" disabled={verifyingId === cert.id} onClick={() => void handleVerify(cert)}>
+                        {verifyingId === cert.id && <Loader2 className="size-4 animate-spin" />} Verify
                       </Button>
-                      <Button size="sm" variant="outline" className="text-destructive" disabled={busy === cert.id} onClick={() => setRejectTarget(cert)}>
+                      <Button size="sm" variant="outline" className="text-destructive" onClick={() => setRejectTarget(cert)}>
                         Reject
                       </Button>
                     </>
@@ -161,80 +147,18 @@ export function TraineeCertificates({ publicId, canManage }: { publicId: string;
         )}
       </CardContent>
 
-      {/* Issue dialog (ADR-002: ISSUED is born VERIFIED) */}
-      <Dialog open={issueOpen} onOpenChange={setIssueOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Issue certificate</DialogTitle>
-            <DialogDescription>Issued certificates are recorded as verified. A file is optional (PDF/JPG/PNG, ≤ 1 MB).</DialogDescription>
-          </DialogHeader>
-          <form
-            className="space-y-3"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void handleIssue(e.currentTarget);
-            }}
-          >
-            <div className="space-y-1">
-              <Label htmlFor="cert-name">Certificate name</Label>
-              <Input id="cert-name" name="name" required maxLength={200} />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="cert-issuer">Issuer</Label>
-              <Input id="cert-issuer" name="issuer" required maxLength={200} placeholder="e.g. MSSDS" />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label htmlFor="cert-issued">Issue date</Label>
-                <Input id="cert-issued" name="issueDate" type="date" required />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="cert-expiry">Expiry (optional)</Label>
-                <Input id="cert-expiry" name="expiryDate" type="date" />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="cert-file">File (optional)</Label>
-              <Input id="cert-file" ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" />
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setIssueOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={busy === "issue"}>{busy === "issue" ? "Issuing…" : "Issue"}</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Reject dialog (CL-18: governance decisions are confirmed with a reason) */}
-      <Dialog open={rejectTarget !== null} onOpenChange={(open) => !open && setRejectTarget(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reject certificate</DialogTitle>
-            <DialogDescription>
-              {rejectTarget ? `Reject “${rejectTarget.name}” — the trainee will see the reason and can re-upload.` : ""}
-            </DialogDescription>
-          </DialogHeader>
-          <form
-            className="space-y-3"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const rawReason = new FormData(e.currentTarget).get("reason");
-              const reason = typeof rawReason === "string" ? rawReason : "";
-              if (rejectTarget) void handleReview(rejectTarget, "REJECTED", reason);
-
-            }}
-          >
-            <div className="space-y-1">
-              <Label htmlFor="reject-reason">Reason (required)</Label>
-              <Textarea id="reject-reason" name="reason" required maxLength={500} rows={3} />
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setRejectTarget(null)}>Cancel</Button>
-              <Button type="submit" variant="destructive" disabled={busy !== null}>Reject</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <IssueCertificateDialog
+        publicId={publicId}
+        open={issueOpen}
+        onOpenChange={setIssueOpen}
+        onIssued={load}
+      />
+      <RejectCertificateDialog
+        publicId={publicId}
+        target={rejectTarget}
+        onOpenChange={(open) => !open && setRejectTarget(null)}
+        onRejected={load}
+      />
     </Card>
   );
 }

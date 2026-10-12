@@ -5,7 +5,7 @@ import { auth } from "~/lib/auth";
 import { db } from "~/server/db";
 import { getSessionScope } from "~/server/scope";
 import { createErrorResponse, routeErrorResponse } from "~/app/api/v1/_utils";
-import { CertificateActionError, reviewCertificate } from "~/server/certificate-actions";
+import { CertificateActionError, reviewCertificate, getTraineeInCertificateScope } from "~/server/certificate-actions";
 export const dynamic = "force-dynamic";
 
 const reviewSchema = z.object({
@@ -32,15 +32,7 @@ export async function PATCH(
     }
 
     const { publicId, certificateId } = await params;
-    const trainee = await db.trainee.findUnique({
-      where: { publicId },
-      include: { enrolments: { include: { cohort: true } } },
-    });
-    if (!trainee) return createErrorResponse("NOT_FOUND", "Trainee not found", 404);
-    if (scope.role === "institute") {
-      const inScope = trainee.enrolments.some((e) => e.cohort.trainingCenterId === scope.centerId);
-      if (!inScope) return createErrorResponse("FORBIDDEN", "This trainee is not enrolled in your center's cohorts", 403);
-    }
+    const trainee = await getTraineeInCertificateScope(publicId, scope.role, scope.centerId);
 
     const parsed = reviewSchema.safeParse(await request.json());
     if (!parsed.success) {

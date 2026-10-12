@@ -1,6 +1,6 @@
 import { db } from "~/server/db";
 import { buildCertificateKey, validateCertificateFile } from "~/server/certificates";
-import { isStorageConfigured, uploadCertificateFile } from "~/server/storage";
+import { isStorageConfigured, signCertificateUrl, uploadCertificateFile } from "~/server/storage";
 
 /**
  * Certificate domain actions shared by the per-trainee and per-cohort flows
@@ -18,6 +18,56 @@ export class CertificateActionError extends Error {
     super(message);
   }
 }
+
+/** Thrown when a fileKey exists but storage is not configured (503). */
+export class StorageNotConfiguredError extends Error {}
+
+/**
+ * Institute-scoping gate (INST-01) shared by every certificate route: loads
+ * the trainee by publicId and checks centre scope for the institute role
+ * (admin is unscoped). Throws CertificateActionError NOT_FOUND / FORBIDDEN —
+ * routes catch it via the standard CertificateActionError handler.
+ */
+export async function getTraineeInCertificateScope(publicId: string, role: string, centerId: string | null) {
+  const trainee = await db.trainee.findUnique({
+    where: { publicId },
+    include: { enrolments: { include: { cohort: true } } },
+  });
+  if (!trainee) throw new CertificateActionError("NOT_FOUND", "Trainee not found", 404);
+  if (role === "institute") {
+    const inScope = trainee.enrolments.some((e) => e.cohort.trainingCenterId === centerId);
+    if (!inScope) {
+      throw new CertificateActionError("FORBIDDEN", "This trainee is not enrolled in your center's cohorts", 403);
+    }
+  }
+  return trainee;
+}
+
+/**
+ * Shared file-resolution for both file routes (trainee + institute/admin):
+ * fileKey → short-lived signed storage URL; else the recorded external link;
+ * null when the certificate has no file. Throws StorageNotConfiguredError for
+ * an orphaned fileKey so each route can answer 503.
+ */
+export async function resolveCertificateFileUrl(certificate: {
+  fileKey: string | null;
+  fileUrl: string | null;
+}): Promise<string | null> {
+  if (certificate.fileKey) {
+    if (!isStorageConfigured()) throw new StorageNotConfiguredError();
+    return signCertificateUrl(certificate.fileKey);
+  }
+  if (certificate.fileUrl) {
+    try {
+      return new URL(certificate.fileUrl).toString();
+    } catch {
+      // Malformed stored link — treated as no file.
+      return null;
+    }
+  }
+  return null;
+}
+
 
 export async function issueCertificate(input: {
   traineeId: string;

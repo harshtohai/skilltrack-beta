@@ -2,8 +2,8 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "~/lib/auth";
 import { db } from "~/server/db";
-import { isStorageConfigured, signCertificateUrl } from "~/server/storage";
 import { routeErrorResponse, createErrorResponse } from "~/app/api/v1/_utils";
+import { resolveCertificateFileUrl, StorageNotConfiguredError } from "~/server/certificate-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -37,27 +37,20 @@ export async function GET(
       return createErrorResponse("NOT_FOUND", "Certificate not found", 404);
     }
 
-    if (certificate.fileKey) {
-      if (!isStorageConfigured()) {
+    try {
+      const url = await resolveCertificateFileUrl(certificate);
+      if (!url) return createErrorResponse("NOT_FOUND", "Certificate has no file", 404);
+      return NextResponse.redirect(url, 302);
+    } catch (error) {
+      if (error instanceof StorageNotConfiguredError) {
         return createErrorResponse(
           "STORAGE_NOT_CONFIGURED",
           "Certificate storage is not configured — the file is unavailable right now",
           503
         );
       }
-      const signedUrl = await signCertificateUrl(certificate.fileKey);
-      return NextResponse.redirect(signedUrl, 302);
+      throw error;
     }
-
-    if (certificate.fileUrl) {
-      try {
-        return NextResponse.redirect(new URL(certificate.fileUrl), 302);
-      } catch {
-        // Malformed stored link — fall through to the 404 below.
-      }
-    }
-
-    return createErrorResponse("NOT_FOUND", "Certificate has no file", 404);
   } catch (error) {
     console.error("GET /api/v1/trainee/certificates/[id]/file error:", error);
     return routeErrorResponse("Failed to open certificate file", error);

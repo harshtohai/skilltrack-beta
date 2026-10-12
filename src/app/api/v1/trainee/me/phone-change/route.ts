@@ -109,6 +109,11 @@ export async function POST(request: NextRequest) {
     // the 30s cooldown on an orphan.
     if ((process.env.BOT_MODE ?? "mock") === "real") {
       const send = await sendKapsoMessage({
+        // NOTE (spec #102 / T6): this free-text send is the pre-template
+        // placeholder. Real mode requires a Meta-approved WhatsApp
+        // authentication template (one-time-password) — swap `text` for the
+        // approved template name + OTP parameter once registered in the Meta
+        // Business Manager. Mock mode (default) never sends.
         toPhoneE164: newPhone,
         text: `Your SkillsTrack verification code is ${otp}. It expires in 30 minutes. Never share this code.`,
       });

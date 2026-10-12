@@ -45,7 +45,7 @@ export function ChangeEmailEmailStep({
         )}
       />
       <Button type="submit" disabled={submitting}>
-        {submitting ? "Sending..." : "Send code"}
+        {submitting && <Loader2 className="size-4 animate-spin" />} Send code
       </Button>
     </form>
   );
