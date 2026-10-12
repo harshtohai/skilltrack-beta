@@ -42,6 +42,7 @@ SkillsTrack is a longitudinal skilling-outcomes platform. It follows up with tra
 - **Identity**: `id` (uuid), `public_id` (human-readable, e.g., `TRN-000001`), `full_name`, `phone_e164` (unique, E.164 format), `email`, `district`, `language` (`EN` | `HI`)
 - **Gender** (Oct 2026): enum `FEMALE | MALE | NON_BINARY | PREFER_NOT_TO_SAY` + optional self-described text; set at signup (Select), shown/edited on the profile
 - **Enrolment**: Links to one Cohort via `enrolments` table
+- **Access** (Oct 2026): passwordless — email magic link / 6-digit OTP, or a WhatsApp OTP to the verified phone (covers phone-only trainees added without an email; one Meta-approved authentication template serves both login and the phone-change flow)
 - **Privacy**: Phone masked in UI (`+91 XXXXX 3210`), synthetic data only for demo
 
 ### Enrolment
@@ -115,9 +116,19 @@ SkillsTrack is a longitudinal skilling-outcomes platform. It follows up with tra
 - **Identity**: `id`, `trainee_id` (FK), `reason` (reuses `non_placement_reason` enum), `district`
 - **Purpose**: Demand-gap signal — gov analytics shows how many trainees per district report "no jobs nearby" / "skills mismatch" etc.
 
+### Certificates (two sources, Oct 2026)
+- **Identity**: `id`, `trainee_id` (FK), `name`, `issuer`, `issue_date`, `expiry_date` (nullable), `file_url` (nullable — private storage, short-lived signed links; PDF/JPG/PNG, max 1 MB)
+- **Source** (`certificate_source`): `SELF_REPORTED` (the trainee uploads any certificate they hold — proof is the attached file) | `ISSUED` (institute-issued programme certificate, tied to the trainee's Enrolment)
+- **Status** (`certificate_status`): `SELF_REPORTED` starts `PENDING` and is reviewed by the trainee's institute (the admin may also review as government oversight) to `VERIFIED` | `REJECTED` (+ reason); `ISSUED` is born `VERIFIED` (the issuer is the authority)
+- **Issuance effect** (Oct 13 grilling Q13): issuing completion certificates to a cohort IS the act of certification — sets the Enrolment's `certification_date` (defaults to the cert's issue date), flips `ACTIVE → COMPLETED`, audit-logged, idempotent (already-certified trainees skipped)
+- **Invariants** (Oct 13 grilling Q12): the trainee sees their own certificates immediately, whatever the status — pending badge, rejected badge + reason (trust is the product); the trainee may edit/delete while `PENDING` and delete-and-reupload while `REJECTED`; `VERIFIED`/`ISSUED` records are immutable to the trainee (junk removal is an admin/institute audit-logged action); review decisions append, never overwrite history
+
 ## Enums (Exact Values)
 
 | Enum | Values |
+|------|--------|
+| `certificate_source` | `SELF_REPORTED`, `ISSUED` |
+| `certificate_status` | `PENDING`, `VERIFIED`, `REJECTED` |
 |------|--------|
 | `outcome_status` | `EMPLOYED`, `SELF_EMPLOYED`, `APPRENTICE`, `LOOKING`, `NOT_WORKING`, `UNKNOWN` |
 | `verification_status` | `UNKNOWN`, `SELF_REPORTED`, `PROVIDER_CONFIRMED`, `EMPLOYER_CONFIRMED`, `DOCUMENT_VERIFIED`, `SYSTEM_VERIFIED`, `CONFLICT` |
@@ -242,6 +253,9 @@ Skipped from the same review as shadcn-standard or already-documented: avatar `d
 - **Interview scheduling** (employer↔trainee slot booking): parked.
 - **Max open jobs per employer** (spam control): parked until real usage demands it. — IMPLEMENTED-this-changeset (quick-wins #89): `POST /api/v1/employer/jobs` 409s at ≥25 OPEN postings (`TOO_MANY_OPEN_JOBS`); closing a posting frees a slot.
 - **Employer profile pages as a metric**: company profiles (sector, size, hiring history) surfaced as their own analytics section — near-future.
+
+## Idea Bag — trainee-section grilling (Oct 13)
+40. **UAN-based past-employment retrieval**: trainee supplies their EPFO UAN (+ consent) and the system imports verified past employment into Employment History. Decided Oct 13 (trainee-section grilling Q6): trainees do NOT hand-type employment rows — the hire-created row stays the sole system-written entry, and prior jobs arrive only via UAN retrieval once built. Self-entry of Employment History is explicitly rejected until then.
 
 ## Non-Goals (Hackathon)
 - Not a replacement for SIDH/NCS/LMS/HRMS
