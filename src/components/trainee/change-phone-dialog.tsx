@@ -13,7 +13,7 @@ import {
 } from "~/components/ui/dialog";
 import { OtpSlots } from "~/components/auth/otp-slots";
 import { maskPhoneE164 } from "~/lib/utils";
-import { ChangePhonePhoneStep } from "./change-phone-phone-step";
+import { ChangePhonePhoneStep } from "~/app/(app)/trainee/profile/change-phone-phone-step";
 
 /**
  * "Change phone" (T6, spec #102) — self-contained dialog so VerifiedInfoCard

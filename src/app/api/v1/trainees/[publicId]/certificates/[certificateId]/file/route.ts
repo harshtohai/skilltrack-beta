@@ -5,7 +5,7 @@ import { auth } from "~/lib/auth";
 import { db } from "~/server/db";
 import { getSessionScope } from "~/server/scope";
 import { routeErrorResponse, createErrorResponse } from "~/app/api/v1/_utils";
-import { CertificateActionError, resolveCertificateFileUrl, StorageNotConfiguredError } from "~/server/certificate-actions";
+import { CertificateActionError, getTraineeInCertificateScope, resolveCertificateFileUrl, StorageNotConfiguredError } from "~/server/certificate-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +41,7 @@ export async function GET(
       where: { id: parsedIds.data.certificateId },
       select: { traineeId: true, fileKey: true, fileUrl: true },
     });
-    if (!certificate || certificate.traineeId !== trainee.id) {
+    if (certificate?.traineeId !== trainee.id) {
       return createErrorResponse("NOT_FOUND", "Certificate not found", 404);
     }
 
