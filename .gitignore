@@ -55,3 +55,6 @@ yarn-error.log*
 shots/
 .playwright-mcp/
 *.png
+
+# git worktrees for parallel slices
+.worktrees/
