@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { z } from "zod";
+import { branding } from "~/lib/branding";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Building2, Check, GraduationCap, Shield, User } from "lucide-react";
@@ -56,8 +57,8 @@ const roleRedirects: Record<UserType, string> = {
 };
 
 const demoCreds: Partial<Record<UserType, string>> = {
-  admin: "admin@maharashtra.gov.in / admin123",
-  institute: "institute@pmkvy.gov.in / institute123",
+  admin: branding.demoAdmin,
+  institute: branding.demoInstitute,
   employer: "hr@company.com / employer123",
 };
 

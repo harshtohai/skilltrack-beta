@@ -2,21 +2,17 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, Check, Save, Lock, Loader2, Award, Briefcase, Target } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
-import { Badge } from "~/components/ui/badge";
-import { StatusBadge, type StatusKey } from "~/components/patterns/status-badge";
-import { EmptyState } from "~/components/patterns/empty-state";
 import { ErrorState } from "~/components/patterns/error-state";
-import { Skeleton } from "~/components/patterns/skeleton";
-import { cn } from "~/lib/utils";
-import { date, datetime } from "~/lib/format";
-import { maskPhoneE164 } from "~/lib/utils";
+import {
+  ProfileSkeleton,
+  ProfileSubNav,
+  TraineeIdCard,
+  VerifiedInfoCard,
+  type TraineeProfile,
+} from "./profile-sections";
+import { CertificatesCard, EmploymentHistoryCard, OutcomeCheckpointsCard } from "./profile-record-cards";
+import { ProfileDetailsForm } from "./profile-details-form";
 
 /**
  * Trainee self-service profile (§9.7 settings pattern): S1 shell from the
@@ -25,59 +21,14 @@ import { maskPhoneE164 } from "~/lib/utils";
  * profile details form with dirty-state Save (toast on save, leave guard when
  * dirty), verified-information card with lock + consent, certificates/
  * employment/checkpoint cards as §9.7 border-b rows. Statuses via StatusBadge
- * only (§4.10/CL-12).
+ * only (§4.10/CL-12). Form state and the save/dirty/leave-guard logic live
+ * here; sections render from profile-sections.tsx, profile-record-cards.tsx
+ * and profile-details-form.tsx.
  */
-
-interface TraineeProfile {
-  id: string;
-  publicId: string;
-  fullName: string;
-  phoneE164: string;
-  email: string | null;
-  district: string;
-  language: string;
-  gender: string;
-  genderSelfDescribed: string | null;
-  consentGiven: boolean;
-  consentGivenAt: string | null;
-  consentMethod: string | null;
-  certificates: Array<{ id: string; name: string; issuer: string; issueDate: string; expiryDate: string | null; fileUrl: string | null }>;
-  employmentHistory: Array<{ id: string; employer: string; role: string | null; salaryBand: string | null; startDate: string; endDate: string | null; isCurrent: boolean }>;
-  outcomeEvents: Array<{ id: string; checkpointDays: number; outcomeStatus: string; verificationStatus: string; createdAt: string }>;
-}
 
 interface MeResponse {
   trainee: TraineeProfile;
   districts: string[];
-}
-
-const SUB_NAV = [
-  { label: "Profile details", href: "#profile-details" },
-  { label: "Verified info", href: "#verified-info" },
-  { label: "Certificates", href: "#certificates" },
-  { label: "Employment", href: "#employment" },
-  { label: "Outcomes", href: "#outcomes" },
-] as const;
-
-const GENDER_LABELS: Record<string, string> = {
-  FEMALE: "Female",
-  MALE: "Male",
-  NON_BINARY: "Non-binary",
-  SELF_DESCRIBED: "Prefer to self-describe",
-  PREFER_NOT_TO_SAY: "Prefer not to say",
-};
-
-function ProfileSkeleton() {
-  return (
-    <div className="lg:flex lg:gap-8" aria-busy>
-      <Skeleton className="hidden lg:block lg:w-56 lg:shrink-0" />
-      <div className="min-w-0 flex-1 space-y-6 lg:max-w-3xl">
-        <Skeleton className="h-28 w-full rounded-2xl" />
-        <Skeleton className="h-64 w-full rounded-2xl" />
-        <Skeleton className="h-40 w-full rounded-2xl" />
-      </div>
-    </div>
-  );
 }
 
 export default function TraineeProfilePage() {
@@ -86,7 +37,6 @@ export default function TraineeProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [copied, setCopied] = useState(false);
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -94,7 +44,6 @@ export default function TraineeProfilePage() {
   const [language, setLanguage] = useState("");
   const [gender, setGender] = useState("PREFER_NOT_TO_SAY");
   const [genderSelfDescribed, setGenderSelfDescribed] = useState("");
-  const [activeSection, setActiveSection] = useState<string>("profile-details");
 
   const loadProfile = useCallback(async () => {
     setLoading(true);
@@ -157,17 +106,6 @@ export default function TraineeProfilePage() {
     }
   };
 
-  const copyTraineeId = async () => {
-    if (!data) return;
-    try {
-      await navigator.clipboard.writeText(data.trainee.publicId);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error("Could not copy trainee ID");
-    }
-  };
-
   const dirty = data
     ? fullName !== data.trainee.fullName ||
       email !== (data.trainee.email ?? "") ||
@@ -202,253 +140,57 @@ export default function TraineeProfilePage() {
   }
 
   const trainee = data.trainee;
-
-  // Self-reported gender for the info list; "—" when prefer-not-to-say/unset.
-  const genderDisplay =
-    trainee.gender === "SELF_DESCRIBED" && trainee.genderSelfDescribed
-      ? trainee.genderSelfDescribed
-      : trainee.gender && trainee.gender !== "PREFER_NOT_TO_SAY"
-        ? (GENDER_LABELS[trainee.gender] ?? "—")
-        : "—";
+  const saveDisabled =
+    saving ||
+    !dirty ||
+    !fullName.trim() ||
+    (gender === "SELF_DESCRIBED" && !genderSelfDescribed.trim());
 
   return (
     <div className="lg:flex lg:gap-8">
-      {/* Sub-nav (§9.7): vertical, items h-9, active bg-accent */}
-      <nav className="hidden lg:block lg:w-56 lg:shrink-0" aria-label="Profile sections">
-        <div className="sticky top-6 flex flex-col gap-0.5">
-          {SUB_NAV.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              onClick={() => setActiveSection(item.href.slice(1))}
-              aria-current={activeSection === item.href.slice(1) ? "true" : undefined}
-              className={cn(
-                "flex h-9 items-center rounded-lg px-3 text-body-sm transition-colors duration-150 hover:bg-accent focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40",
-                activeSection === item.href.slice(1) && "bg-accent font-medium",
-              )}
-            >
-              {item.label}
-            </a>
-          ))}
-        </div>
-      </nav>
+      <ProfileSubNav />
 
       <div className="min-w-0 flex-1 space-y-6 lg:max-w-3xl">
         {/* Trainee ID — prominent + copyable */}
-        <Card className="border-2 border-primary/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-caption font-medium uppercase tracking-wide text-muted-foreground">
-              Your Trainee ID
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between gap-4">
-              <span className="font-mono text-2xl font-semibold text-primary-strong tabular-nums">{trainee.publicId}</span>
-              <Button variant="outline" size="sm" onClick={() => void copyTraineeId()} className="gap-2">
-                {copied ? <Check className="text-success-text" /> : <Copy />}
-                {copied ? "Copied" : "Copy"}
-              </Button>
-            </div>
-            <p className="mt-2 text-caption text-muted-foreground">
-              Share this ID with your training center or employer for verification.
-            </p>
-          </CardContent>
-        </Card>
+        <TraineeIdCard publicId={trainee.publicId} />
 
         {/* Editable profile (§10 settings flow: dirty state enables Save) */}
-        <Card id="profile-details" className="scroll-mt-6">
-          <CardHeader>
-            <CardTitle>Profile Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="district">District</Label>
-                <Select value={district} onValueChange={setDistrict}>
-                  <SelectTrigger id="district" className="w-full">
-                    <SelectValue placeholder="Select district" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {data.districts.map((d) => (
-                      <SelectItem key={d} value={d}>{d}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="language">Language</Label>
-                <Select value={language} onValueChange={setLanguage}>
-                  <SelectTrigger id="language" className="w-full">
-                    <SelectValue placeholder="Select language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="EN">English</SelectItem>
-                    <SelectItem value="HI">हिंदी (Hindi)</SelectItem>
-                    <SelectItem value="MR">मराठी (Marathi)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="gender">Gender</Label>
-                <Select value={gender} onValueChange={setGender}>
-                  <SelectTrigger id="gender" className="w-full">
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="FEMALE">Female</SelectItem>
-                    <SelectItem value="MALE">Male</SelectItem>
-                    <SelectItem value="NON_BINARY">Non-binary</SelectItem>
-                    <SelectItem value="SELF_DESCRIBED">Prefer to self-describe</SelectItem>
-                    <SelectItem value="PREFER_NOT_TO_SAY">Prefer not to say</SelectItem>
-                  </SelectContent>
-                </Select>
-                {gender === "SELF_DESCRIBED" ? (
-                  <>
-                    <Label htmlFor="genderSelfDescribed">Describe your gender</Label>
-                    <Input
-                      id="genderSelfDescribed"
-                      value={genderSelfDescribed}
-                      onChange={(e) => setGenderSelfDescribed(e.target.value)}
-                      maxLength={100}
-                    />
-                  </>
-                ) : null}
-              </div>
-            </div>
-
-            <Button
-              className="mt-6 gap-2"
-              onClick={() => void handleSave()}
-              disabled={
-                saving ||
-                !dirty ||
-                !fullName.trim() ||
-                (gender === "SELF_DESCRIBED" && !genderSelfDescribed.trim())
-              }
-            >
-              {saving ? <Loader2 className="animate-spin" /> : <Save />}
-              {saving ? "Saving…" : "Save Changes"}
-            </Button>
-          </CardContent>
-        </Card>
+        <ProfileDetailsForm
+          fullName={fullName}
+          onFullNameChange={setFullName}
+          email={email}
+          onEmailChange={setEmail}
+          district={district}
+          onDistrictChange={setDistrict}
+          language={language}
+          onLanguageChange={setLanguage}
+          gender={gender}
+          onGenderChange={setGender}
+          genderSelfDescribed={genderSelfDescribed}
+          onGenderSelfDescribedChange={setGenderSelfDescribed}
+          districts={data.districts}
+          saving={saving}
+          saveDisabled={saveDisabled}
+          onSave={() => void handleSave()}
+        />
 
         {/* Locked fields (§9.7 rows pattern) */}
-        <Card id="verified-info" className="scroll-mt-6">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Verified Information</CardTitle>
-            <Lock className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="flex items-center justify-between gap-4 border-b py-4">
-              <span className="text-body-sm text-muted-foreground">Phone (verified via WhatsApp)</span>
-              <span className="font-mono text-body-sm font-medium tabular-nums">{maskPhoneE164(trainee.phoneE164)}</span>
-            </div>
-            <div className="flex items-center justify-between gap-4 border-b py-4">
-              <span className="text-body-sm text-muted-foreground">Consent</span>
-              <div className="flex items-center gap-3">
-                <StatusBadge status={trainee.consentGiven ? "GIVEN" : "PENDING_CONSENT"} />
-                {trainee.consentGiven && trainee.consentGivenAt ? (
-                  <span className="text-caption text-muted-foreground">{datetime(trainee.consentGivenAt)}</span>
-                ) : null}
-              </div>
-            </div>
-            <div className="flex items-center justify-between gap-4 border-b py-4">
-              <span className="text-body-sm text-muted-foreground">Gender</span>
-              <span className="text-body-sm font-medium">{genderDisplay}</span>
-            </div>
-          </CardContent>
-        </Card>
+        <VerifiedInfoCard
+          phoneE164={trainee.phoneE164}
+          consentGiven={trainee.consentGiven}
+          consentGivenAt={trainee.consentGivenAt}
+          gender={trainee.gender}
+          genderSelfDescribed={trainee.genderSelfDescribed}
+        />
 
         {/* Certificates (§9.7 rows pattern) */}
-        <Card id="certificates" className="scroll-mt-6">
-          <CardHeader>
-            <CardTitle>Certificates</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {trainee.certificates.length === 0 ? (
-              <EmptyState
-                icon={<Award />}
-                title="No certificates yet"
-                description="Your programme certificates will appear here once issued."
-              />
-            ) : (
-              trainee.certificates.map((cert) => (
-                <div key={cert.id} className="flex items-center justify-between gap-4 border-b py-4">
-                  <div className="min-w-0">
-                    <p className="text-body-sm font-medium">{cert.name}</p>
-                    <p className="text-caption text-muted-foreground">{cert.issuer}</p>
-                  </div>
-                  <span className="shrink-0 text-caption text-muted-foreground">{date(cert.issueDate)}</span>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+        <CertificatesCard certificates={trainee.certificates} />
 
         {/* Employment history (§9.7 rows pattern) */}
-        <Card id="employment" className="scroll-mt-6">
-          <CardHeader>
-            <CardTitle>Employment History</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {trainee.employmentHistory.length === 0 ? (
-              <EmptyState
-                icon={<Briefcase />}
-                title="No employment history yet"
-                description="Your verified work experience will appear here."
-              />
-            ) : (
-              trainee.employmentHistory.map((job) => (
-                <div key={job.id} className="flex items-center justify-between gap-4 border-b py-4">
-                  <div className="min-w-0">
-                    <p className="text-body-sm font-medium">{job.employer}</p>
-                    <p className="text-caption text-muted-foreground">{job.role ?? "—"}</p>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    {job.isCurrent && <Badge variant="success">Current</Badge>}
-                    <p className={cn("text-caption text-muted-foreground", job.isCurrent && "mt-1")}>
-                      {date(job.startDate)}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+        <EmploymentHistoryCard employmentHistory={trainee.employmentHistory} />
 
         {/* Outcome checkpoints (§9.7 rows pattern) */}
-        <Card id="outcomes" className="scroll-mt-6">
-          <CardHeader>
-            <CardTitle>Outcome Checkpoints</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {trainee.outcomeEvents.length === 0 ? (
-              <EmptyState
-                icon={<Target />}
-                title="No outcome checkpoints yet"
-                description="Your 30/90-day follow-up outcomes will appear here."
-              />
-            ) : (
-              trainee.outcomeEvents.map((o) => (
-                <div key={o.id} className="flex items-center justify-between gap-4 border-b py-4">
-                  <span className="text-body-sm font-medium">{o.checkpointDays}-day checkpoint</span>
-                  <div className="flex items-center gap-3">
-                    <StatusBadge status={o.outcomeStatus as StatusKey} />
-                    <span className="text-caption text-muted-foreground">{datetime(o.createdAt)}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+        <OutcomeCheckpointsCard outcomeEvents={trainee.outcomeEvents} />
       </div>
     </div>
   );

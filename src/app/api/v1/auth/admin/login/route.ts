@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { routeErrorResponse, createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 
@@ -9,7 +9,7 @@ const adminLoginSchema = z.object({
   password: z.string().min(1),
 });
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@maharashtra.gov.in";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@skilltrack.in";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "admin123";
 
 export async function POST(request: NextRequest) {

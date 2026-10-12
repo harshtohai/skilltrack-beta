@@ -11,6 +11,7 @@ import {
   Check,
   type LucideIcon,
 } from "lucide-react";
+import { branding } from "~/lib/branding";
 
 import { auth } from "~/lib/auth";
 import { roleHomeRoutes } from "~/lib/protected-routes";
@@ -77,7 +78,7 @@ export default async function LandingPage() {
             <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-primary-soft px-4 py-1.5 text-body-sm font-medium text-primary-strong">
                 <Shield className="size-4" />
-                <span>Government of Maharashtra | SIH 2026 Problem statement 26135</span>
+                <span>{branding.heroBadge}</span>
               </div>
               <h1 className="mb-6 text-h1 font-semibold tracking-tight text-foreground md:text-display">
                 Track skills. Measure impact.{" "}

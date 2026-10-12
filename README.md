@@ -113,6 +113,28 @@ flowchart LR
 - **JWT sessions, no adapter** — credentials login and magic-link verification both mint the same signed session cookie; middleware decodes it at the edge for role checks.
 - **Everything audited** — login, consent, claims, bot messages, and admin actions land in `AuditEvent` with actor type/id.
 
+### Component organization (src/)
+
+```text
+src/
+├── app/                        # routes. Server pages keep auth/scope/data-fetch
+│   └── (app)/<surface>/        #   + colocated single-use sections (kpi-cards.tsx,
+│                               #   leaderboard columns, form sections… one concern each)
+├── components/
+│   ├── ui/                     # shadcn primitives (button, select, dialog…)
+│   ├── patterns/               # cross-page design-system pieces (DataTable,
+│   │                           #   StatusBadge, ChartCard, ScoreBadge, PageHeader…)
+│   ├── <domain>/               # domain-shared components (trainee/, employer/,
+│   │                           #   admin/, auth/, charts/, viz/, layouts/)
+│   └── <root files>            # app-wide singletons (providers, copy-button…)
+├── lib/                        # pure helpers (format, csv, districts, kpi-deltas,
+│                               #   job-board-labels) + zod API contracts
+└── server/                     # Prisma client + pure business modules (scoring,
+                                #   recommendations, analytics, bot state machine)
+```
+
+Extraction rules (Idea Bag #32, applied repo-wide): pages stay thin and fetch; sections/coldefs/forms extract to their own file targeting ≤~200 lines; a block shared by 2+ surfaces lifts to `components/patterns/` or the domain folder — single-use blocks stay colocated; renderers live in `"use client"` files (they can't cross the server/client boundary). Cohesive logic modules (bot state machine, contracts) are deliberately kept whole.
+
 ## Data Model
 
 ```mermaid
@@ -393,8 +415,8 @@ Seeded demo accounts (override via env; defaults live in code):
 
 | Role | Email | Password |
 |---|---|---|
-| Government admin | `admin@maharashtra.gov.in` | `admin123` |
-| Institute | `institute@pmkvy.gov.in` | `institute123` |
+| Government admin | `admin@skilltrack.in` | `admin123` |
+| Institute | `institute@skilltrack.in` | `institute123` |
 | Employer (demo) | `hr@company.com` | `employer123` |
 | Trainee | any seeded trainee email → magic link (no password) |
 

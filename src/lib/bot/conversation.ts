@@ -456,7 +456,7 @@ async function handleConsent(ctx: Ctx) {
     });
     ctx.state.data.traineeId = trainee.id;
     ctx.state.data.traineeName = trainee.fullName;
-    ctx.state.data.programme = trainee.enrolments[0]?.cohort?.programme?.name ?? "PMKVY Training";
+    ctx.state.data.programme = trainee.enrolments[0]?.cohort?.programme?.name ?? "Skill Training";
     ctx.state.data.cohort = trainee.enrolments[0]?.cohort?.name ?? "Your Batch";
     ctx.state.step = STEPS.IDENTITY_VERIFY;
     await askQuestion(STEPS.IDENTITY_VERIFY, ctx);
