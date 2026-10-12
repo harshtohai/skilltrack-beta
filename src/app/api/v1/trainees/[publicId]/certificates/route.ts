@@ -102,6 +102,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       issueDate: form.get("issueDate"),
       expiryDate: typeof rawExpiry === "string" && rawExpiry ? rawExpiry : undefined,
     });
+
     if (!parsed.success) {
       return createErrorResponse("VALIDATION_ERROR", parsed.error.issues[0]?.message ?? "Invalid input", 400);
     }

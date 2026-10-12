@@ -78,6 +78,7 @@ async function CohortDetailContent({ params }: { params: Promise<{ id: string }>
       programmeName={cohort.programme.name}
       startDate={cohort.startDate.toISOString()}
       endDate={cohort.endDate.toISOString()}
+      activeTraineeCount={cohort.enrolments.filter((e) => e.status === "ACTIVE").length}
       rows={rows}
     />
   );

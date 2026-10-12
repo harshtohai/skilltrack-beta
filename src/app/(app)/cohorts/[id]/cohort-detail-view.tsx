@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Download, RefreshCw, Send } from "lucide-react";
+import { BadgeCheck, ChevronRight, Download, RefreshCw, Send } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   AlertDialog,
@@ -20,6 +20,7 @@ import { Button } from "~/components/ui/button";
 import { CopyButton } from "~/components/copy-button";
 import { DataTable, rowActionsColumn } from "~/components/patterns/data-table";
 import { EmptyState } from "~/components/patterns/empty-state";
+import { ConfirmDialog } from "~/components/patterns/confirm-dialog";
 import { StatusBadge, type StatusKey } from "~/components/patterns/status-badge";
 import { date } from "~/lib/format";
 import { toast } from "sonner";
@@ -89,6 +90,7 @@ export function CohortDetailView({
   programmeName,
   startDate,
   endDate,
+  activeTraineeCount,
   rows,
 }: {
   cohortId: string;
@@ -96,10 +98,12 @@ export function CohortDetailView({
   programmeName: string;
   startDate: string;
   endDate: string;
+  activeTraineeCount: number;
   rows: CohortTraineeRow[];
 }) {
   const router = useRouter();
   const [triggering, setTriggering] = useState(false);
+  const [issuing, setIssuing] = useState(false);
 
   const handleTriggerFollowup = async () => {
     setTriggering(true);
@@ -119,6 +123,33 @@ export function CohortDetailView({
       toast.error("Failed to trigger follow-up");
     } finally {
       setTriggering(false);
+    }
+  };
+
+  /** T4 (CL-18): bulk certification — confirmed, then issued/skipped reported. */
+  const handleIssueCertificates = async () => {
+    setIssuing(true);
+    try {
+      const res = await fetch(`/api/v1/cohorts/${cohortId}/certificates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { issued: number; skipped: number };
+        toast.success(
+          `Issued ${data.issued} completion certificate${data.issued === 1 ? "" : "s"}` +
+            (data.skipped > 0 ? ` — ${data.skipped} already certified` : "")
+        );
+        router.refresh();
+      } else {
+        const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+        toast.error(body?.error?.message ?? "Failed to issue completion certificates");
+      }
+    } catch {
+      toast.error("Failed to issue completion certificates");
+    } finally {
+      setIssuing(false);
     }
   };
 
@@ -155,6 +186,25 @@ export function CohortDetailView({
           <Button variant="ghost" onClick={() => router.refresh()} aria-label="Refresh">
             <RefreshCw />
           </Button>
+          <ConfirmDialog
+            trigger={
+              <Button variant="outline" disabled={issuing}>
+                <BadgeCheck />
+                Issue completion certificates
+              </Button>
+            }
+            title="Issue completion certificates?"
+            description={
+              (activeTraineeCount > 0
+                ? `All ${activeTraineeCount} active trainee${activeTraineeCount === 1 ? "" : "s"} in ${cohortName} `
+                : `Every active trainee in ${cohortName} `) +
+              `will receive a verified completion certificate for ${programmeName}. ` +
+              "Their certification date is set and their enrolment is marked completed — already certified trainees are skipped."
+            }
+            confirmLabel="Issue certificates"
+            destructive={false}
+            onConfirm={() => void handleIssueCertificates()}
+          />
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button disabled={triggering}>

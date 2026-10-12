@@ -46,6 +46,7 @@ export function TraineeCertificates({ publicId, canManage }: { publicId: string;
       const body = (await res.json()) as { certificates: CertificateRow[] };
       setCerts(body.certificates);
     } else {
+
       setCerts([]);
     }
   }, [publicId]);
@@ -220,6 +221,7 @@ export function TraineeCertificates({ publicId, canManage }: { publicId: string;
               const rawReason = new FormData(e.currentTarget).get("reason");
               const reason = typeof rawReason === "string" ? rawReason : "";
               if (rejectTarget) void handleReview(rejectTarget, "REJECTED", reason);
+
             }}
           >
             <div className="space-y-1">
