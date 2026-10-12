@@ -16,6 +16,7 @@ export interface TraineeProfile {
   consentGivenAt: string | null;
   consentMethod: string | null;
   certificates: Certificate[];
+  training: TrainingRecord[];
   employmentHistory: EmploymentHistory[];
   outcomeEvents: OutcomeEvent[];
   followupEvents: FollowupEvent[];
@@ -28,6 +29,19 @@ export interface Certificate {
   issueDate: string;
   expiryDate: string | null;
   fileUrl: string | null;
+  source: "SELF_REPORTED" | "ISSUED";
+  status: "PENDING" | "VERIFIED" | "REJECTED";
+  rejectionReason: string | null;
+  hasFile: boolean;
+}
+
+export interface TrainingRecord {
+  id: string;
+  status: string;
+  certificationDate: string | null;
+  cohort: { id: string; name: string };
+  programme: { id: string; name: string };
+  trainingCenter: { id: string; name: string; district: string } | null;
 }
 
 export interface EmploymentHistory {
