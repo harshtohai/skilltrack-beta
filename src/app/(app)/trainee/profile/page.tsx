@@ -11,7 +11,8 @@ import {
   VerifiedInfoCard,
   type TraineeProfile,
 } from "./profile-sections";
-import { CertificatesCard, EmploymentHistoryCard, OutcomeCheckpointsCard } from "./profile-record-cards";
+import { EmploymentHistoryCard, OutcomeCheckpointsCard } from "./profile-record-cards";
+import { CertificatesSection } from "~/components/trainee/certificates-section";
 import { ProfileDetailsForm } from "./profile-details-form";
 
 /**
@@ -19,7 +20,8 @@ import { ProfileDetailsForm } from "./profile-details-form";
  * (app) layout, `lg:flex lg:gap-8` with a left sub-nav (items h-9, active
  * bg-accent) and a `max-w-3xl` content column. Trainee ID card with copy,
  * profile details form with dirty-state Save (toast on save, leave guard when
- * dirty), verified-information card with lock + consent, certificates/
+ * dirty), verified-information card with lock + consent, the certificates
+ * section (~/components/trainee/certificates-section, own fetch + mutations),
  * employment/checkpoint cards as §9.7 border-b rows. Statuses via StatusBadge
  * only (§4.10/CL-12). Form state and the save/dirty/leave-guard logic live
  * here; sections render from profile-sections.tsx, profile-record-cards.tsx
@@ -183,8 +185,8 @@ export default function TraineeProfilePage() {
           genderSelfDescribed={trainee.genderSelfDescribed}
         />
 
-        {/* Certificates (§9.7 rows pattern) */}
-        <CertificatesCard certificates={trainee.certificates} />
+        {/* Certificates (T2: self-service upload/edit/delete section) */}
+        <CertificatesSection />
 
         {/* Employment history (§9.7 rows pattern) */}
         <EmploymentHistoryCard employmentHistory={trainee.employmentHistory} />

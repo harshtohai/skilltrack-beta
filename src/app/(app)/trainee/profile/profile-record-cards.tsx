@@ -1,6 +1,6 @@
 "use client";
 
-import { Award, Briefcase, Target } from "lucide-react";
+import { Briefcase, Target } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { StatusBadge, type StatusKey } from "~/components/patterns/status-badge";
@@ -10,43 +10,12 @@ import { date, datetime } from "~/lib/format";
 import type { TraineeProfile } from "./profile-sections";
 
 /**
- * Trainee profile record cards (§9.7 rows pattern): certificates, employment
- * history, and outcome checkpoints. Read-only — data comes from the page's
- * /trainee/me load. Row markup is byte-identical to the original inline cards.
+ * Trainee profile record cards (§9.7 rows pattern): employment history and
+ * outcome checkpoints. Read-only — data comes from the page's /trainee/me
+ * load. Row markup is byte-identical to the original inline cards. The
+ * certificates card was replaced by the interactive certificates section
+ * (~/components/trainee/certificates-section, T2).
  */
-
-export function CertificatesCard({
-  certificates,
-}: {
-  certificates: TraineeProfile["certificates"];
-}) {
-  return (
-    <Card id="certificates" className="scroll-mt-6">
-      <CardHeader>
-        <CardTitle>Certificates</CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0">
-        {certificates.length === 0 ? (
-          <EmptyState
-            icon={<Award />}
-            title="No certificates yet"
-            description="Your programme certificates will appear here once issued."
-          />
-        ) : (
-          certificates.map((cert) => (
-            <div key={cert.id} className="flex items-center justify-between gap-4 border-b py-4">
-              <div className="min-w-0">
-                <p className="text-body-sm font-medium">{cert.name}</p>
-                <p className="text-caption text-muted-foreground">{cert.issuer}</p>
-              </div>
-              <span className="shrink-0 text-caption text-muted-foreground">{date(cert.issueDate)}</span>
-            </div>
-          ))
-        )}
-      </CardContent>
-    </Card>
-  );
-}
 
 export function EmploymentHistoryCard({
   employmentHistory,
