@@ -254,7 +254,10 @@ Skipped from the same review as shadcn-standard or already-documented: avatar `d
 One codebase, two faces — `src/lib/branding.ts` + `NEXT_PUBLIC_BRANDING` env:
 - **`maharashtra`** → SIH 2026 / Government of Maharashtra / MSSDS-PMKVY attribution on landing, footer, privacy, signup quote, login demo hints (`maharashtra.gov.in`), and WhatsApp bot copy (en/hi/mr substring patches over the neutral templates, `applyBotReplacements` in messages/index.ts warns on a missed match).
 - **`default`** (unset) → neutral SkillsTrack copy.
-Deployment plan: current Vercel project = `maharashtra` flavor; a second project linked to the same repo with unset branding = the public version. Both auto-deploy on every push to main — features land once, appear on both. Bot message edits must keep both flavors' patch pairs in sync (branding.test.ts covers it).
+**Deployed topology (Oct 12)**: two Vercel projects, one Git repo —
+- `skilltrack` (current, SSO-protected) = **maharashtra flavor**: `NEXT_PUBLIC_BRANDING=maharashtra` + `ADMIN_EMAIL=admin@maharashtra.gov.in` / `INSTITUTE_EMAIL=institute@pmkvy.gov.in` (Production + Preview). Production: `https://skilltrack-harshtohais-projects.vercel.app` — SIH badge verified live post-merge.
+- `skilltrack-public` (prj_bzaJ6jm7r1dA6FHaS5LWAarHkPfr) = **default flavor** (no branding var): full env seeded from local .env with `@skilltrack.in` demo creds; deployed via worktree `vercel --prod`.
+Both auto-deploy on every push to main — features land once, appear on both. Bot message edits must keep both flavors' patch pairs in sync (branding.test.ts covers it). Vercel CLI notes: `env add` needs `--value` (stdin piping unreliable) + `--no-sensitive` keeps `env pull` verifiable; `vercel curl` proxies GETs only (POSTs silently die) — test login POSTs via plain curl on non-SSO deployments.
 
 ### Bug Bag — full-app QA walkthrough (Oct 4)
 Context: 4-agent role-by-role walkthrough (trainee, institute ×2, employer, admin) + coordinator code-fix pass. Full report + latency table at `shots/walkthrough/QA-REPORT.md`. Statuses: FIXED-this-changeset / CLEARED-not-reproducible / OPEN-needs-decision.
