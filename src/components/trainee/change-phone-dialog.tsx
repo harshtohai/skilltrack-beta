@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
-import { OtpSlots } from "~/app/auth/trainee/[[...token]]/otp-slots";
+import { OtpSlots } from "~/components/auth/otp-slots";
 import { maskPhoneE164 } from "~/lib/utils";
 
 /**
