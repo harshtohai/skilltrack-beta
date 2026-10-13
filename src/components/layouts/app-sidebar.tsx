@@ -10,7 +10,6 @@ import {
   ChevronDown,
   GraduationCap,
   LogOut,
-  Search,
 } from "lucide-react";
 
 import { cn } from "~/lib/utils";
@@ -39,15 +38,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { Kbd } from "~/components/ui/kbd";
 import { CommandPalette } from "~/components/layouts/command-palette";
 import { isNavActive, navForRole, ROLE_LABELS } from "~/lib/nav";
 import type { UserRole } from "~/lib/protected-routes";
 
 /**
- * App sidebar per design §3.3/§15.7: logo + collapse, role indicator, ⌘K
- * search trigger, role-aware nav groups, user card at footer opening an upward
- * menu (theme Light/Dark/System per DM-10, log out LAST after separator).
+ * App sidebar per design §3.3/§15.7: logo + collapse, role-aware nav groups,
+ * user card at footer opening an upward menu (theme Light/Dark/System per
+ * DM-10, log out LAST after separator).
  */
 
 export type SidebarUser = { name: string; role: UserRole } | null;
@@ -92,44 +90,6 @@ function AppSidebar({ user }: { user: SidebarUser }) {
             <SidebarTrigger />
           </div>
         </SidebarHeader>
-
-        {/* Role indicator (workspace switcher slot, §3.3) — static: one role per user */}
-        <div className="px-3 pt-1">
-          <div
-            className={cn(
-              "flex h-10 items-center rounded-lg bg-sidebar-accent px-3",
-              collapsed && "size-10 justify-center px-0",
-            )}
-          >
-            <span className="truncate text-body-sm font-medium text-sidebar-accent-foreground">
-              {collapsed ? <span className="sr-only">{ROLE_LABELS[role]}</span> : ROLE_LABELS[role]}
-            </span>
-            {!collapsed ? (
-              <ChevronsUpDown className="ml-auto size-4 shrink-0 text-muted-foreground opacity-60" aria-hidden />
-            ) : null}
-          </div>
-        </div>
-
-        {/* ⌘K search trigger (§15.5) */}
-        <div className="px-3 pt-2">
-          <button
-            type="button"
-            onClick={() => window.dispatchEvent(new Event("skilltrack:command-open"))}
-            aria-label="Open command palette"
-            className={cn(
-              "flex h-9 w-full items-center gap-2 rounded-lg bg-muted px-3 text-body-sm text-muted-foreground transition-colors duration-150 hover:border hover:border-input focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40",
-              collapsed && "size-9 justify-center px-0",
-            )}
-          >
-            <Search className="size-4 shrink-0" />
-            {!collapsed ? (
-              <>
-                <span>Search</span>
-                <Kbd className="ml-auto">⌘K</Kbd>
-              </>
-            ) : null}
-          </button>
-        </div>
 
         {/* Nav groups (role-aware, collapsible per shadcn docs / §15.7) */}
         <SidebarContent className="pt-3">
