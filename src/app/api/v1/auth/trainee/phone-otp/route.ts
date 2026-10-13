@@ -9,7 +9,7 @@ import {
   routeErrorResponse,
 } from "~/app/api/v1/_utils";
 import { hashPhone } from "~/lib/phone-encrypt";
-import { sendKapsoMessage } from "~/lib/bot/kapso";
+import { sendKapsoOtp } from "~/lib/bot/kapso";
 
 export const dynamic = "force-dynamic";
 
@@ -114,22 +114,14 @@ export async function POST(request: NextRequest) {
     // the 30s cooldown on an orphan. (The 502 only fires for registered
     // phones — the same send-failure trade-off the email flow accepts with
     // EMAIL_SEND_FAILED.)
-    if ((process.env.BOT_MODE ?? "mock") === "real") {
-      const send = await sendKapsoMessage({
-        toPhoneE164: phone,
-        text: `Your SkillsTrack verification code is ${otp}. It expires in 30 minutes. Never share this code.`,
-      });
-      if (!send[0]?.success) {
-        console.error("[LOGIN-OTP] WhatsApp send failed:", send[0]?.error);
-        return createErrorResponse(
-          "WHATSAPP_SEND_FAILED",
-          "Couldn't send the code. Try again in a moment.",
-          502,
-        );
-      }
-    } else {
-      // Mock mode (dev default): log the OTP instead of sending it.
-      console.log(`[LOGIN-OTP] OTP for ${phone}: ${otp}`);
+    const send = await sendKapsoOtp(phone, otp, "login");
+    if (!send.success) {
+      console.error("[LOGIN-OTP] WhatsApp send failed:", send.error);
+      return createErrorResponse(
+        "WHATSAPP_SEND_FAILED",
+        "Couldn't send the code. Try again in a moment.",
+        502,
+      );
     }
 
     await db.traineeLoginToken.create({

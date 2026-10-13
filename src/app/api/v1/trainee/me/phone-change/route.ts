@@ -10,7 +10,7 @@ import {
   routeErrorResponse,
 } from "~/app/api/v1/_utils";
 import { hashPhone } from "~/lib/phone-encrypt";
-import { sendKapsoMessage } from "~/lib/bot/kapso";
+import { sendKapsoOtp } from "~/lib/bot/kapso";
 
 export const dynamic = "force-dynamic";
 
@@ -107,27 +107,14 @@ export async function POST(request: NextRequest) {
     // Deliver BEFORE persisting the token: a failed Kapso send leaves no
     // token row, so the trainee can retry immediately instead of waiting out
     // the 30s cooldown on an orphan.
-    if ((process.env.BOT_MODE ?? "mock") === "real") {
-      const send = await sendKapsoMessage({
-        // NOTE (spec #102 / T6): this free-text send is the pre-template
-        // placeholder. Real mode requires a Meta-approved WhatsApp
-        // authentication template (one-time-password) — swap `text` for the
-        // approved template name + OTP parameter once registered in the Meta
-        // Business Manager. Mock mode (default) never sends.
-        toPhoneE164: newPhone,
-        text: `Your SkillsTrack verification code is ${otp}. It expires in 30 minutes. Never share this code.`,
-      });
-      if (!send[0]?.success) {
-        console.error("[PHONE-CHANGE] WhatsApp send failed:", send[0]?.error);
-        return createErrorResponse(
-          "WHATSAPP_SEND_FAILED",
-          "Couldn't send the code. Try again in a moment.",
-          502,
-        );
-      }
-    } else {
-      // Mock mode (dev default): log the OTP instead of sending it.
-      console.log(`[PHONE-CHANGE] OTP for ${newPhone} (trainee ${traineeId}): ${otp}`);
+    const send = await sendKapsoOtp(newPhone, otp, "phone-change");
+    if (!send.success) {
+      console.error("[PHONE-CHANGE] WhatsApp send failed:", send.error);
+      return createErrorResponse(
+        "WHATSAPP_SEND_FAILED",
+        "Couldn't send the code. Try again in a moment.",
+        502,
+      );
     }
 
     await db.traineeLoginToken.create({
