@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Award, Briefcase, Clock, Pencil, User } from "lucide-react";
+import { Award, Briefcase, Clock, Pencil, Target, User } from "lucide-react";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -18,10 +18,11 @@ import type { TraineeProfile } from "./profile-types";
 /**
  * Verified-trainee profile portal (§9.10 "Profile (user)"): S1 shell from the
  * (app) layout, profile header card (avatar 64, name, caption, PRIMARY "Edit
- * profile"), line-style tabs Profile/Employment/Certificates/Outcomes,
- * personal info as a description list (with the read-only My Training chain),
- * employment timeline rows, certificate grid with source/status badges, and
- * outcome checkpoints as left-accent cards.
+ * profile"), line-style tabs
+ * Profile/Employment/Certificates/Skills/Outcomes, personal info as a
+ * description list (with the read-only My Training chain), employment timeline
+ * rows, certificate grid with provenance labels, skill self-assessment levels,
+ * and outcome checkpoints as left-accent cards.
  */
 function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/).slice(0, 2);
@@ -61,6 +62,7 @@ export function TraineeProfileView({ profile }: { profile: TraineeProfile }) {
           <TabsTrigger variant="line" value="profile"><User />Profile</TabsTrigger>
           <TabsTrigger variant="line" value="employment"><Briefcase />Employment</TabsTrigger>
           <TabsTrigger variant="line" value="certificates"><Award />Certificates</TabsTrigger>
+          <TabsTrigger variant="line" value="skills"><Target />Skills</TabsTrigger>
           <TabsTrigger variant="line" value="outcomes"><Clock />Outcomes</TabsTrigger>
         </TabsList>
 
@@ -219,6 +221,40 @@ export function TraineeProfileView({ profile }: { profile: TraineeProfile }) {
                       )}
                     </div>
                   ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="skills" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Skill Self-Assessment</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {profile.skills.length === 0 ? (
+                <EmptyState
+                  icon={<Target />}
+                  title="No skills rated yet"
+                  description="Rate your skills from your profile — employers never see this; it only tunes your course suggestions."
+                />
+              ) : (
+                <div className="space-y-4">
+                  {profile.skills.map((s) => (
+                    <div key={s.skill} className="flex items-center justify-between gap-3 border-b pb-3 last:border-b-0 last:pb-0">
+                      <div className="min-w-0">
+                        <p className="text-body-sm font-medium">{s.label}</p>
+                        <p className="text-caption text-muted-foreground">
+                          Rated {date(s.assessedAt)}
+                        </p>
+                      </div>
+                      <Badge variant="secondary">{s.level} / 5</Badge>
+                    </div>
+                  ))}
+                  <p className="text-caption text-muted-foreground">
+                    For you and your training center — employers never see this. Retake any time from your profile.
+                  </p>
                 </div>
               )}
             </CardContent>

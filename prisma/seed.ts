@@ -291,8 +291,13 @@ async function main() {
   });
   console.log(`✅ ${COURSE_CATALOGUE.length} courses`);
 
-  const programmes = await Promise.all(PROGRAMMES.map((p) => prisma.programme.create({ data: p })));
-  console.log(`✅ ${programmes.length} programmes`);
+  const courseRows = await prisma.course.findMany({ select: { id: true }, orderBy: { name: "asc" } });
+  const programmes = await Promise.all(
+    PROGRAMMES.map((p, i) =>
+      prisma.programme.create({ data: { ...p, courseId: courseRows[i % courseRows.length]!.id } })
+    )
+  );
+  console.log(`✅ ${programmes.length} programmes (each linked to a course for skills)`);
 
   // ── cohorts: 12 × 48-day windows tiling the last ~19 months ─────────────
   // Every certification date therefore lands in exactly one cohort, and

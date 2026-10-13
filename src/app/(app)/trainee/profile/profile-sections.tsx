@@ -49,6 +49,7 @@ const SUB_NAV = [
   { label: "Profile details", href: "#profile-details" },
   { label: "Verified info", href: "#verified-info" },
   { label: "My training", href: "#my-training" },
+  { label: "Skills", href: "#skills" },
   { label: "Certificates", href: "#certificates" },
   { label: "Employment", href: "#employment" },
   { label: "Outcomes", href: "#outcomes" },

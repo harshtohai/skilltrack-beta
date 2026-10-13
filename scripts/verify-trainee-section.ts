@@ -217,6 +217,33 @@ async function main() {
       body: JSON.stringify({ newPhone: target.phoneE164.replace("+91", "") }),
     });
     check("phone-change SAME guard", phoneSame.status === 400);
+
+    // ── Skills self-assessment (bag #44) ────────────────────────────────────
+    const skillsGet = await fetch(`${BASE}/api/v1/trainee/skills`, { headers: { Cookie: jar.join("; ") } });
+    const skillsBody = skillsGet.ok
+      ? await skillsGet.json() as { course: { name: string } | null; skills: Array<{ skill: string; level: number | null }> }
+      : null;
+    check("skills endpoint returns a course-linked skill list", skillsGet.ok && skillsBody?.course !== null && (skillsBody?.skills.length ?? 0) > 0);
+    const ratedSkills = (skillsBody?.skills ?? []).slice(0, 2).map((s) => ({ skill: s.skill, level: 3 }));
+    if (ratedSkills.length > 0) {
+      const skillsPost = await fetch(`${BASE}/api/v1/trainee/skills`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: jar.join("; ") },
+        body: JSON.stringify({ levels: ratedSkills }),
+      });
+      check("skills POST → saved", skillsPost.ok);
+      const skillsRe = await fetch(`${BASE}/api/v1/trainee/skills`, { headers: { Cookie: jar.join("; ") } });
+      const skillsReBody = await skillsRe.json() as { skills: Array<{ skill: string; level: number | null }> };
+      check("skills GET reflects the saved levels", ratedSkills.every((r) => skillsReBody.skills.find((s) => s.skill === r.skill)?.level === 3));
+      const badSkill = await fetch(`${BASE}/api/v1/trainee/skills`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: jar.join("; ") },
+        body: JSON.stringify({ levels: [{ skill: "made-up-skill", level: 5 }] }),
+      });
+      check("fabricated skill rejected → 400", badSkill.status === 400);
+    } else {
+      check("skills POST (skipped — no skills on the course)", true);
+    }
   }
 
   // ── Enumeration safety: unknown phone never leaks registration ──────────

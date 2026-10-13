@@ -171,6 +171,7 @@ model Course {
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  programmes  Programme[]
 
   @@map("courses")
 }
@@ -179,6 +180,8 @@ model Programme {
   id        String    @id @default(uuid())
   name      String
   code      String    @unique
+  courseId  String?
+  course    Course?   @relation(fields: [courseId], references: [id])
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   cohorts   Cohort[]
@@ -230,6 +233,7 @@ model Trainee {
   employmentClaims     EmploymentClaim[]
   outcomeEvents        OutcomeEvent[]
   certificates         Certificate[]
+  skillAssessments     SkillAssessment[]
   employmentHistory    EmploymentHistory[]
   loginTokens          TraineeLoginToken[]
   jobApplications      JobApplication[]
@@ -406,6 +410,19 @@ model EmploymentHistory {
 
   @@index([traineeId])
   @@map("employment_history")
+}
+
+model SkillAssessment {
+  id         String   @id @default(uuid())
+  traineeId  String
+  skill      String
+  level      Int // 1–5, self-assessed
+  assessedAt DateTime @default(now())
+
+  trainee Trainee @relation(fields: [traineeId], references: [id], onDelete: Cascade)
+
+  @@index([traineeId, skill, assessedAt])
+  @@map("skill_assessments")
 }
 
 model TraineeLoginToken {

@@ -12,6 +12,7 @@ import {
   type TraineeProfile,
 } from "./profile-sections";
 import { VerifiedInfoCard } from "./profile-verified-info";
+import { SkillsSection } from "~/components/trainee/skills-section";
 import { EmploymentHistoryCard, OutcomeCheckpointsCard } from "./profile-record-cards";
 import { CertificatesSection } from "~/components/trainee/certificates-section";
 import { ProfileDetailsForm } from "./profile-details-form";
@@ -186,6 +187,9 @@ export default function TraineeProfilePage() {
 
         {/* My Training (T8): read-only enrolment chain */}
         <MyTrainingCard training={trainee.training ?? []} />
+
+        {/* Skills (bag #44): self-assessment with the straight-up disclosure contract */}
+        <SkillsSection />
 
         {/* Certificates (T2: self-service upload/edit/delete section) */}
         <CertificatesSection />

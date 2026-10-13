@@ -17,6 +17,7 @@ export interface TraineeProfile {
   consentMethod: string | null;
   certificates: Certificate[];
   training: TrainingRecord[];
+  skills: SkillRecord[];
   employmentHistory: EmploymentHistory[];
   outcomeEvents: OutcomeEvent[];
   followupEvents: FollowupEvent[];
@@ -42,6 +43,13 @@ export interface TrainingRecord {
   cohort: { id: string; name: string };
   programme: { id: string; name: string };
   trainingCenter: { id: string; name: string; district: string } | null;
+}
+
+export interface SkillRecord {
+  skill: string;
+  label: string;
+  level: number;
+  assessedAt: string;
 }
 
 export interface EmploymentHistory {
