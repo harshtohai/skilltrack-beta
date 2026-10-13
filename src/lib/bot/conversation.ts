@@ -461,10 +461,12 @@ async function handleConsent(ctx: Ctx) {
     ctx.state.step = STEPS.IDENTITY_VERIFY;
     await askQuestion(STEPS.IDENTITY_VERIFY, ctx);
   } else {
+    // Unregistered number: there is nobody to attribute the answers to —
+    // continuing the survey would record traineeId-null data that never
+    // surfaces on any follow-up view. End honestly instead.
     ctx.state.data.traineeId = null;
-    ctx.state.step = STEPS.EMPLOYMENT_STATUS;
+    ctx.state.step = STEPS.DECLINED;
     await sendKapsoMessage({ toPhoneE164: ctx.phone, text: t.notFound });
-    await askQuestion(STEPS.EMPLOYMENT_STATUS, ctx);
   }
 }
 
@@ -656,6 +658,7 @@ async function completeSurvey(ctx: Ctx) {
 
 async function saveSurveyResponse(phone: string, data: ConversationData) {
   try {
+    const completedAt = new Date();
     await db.surveyResponse.create({
       data: {
         phoneE164: phone,
@@ -673,9 +676,36 @@ async function saveSurveyResponse(phone: string, data: ConversationData) {
         challenges: data.challenges ?? [],
         recommendations: data.recommendations,
         language: data.lang ? data.lang.toUpperCase() : undefined,
-        completedAt: new Date(),
+        completedAt,
       },
     });
+
+    // Follow-up views (admin + trainee) read followup_events — record the
+    // completed chat there too, or the interaction is invisible to them.
+    // checkpointDays 0 marks a trainee-initiated chat (not a scheduled
+    // checkpoint); the response data itself lives in survey_responses.
+    if (data.traineeId) {
+      const enrolment = await db.enrolment.findFirst({
+        where: { traineeId: data.traineeId },
+        select: { cohortId: true },
+      });
+      if (enrolment) {
+        await db.followupEvent.create({
+          data: {
+            traineeId: data.traineeId,
+            cohortId: enrolment.cohortId,
+            checkpointDays: 0,
+            status: "RESPONDED",
+            channel: "WHATSAPP",
+            sentAt: completedAt,
+            respondedAt: completedAt,
+          },
+        });
+      } else {
+        console.warn("[SURVEY] Trainee has no enrolment — no follow-up recorded:", data.traineeId);
+      }
+    }
+
     console.log("[SURVEY] Saved response for", phone);
   } catch (err) {
     console.error("[SURVEY] Save error:", err);

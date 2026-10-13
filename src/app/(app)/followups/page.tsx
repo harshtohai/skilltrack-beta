@@ -412,7 +412,7 @@ export default function FollowupsPage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{fu.checkpointDays}-day</Badge>
+                        <Badge variant="secondary">{fu.checkpointDays === 0 ? "Chat" : `${fu.checkpointDays}-day`}</Badge>
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={fu.status} />
