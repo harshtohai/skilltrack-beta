@@ -108,29 +108,18 @@ async function main() {
   check("issued certificate is ISSUED/VERIFIED", issued?.source === "ISSUED" && issued?.status === "VERIFIED");
 
   // ── Review lifecycle (append-only) ──────────────────────────────────────
+  // ADR-003: the review model is REMOVED — self-reported certificates are
+  // born VERIFIED, editable/deletable by their owner; ISSUED are immutable;
+  // the review route is gone.
   const pendingTraineeRow = await prisma.trainee.findUniqueOrThrow({ where: { publicId: trainee.publicId } });
-  const pending = await prisma.certificate.create({
-    data: {
-      traineeId: pendingTraineeRow.id,
-      name: "Harness Pending Cert",
-      issuer: "Some Academy",
-      issueDate: new Date("2026-09-01"),
-      source: "SELF_REPORTED",
-      status: "PENDING",
-    },
-  });
-  const reject = await fetch(`${BASE}/api/v1/trainees/${trainee.publicId}/certificates/${pending.id}`, {
-    method: "PATCH",
-    headers: { ...H, "Content-Type": "application/json" },
-    body: JSON.stringify({ decision: "REJECTED", rejectionReason: "Harness: blurred scan" }),
-  });
-  check("reject PENDING cert with reason → REJECTED", reject.ok && (await reject.json() as { certificate: { status: string } }).certificate.status === "REJECTED");
-  const reReview = await fetch(`${BASE}/api/v1/trainees/${trainee.publicId}/certificates/${pending.id}`, {
+  const reviewRoute = await fetch(`${BASE}/api/v1/trainees/${trainee.publicId}/certificates/${crypto.randomUUID()}`, {
     method: "PATCH",
     headers: { ...H, "Content-Type": "application/json" },
     body: JSON.stringify({ decision: "VERIFIED" }),
   });
-  check("re-review of decided cert → 409 CERTIFICATE_IMMUTABLE", reReview.status === 409);
+  check("review route removed (404/405)", reviewRoute.status === 404 || reviewRoute.status === 405);
+  const issuedCount = listed.filter((c) => c.source === "ISSUED").length;
+  check("provenance labels present on institute view", listed.every((c) => c.source === "ISSUED" || c.source === "SELF_REPORTED"));
 
   // ── Cohort bulk issuance + idempotency ──────────────────────────────────
   const centerCode = process.env.INSTITUTE_CENTER_CODE ?? "";
@@ -194,6 +183,19 @@ async function main() {
     } else {
       const fileMine = await fetch(`${BASE}/api/v1/trainee/certificates/${mine.id}/file`, { headers: { Cookie: jar.join("; ") }, redirect: "manual" });
       check("own certificate file → 302 signed/external link", fileMine.status === 302);
+    }
+
+    // ADR-003: ISSUED certificates are immutable to the trainee even post-review-removal.
+    const issuedOfTarget = await prisma.certificate.findFirst({ where: { traineeId: target.id, source: "ISSUED" }, select: { id: true } });
+    if (issuedOfTarget) {
+      const patchIssued = await fetch(`${BASE}/api/v1/trainee/certificates/${issuedOfTarget.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Cookie: jar.join("; ") },
+        body: JSON.stringify({ name: "Tampered" }),
+      });
+      check("ISSUED certificate immutable to trainee → 409", patchIssued.status === 409);
+    } else {
+      check("ISSUED certificate immutability (skipped — no ISSUED cert on target trainee)", true);
     }
 
     const foreign = await prisma.certificate.findFirst({ where: { traineeId: { not: target.id } }, select: { id: true } });

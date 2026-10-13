@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { Textarea } from "~/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "~/components/ui/dialog";
@@ -104,76 +103,6 @@ export function IssueCertificateDialog({
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" disabled={submitting}>
               {submitting && <Loader2 className="size-4 animate-spin" />} Issue
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-export function RejectCertificateDialog({
-  publicId,
-  target,
-  onOpenChange,
-  onRejected,
-}: {
-  publicId: string;
-  target: { id: string; name: string } | null;
-  onOpenChange: (open: boolean) => void;
-  onRejected: () => Promise<void>;
-}) {
-  const [submitting, setSubmitting] = useState(false);
-
-  async function handleSubmit(form: HTMLFormElement) {
-    if (!target) return;
-    const rawReason = new FormData(form).get("reason");
-    const reason = typeof rawReason === "string" ? rawReason : "";
-    setSubmitting(true);
-    try {
-      const res = await fetch(`/api/v1/trainees/${publicId}/certificates/${target.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision: "REJECTED", rejectionReason: reason }),
-      });
-      const body = (await res.json()) as { error?: { message?: string } };
-      if (!res.ok) {
-        toast.error(body.error?.message ?? "Could not record the review.");
-        return;
-      }
-      toast.success("Certificate rejected.");
-      form.reset();
-      onOpenChange(false);
-      await onRejected();
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  return (
-    <Dialog open={target !== null} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Reject certificate</DialogTitle>
-          <DialogDescription>
-            {target ? `Reject “${target.name}” — the trainee will see the reason and can re-upload.` : ""}
-          </DialogDescription>
-        </DialogHeader>
-        <form
-          className="space-y-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void handleSubmit(e.currentTarget);
-          }}
-        >
-          <div className="space-y-1">
-            <Label htmlFor="reject-reason">Reason (required)</Label>
-            <Textarea id="reject-reason" name="reason" required maxLength={500} rows={3} />
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" variant="destructive" disabled={submitting}>
-              {submitting && <Loader2 className="size-4 animate-spin" />} Reject
             </Button>
           </DialogFooter>
         </form>

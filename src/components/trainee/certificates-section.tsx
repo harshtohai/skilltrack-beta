@@ -5,7 +5,6 @@ import { Award, ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { StatusBadge, type StatusKey } from "~/components/patterns/status-badge";
 import { EmptyState } from "~/components/patterns/empty-state";
 import { ConfirmDialog } from "~/components/patterns/confirm-dialog";
 import { Skeleton } from "~/components/patterns/skeleton";
@@ -13,11 +12,12 @@ import { date } from "~/lib/format";
 import { CertificateFormDialog } from "~/components/trainee/certificate-form-dialog";
 
 /**
- * Trainee certificates section (T2 / ADR-002): self-service list on the
- * profile page — upload via dialog, view file (signed-URL route), edit while
- * PENDING, delete (confirm, CL-18) while PENDING or REJECTED. Own state and
- * fetches to /api/v1/trainee/certificates; the page's dirty-state/leave-guard
- * form logic is untouched. Status via StatusBadge only (§4.10/CL-12).
+ * Trainee certificates section (T2, provenance-only per ADR-003): self-service
+ * list on the profile page — upload via dialog, view file (signed-URL route),
+ * edit/delete own self-reported certificates any time; institute-issued ones
+ * are the institute's record and stay immutable. Own state and fetches to
+ * /api/v1/trainee/certificates; the page's dirty-state/leave-guard form logic
+ * is untouched.
  */
 
 export interface TraineeCertificate {
@@ -27,11 +27,8 @@ export interface TraineeCertificate {
   issueDate: string;
   expiryDate: string | null;
   source: string;
-  status: string;
-  rejectionReason: string | null;
   hasFile: boolean;
   fileUrl: string | null;
-  reviewedAt: string | null;
 }
 
 const SOURCE_HINTS: Record<string, string> = {
@@ -39,12 +36,8 @@ const SOURCE_HINTS: Record<string, string> = {
   ISSUED: "Issued by institute",
 };
 
-function canEdit(cert: TraineeCertificate): boolean {
-  return cert.status === "PENDING";
-}
-
-function canDelete(cert: TraineeCertificate): boolean {
-  return cert.status === "PENDING" || cert.status === "REJECTED";
+function canModify(cert: TraineeCertificate): boolean {
+  return cert.source === "SELF_REPORTED";
 }
 
 export function CertificatesSection() {
@@ -132,7 +125,6 @@ export function CertificatesSection() {
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
-                  <StatusBadge status={cert.status as StatusKey} />
                   {cert.hasFile && (
                     <Button variant="ghost" size="icon-sm" asChild aria-label={`View file for ${cert.name}`}>
                       <a
@@ -144,7 +136,7 @@ export function CertificatesSection() {
                       </a>
                     </Button>
                   )}
-                  {canEdit(cert) && (
+                  {canModify(cert) && (
                     <Button
                       variant="ghost"
                       size="icon-sm"
@@ -154,7 +146,7 @@ export function CertificatesSection() {
                       <Pencil />
                     </Button>
                   )}
-                  {canDelete(cert) && (
+                  {canModify(cert) && (
                     <ConfirmDialog
                       trigger={
                         <Button
@@ -173,11 +165,6 @@ export function CertificatesSection() {
                   )}
                 </div>
               </div>
-              {cert.status === "REJECTED" && cert.rejectionReason && (
-                <p className="mt-2 rounded-md bg-danger-soft px-3 py-2 text-caption text-danger-text">
-                  Rejected: {cert.rejectionReason}
-                </p>
-              )}
             </div>
           ))
         )}

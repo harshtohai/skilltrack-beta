@@ -3,9 +3,9 @@ import { buildCertificateKey, validateCertificateFile } from "~/server/certifica
 import { isStorageConfigured, signCertificateUrl, uploadCertificateFile } from "~/server/storage";
 
 /**
- * Certificate domain actions shared by the per-trainee and per-cohort flows
- * (ADR-002). ISSUED certificates are born VERIFIED (the issuer is the
- * authority); review decisions append — never overwrite history. Every state
+ * Certificate domain actions (ADR-003, provenance-only model): SELF_REPORTED
+ * certificates are born VERIFIED and live immediately — there is no review
+ * step. ISSUED certificates carry the institute's authority. Every state
  * change writes an audit event.
  */
 
@@ -42,32 +42,6 @@ export async function getTraineeInCertificateScope(publicId: string, role: strin
   }
   return trainee;
 }
-
-/**
- * Shared file-resolution for both file routes (trainee + institute/admin):
- * fileKey → short-lived signed storage URL; else the recorded external link;
- * null when the certificate has no file. Throws StorageNotConfiguredError for
- * an orphaned fileKey so each route can answer 503.
- */
-export async function resolveCertificateFileUrl(certificate: {
-  fileKey: string | null;
-  fileUrl: string | null;
-}): Promise<string | null> {
-  if (certificate.fileKey) {
-    if (!isStorageConfigured()) throw new StorageNotConfiguredError();
-    return signCertificateUrl(certificate.fileKey);
-  }
-  if (certificate.fileUrl) {
-    try {
-      return new URL(certificate.fileUrl).toString();
-    } catch {
-      // Malformed stored link — treated as no file.
-      return null;
-    }
-  }
-  return null;
-}
-
 
 export async function issueCertificate(input: {
   traineeId: string;
@@ -123,49 +97,27 @@ export async function issueCertificate(input: {
   return certificate;
 }
 
-export async function reviewCertificate(input: {
-  certificateId: string;
-  decision: "VERIFIED" | "REJECTED";
-  rejectionReason?: string | null;
-  actorRole: "admin" | "institute";
-  actorId: string;
-}) {
-  const certificate = await db.certificate.findUnique({ where: { id: input.certificateId } });
-  if (!certificate) throw new CertificateActionError("NOT_FOUND", "Certificate not found", 404);
-  if (certificate.status !== "PENDING") {
-    throw new CertificateActionError("CERTIFICATE_IMMUTABLE", "Only pending certificates can be reviewed", 409);
+/**
+ * Shared file-resolution for the file routes (trainee, institute/admin and
+ * employer): fileKey → short-lived signed storage URL; else the recorded
+ * external link; null when the certificate has no file. Throws
+ * StorageNotConfiguredError for an orphaned fileKey so each route can answer 503.
+ */
+export async function resolveCertificateFileUrl(certificate: {
+  fileKey: string | null;
+  fileUrl: string | null;
+}): Promise<string | null> {
+  if (certificate.fileKey) {
+    if (!isStorageConfigured()) throw new StorageNotConfiguredError();
+    return signCertificateUrl(certificate.fileKey);
   }
-  const reason = input.rejectionReason?.trim() ?? "";
-  if (input.decision === "REJECTED" && !reason) {
-    throw new CertificateActionError("REASON_REQUIRED", "A rejection reason is required", 400);
+  if (certificate.fileUrl) {
+    try {
+      return new URL(certificate.fileUrl).toString();
+    } catch {
+      // Malformed stored link — treated as no file.
+      return null;
+    }
   }
-
-  const updated = await db.certificate.update({
-    where: { id: certificate.id },
-    data: {
-      status: input.decision,
-      rejectionReason: input.decision === "REJECTED" ? reason : null,
-      reviewedAt: new Date(),
-      reviewedBy: input.actorId,
-    },
-  });
-
-  await db.auditEvent.create({
-    data: {
-      entityType: "Certificate",
-      entityId: certificate.id,
-      action: "CERTIFICATE_REVIEWED",
-      actorType: input.actorRole === "admin" ? "ADMIN" : "SYSTEM",
-      actorId: input.actorId,
-      metadata: {
-        traineeId: certificate.traineeId,
-        decision: input.decision,
-        rejectionReason: reason || null,
-        certificateSource: certificate.source,
-        role: input.actorRole,
-      },
-    },
-  });
-
-  return updated;
+  return null;
 }

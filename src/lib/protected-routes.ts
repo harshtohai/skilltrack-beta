@@ -36,6 +36,7 @@ export const protectedRoutes: {
   { path: "/api/v1/demo", roles: ["admin", "institute"] },
   { path: "/api/v1/employer/me", roles: ["employer", "admin"] },
   { path: "/api/v1/employer/jobs", roles: ["employer", "admin"] }, // F25 job CRUD + applicants
+  { path: "/api/v1/employer/certificates", roles: ["employer", "admin"] }, // applicant proof files (issue #111)
   { path: "/api/v1/trainee/me", roles: ["trainee"] },
   { path: "/api/v1/trainee/recommendations", roles: ["trainee"] },
   { path: "/api/v1/trainee/jobs", roles: ["trainee"] }, // F25 job board browse + apply

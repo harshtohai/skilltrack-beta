@@ -118,12 +118,13 @@ SkillsTrack is a longitudinal skilling-outcomes platform. It follows up with tra
 - **Identity**: `id`, `trainee_id` (FK), `reason` (reuses `non_placement_reason` enum), `district`
 - **Purpose**: Demand-gap signal — gov analytics shows how many trainees per district report "no jobs nearby" / "skills mismatch" etc.
 
-### Certificates (two sources, Oct 2026)
-- **Identity**: `id`, `trainee_id` (FK), `name`, `issuer`, `issue_date`, `expiry_date` (nullable), `file_url` (nullable — private storage, short-lived signed links; PDF/JPG/PNG, max 1 MB)
-- **Source** (`certificate_source`): `SELF_REPORTED` (the trainee uploads any certificate they hold — proof is the attached file) | `ISSUED` (institute-issued programme certificate, tied to the trainee's Enrolment)
-- **Status** (`certificate_status`): `SELF_REPORTED` starts `PENDING` and is reviewed by the trainee's institute (the admin may also review as government oversight) to `VERIFIED` | `REJECTED` (+ reason); `ISSUED` is born `VERIFIED` (the issuer is the authority)
-- **Issuance effect** (Oct 13 grilling Q13): issuing completion certificates to a cohort IS the act of certification — sets the Enrolment's `certification_date` (defaults to the cert's issue date), flips `ACTIVE → COMPLETED`, audit-logged, idempotent (already-certified trainees skipped)
-- **Invariants** (Oct 13 grilling Q12): the trainee sees their own certificates immediately, whatever the status — pending badge, rejected badge + reason (trust is the product); the trainee may edit/delete while `PENDING` and delete-and-reupload while `REJECTED`; `VERIFIED`/`ISSUED` records are immutable to the trainee (junk removal is an admin/institute audit-logged action); review decisions append, never overwrite history
+### Certificates (provenance-only, Oct 2026 — ADR-003 supersedes ADR-002's review model)
+- **Identity**: `id`, `trainee_id` (FK), `name`, `issuer`, `issue_date`, `expiry_date` (nullable), `file_url` (nullable — private storage, short-lived signed links; PDF/JPG/PNG, max 1 MB), `file_key` (nullable)
+- **Source** (`certificate_source`): `SELF_REPORTED` (the trainee uploads any certificate they hold) | `ISSUED` (institute-issued programme certificate, tied to the trainee's Enrolment) — provenance is the signal; there is **no review workflow** (certificates are not hand-validated, owner decision Oct 13)
+- **Status** (`certificate_status`): constant `VERIFIED` on every row (schema retained for stability); `PENDING`/`REJECTED` are no longer produced
+- **Issuance effect** (Oct 13 grilling Q13): issuing completion certificates to a cohort IS the act of certification — sets the Enrolment's `certification_date` (defaults to the cert's issue date), flips `ACTIVE → COMPLETED`, audit-logged, idempotent (marker: status COMPLETED — certification_date is pre-seeded non-null)
+- **Invariants**: certificates are live immediately at creation; the trainee may edit/delete their own `SELF_REPORTED` certificates any time, while `ISSUED` records are the institute's and immutable to the trainee; employers see applicants' certificates with provenance labels and may open proof files scoped to their own applicants
+- **File access**: the owning trainee, the trainee's institute, government admin, and employers scoped to their own applicants
 
 ## Enums (Exact Values)
 

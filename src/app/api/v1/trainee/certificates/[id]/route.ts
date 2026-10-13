@@ -9,11 +9,12 @@ import { certificateDateSchema, serializeCertificate } from "../_utils";
 export const dynamic = "force-dynamic";
 
 /**
- * Own-certificate lifecycle (T2 / ADR-002): PATCH edits name/issuer/dates of a
- * PENDING certificate only (VERIFIED/REJECTED are immutable to the trainee);
- * DELETE removes a PENDING or REJECTED certificate (delete-and-reupload after
- * rejection), deleting the stored object best-effort. Both are trainee-scoped
- * (another trainee's id is a 404) and audit-logged.
+ * Own-certificate lifecycle (T2, provenance-only per ADR-003): PATCH edits
+ * name/issuer/dates of the trainee's own SELF_REPORTED certificate (any time —
+ * no review gate); ISSUED certificates are the institute's record and stay
+ * immutable. DELETE removes an owned SELF_REPORTED certificate (best-effort
+ * storage cleanup). Both are trainee-scoped (another trainee's id is a 404)
+ * and audit-logged.
  */
 
 const certificateIdParamSchema = z.object({ id: z.string().uuid() });
@@ -50,10 +51,10 @@ export async function PATCH(
     if (certificate?.traineeId !== traineeId) {
       return createErrorResponse("NOT_FOUND", "Certificate not found", 404);
     }
-    if (certificate.status !== "PENDING") {
+    if (certificate.source !== "SELF_REPORTED") {
       return createErrorResponse(
         "CERTIFICATE_IMMUTABLE",
-        "Only pending certificates can be edited",
+        "Institute-issued certificates can't be edited",
         409
       );
     }
@@ -115,10 +116,10 @@ export async function DELETE(
     if (certificate?.traineeId !== traineeId) {
       return createErrorResponse("NOT_FOUND", "Certificate not found", 404);
     }
-    if (certificate.status !== "PENDING" && certificate.status !== "REJECTED") {
+    if (certificate.source !== "SELF_REPORTED") {
       return createErrorResponse(
         "CERTIFICATE_IMMUTABLE",
-        "Verified certificates can no longer be deleted",
+        "Institute-issued certificates can't be deleted",
         409
       );
     }

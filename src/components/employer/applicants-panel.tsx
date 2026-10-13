@@ -72,12 +72,31 @@ export function ApplicantsPanel({
                   <p>Skills: {applicant.skills.join(", ")}</p>
                 )}
                 {applicant.certificates.length > 0 && (
-                  <p>
-                    Certificates:{" "}
-                    {applicant.certificates
-                      .map((c) => `${c.name} (${c.issuer})`)
-                      .join(", ")}
-                  </p>
+                  <div className="space-y-0.5">
+                    {applicant.certificates.map((c) => (
+                      <p key={c.id}>
+                        <span className="font-medium text-foreground">{c.name}</span>{" "}
+                        ({c.issuer} ·{" "}
+                        {c.source === "ISSUED"
+                          ? "institute-issued"
+                          : "self-reported"}
+                        )
+                        {c.hasFile && (
+                          <>
+                            {" · "}
+                            <a
+                              href={`/api/v1/employer/certificates/${c.id}/file`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary-strong hover:underline"
+                            >
+                              View file
+                            </a>
+                          </>
+                        )}
+                      </p>
+                    ))}
+                  </div>
                 )}
               </div>
             )}

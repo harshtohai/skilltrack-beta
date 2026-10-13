@@ -198,10 +198,7 @@ export function TraineeProfileView({ profile }: { profile: TraineeProfile }) {
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {profile.certificates.map((cert) => (
                     <div key={cert.id} className="rounded-xl border bg-card p-4">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-body-sm font-medium">{cert.name}</p>
-                        <StatusBadge status={cert.status} />
-                      </div>
+                      <p className="text-body-sm font-medium">{cert.name}</p>
                       <p className="mt-0.5 text-caption text-muted-foreground">
                         {cert.issuer}
                         {cert.source === "ISSUED" ? " · Institute-issued" : ""}
@@ -210,9 +207,6 @@ export function TraineeProfileView({ profile }: { profile: TraineeProfile }) {
                         <span>Issued {date(cert.issueDate)}</span>
                         {cert.expiryDate && <span>Expires {date(cert.expiryDate)}</span>}
                       </div>
-                      {cert.status === "REJECTED" && cert.rejectionReason && (
-                        <p className="mt-2 text-caption text-destructive">Reason: {cert.rejectionReason}</p>
-                      )}
                       {(cert.hasFile || cert.fileUrl) && (
                         <a
                           href={cert.hasFile ? `/api/v1/trainee/certificates/${cert.id}/file` : (cert.fileUrl ?? "#")}

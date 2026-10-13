@@ -1,6 +1,6 @@
 # ADR 002: Two-Source Certificate Model (Self-Reported vs Issued)
 
-**Status**: Accepted
+**Status**: Superseded by ADR-003 (provenance-only; the review workflow was removed by owner decision, Oct 13 — issue #111)
 **Date**: 2026-10-13
 
 ## Context

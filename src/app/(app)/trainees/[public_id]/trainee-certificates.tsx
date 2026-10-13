@@ -1,16 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/patterns/skeleton";
 import { ErrorState } from "~/components/patterns/error-state";
 import { EmptyState } from "~/components/patterns/empty-state";
-import { StatusBadge } from "~/components/patterns/status-badge";
 import { date } from "~/lib/format";
-import { IssueCertificateDialog, RejectCertificateDialog } from "./trainee-certificate-dialogs";
+import { IssueCertificateDialog } from "./trainee-certificate-dialogs";
 
 export interface CertificateRow {
   id: string;
@@ -26,18 +23,15 @@ export interface CertificateRow {
 }
 
 /**
- * T3 (spec #102 / ADR-002): certificates on the trainee detail page.
- * Institute (own center's trainees) and admin can issue ad-hoc certificates
- * (born VERIFIED) and review self-reported ones — verify, or reject with a
- * reason (dialogs in trainee-certificate-dialogs.tsx). Decisions are
- * append-only; the trainee sees the result immediately on their profile.
+ * Certificates on the trainee detail page (T3, provenance-only per ADR-003):
+ * institute (own center's trainees) and admin issue ad-hoc certificates
+ * (born VERIFIED). There is no review workflow — self-reported certificates
+ * are live immediately; this surface shows provenance and proof files.
  */
 export function TraineeCertificates({ publicId, canManage }: { publicId: string; canManage: boolean }) {
   const [certs, setCerts] = useState<CertificateRow[] | null>(null);
   const [error, setError] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
-  const [rejectTarget, setRejectTarget] = useState<CertificateRow | null>(null);
-  const [verifyingId, setVerifyingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(false);
@@ -54,26 +48,6 @@ export function TraineeCertificates({ publicId, canManage }: { publicId: string;
   useEffect(() => {
     void load();
   }, [load]);
-
-  async function handleVerify(cert: CertificateRow) {
-    setVerifyingId(cert.id);
-    try {
-      const res = await fetch(`/api/v1/trainees/${publicId}/certificates/${cert.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision: "VERIFIED" }),
-      });
-      const body = (await res.json()) as { error?: { message?: string } };
-      if (!res.ok) {
-        toast.error(body.error?.message ?? "Could not record the review.");
-        return;
-      }
-      toast.success("Certificate verified.");
-      await load();
-    } finally {
-      setVerifyingId(null);
-    }
-  }
 
   return (
     <Card className="p-5 lg:col-span-2">
@@ -114,12 +88,8 @@ export function TraineeCertificates({ publicId, canManage }: { publicId: string;
                     {cert.issuer} · {date(cert.issueDate)}
                     {cert.expiryDate ? ` · expires ${date(cert.expiryDate)}` : ""}
                   </p>
-                  {cert.status === "REJECTED" && cert.rejectionReason ? (
-                    <p className="text-caption text-destructive">Reason: {cert.rejectionReason}</p>
-                  ) : null}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <StatusBadge status={cert.status} />
                   {cert.hasFile ? (
                     <a
                       href={`/api/v1/trainees/${publicId}/certificates/${cert.id}/file`}
@@ -129,16 +99,6 @@ export function TraineeCertificates({ publicId, canManage }: { publicId: string;
                     >
                       View proof
                     </a>
-                  ) : null}
-                  {canManage && cert.status === "PENDING" ? (
-                    <>
-                      <Button size="sm" variant="outline" disabled={verifyingId === cert.id} onClick={() => void handleVerify(cert)}>
-                        {verifyingId === cert.id && <Loader2 className="size-4 animate-spin" />} Verify
-                      </Button>
-                      <Button size="sm" variant="outline" className="text-destructive" onClick={() => setRejectTarget(cert)}>
-                        Reject
-                      </Button>
-                    </>
                   ) : null}
                 </div>
               </li>
@@ -152,12 +112,6 @@ export function TraineeCertificates({ publicId, canManage }: { publicId: string;
         open={issueOpen}
         onOpenChange={setIssueOpen}
         onIssued={load}
-      />
-      <RejectCertificateDialog
-        publicId={publicId}
-        target={rejectTarget}
-        onOpenChange={(open) => !open && setRejectTarget(null)}
-        onRejected={load}
       />
     </Card>
   );

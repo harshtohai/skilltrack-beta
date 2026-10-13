@@ -10,10 +10,11 @@ import { certificateDateSchema, serializeCertificate } from "./_utils";
 export const dynamic = "force-dynamic";
 
 /**
- * Trainee certificates (T2 / ADR-002): GET lists the session trainee's own
- * certificates newest-first; POST accepts multipart/form-data (file + fields),
- * uploads to the private certificates bucket and creates a SELF_REPORTED /
- * PENDING row for institute review. Uploaded files are PDF/JPG/PNG ≤ 1 MB;
+ * Trainee certificates (T2, provenance-only model per ADR-003): GET lists the
+ * session trainee's own certificates newest-first; POST accepts
+ * multipart/form-data (file + fields), uploads to the private certificates
+ * bucket and creates a SELF_REPORTED / VERIFIED row — live immediately, no
+ * review step. Uploaded files are PDF/JPG/PNG ≤ 1 MB;
  * storage is env-gated — without SUPABASE_URL + SERVICE_ROLE_KEY uploads
  * report STORAGE_NOT_CONFIGURED (503).
  */
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
         expiryDate: data.expiryDate ? new Date(data.expiryDate) : null,
         fileKey: uploadedKey,
         source: "SELF_REPORTED",
-        status: "PENDING",
+        status: "VERIFIED",
       },
     });
 
