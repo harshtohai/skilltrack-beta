@@ -233,6 +233,43 @@ async function main() {
   const anonCerts = await fetch(`${BASE}/api/v1/trainee/certificates`);
   check("unauthenticated certificates → 401", anonCerts.status === 401);
 
+  // ── Removal + CSV import (#112/#114) ────────────────────────────────────
+  const removalTrainee = await prisma.trainee.findUniqueOrThrow({ where: { publicId: trainee.publicId } });
+  const removalCert = await prisma.certificate.create({
+    data: {
+      traineeId: removalTrainee.id,
+      name: "Harness Removal Cert",
+      issuer: "Some Academy",
+      issueDate: new Date("2026-09-01"),
+      source: "SELF_REPORTED",
+      status: "VERIFIED",
+    },
+  });
+  const removeRes = await fetch(`${BASE}/api/v1/trainees/${trainee.publicId}/certificates/${removalCert.id}`, {
+    method: "DELETE",
+    headers: { ...H, "Content-Type": "application/json" },
+    body: JSON.stringify({ reason: "harness" }),
+  });
+  check("institute removes SELF_REPORTED cert → 200", removeRes.ok);
+  const gone = await prisma.certificate.findUnique({ where: { id: removalCert.id } });
+  check("removed certificate is gone from the DB", gone === null);
+
+  const csv = "publicId,name,issuer,issueDate,expiryDate\n"
+    + `${trainee.publicId},Harness Import Cert,MSSDS,2026-10-13,\n`
+    + `${trainee.publicId},Harness Import Cert,MSSDS,2026-10-13,\n`
+    + "TRN-UNKNOWN-0000,Ghost Cert,MSSDS,2026-10-13,\n";
+  const importForm = new FormData();
+  importForm.set("file", new Blob([csv], { type: "text/csv" }), "harness.csv");
+  const importRes = await fetch(`${BASE}/api/v1/trainees/import-certificates`, { method: "POST", headers: { Cookie: cookie }, body: importForm });
+  const importBody = importRes.ok ? await importRes.json() as { created: number; skipped: number; results: Array<{ status: string }> } : null;
+  check(
+    "CSV import → created 1, skipped 1, error 1",
+    importRes.ok && importBody?.created === 1 && importBody?.skipped === 1 && importBody?.results.filter((r) => r.status === "error").length === 1,
+    importRes.ok ? JSON.stringify(importBody) : `status ${importRes.status}`,
+  );
+  const importCleanup = await prisma.certificate.deleteMany({ where: { name: "Harness Import Cert" } });
+  check("import cleanup", importCleanup.count === 1);
+
   console.log(`\n${passed} passed · ${failed} failed\n`);
   await prisma.$disconnect();
   process.exit(failed === 0 ? 0 : 1);

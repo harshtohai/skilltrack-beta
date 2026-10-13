@@ -10,6 +10,7 @@ import { ConfirmDialog } from "~/components/patterns/confirm-dialog";
 import { Skeleton } from "~/components/patterns/skeleton";
 import { date } from "~/lib/format";
 import { CertificateFormDialog } from "~/components/trainee/certificate-form-dialog";
+import { CertificatePreviewDialog } from "~/components/patterns/certificate-preview-dialog";
 
 /**
  * Trainee certificates section (T2, provenance-only per ADR-003): self-service
@@ -45,6 +46,7 @@ export function CertificatesSection() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<TraineeCertificate | null>(null);
+  const [preview, setPreview] = useState<{ id: string; name: string } | null>(null);
 
   const loadCertificates = useCallback(async () => {
     setLoading(true);
@@ -126,14 +128,13 @@ export function CertificatesSection() {
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                   {cert.hasFile && (
-                    <Button variant="ghost" size="icon-sm" asChild aria-label={`View file for ${cert.name}`}>
-                      <a
-                        href={`/api/v1/trainee/certificates/${cert.id}/file`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <ExternalLink />
-                      </a>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Preview ${cert.name}`}
+                      onClick={() => setPreview({ id: cert.id, name: cert.name })}
+                    >
+                      <ExternalLink />
                     </Button>
                   )}
                   {canModify(cert) && (
@@ -174,6 +175,12 @@ export function CertificatesSection() {
         onOpenChange={setDialogOpen}
         certificate={editing}
         onSaved={() => void loadCertificates()}
+      />
+      <CertificatePreviewDialog
+        open={preview !== null}
+        onOpenChange={(open) => !open && setPreview(null)}
+        name={preview?.name ?? ""}
+        fileSrc={preview ? `/api/v1/trainee/certificates/${preview.id}/file` : ""}
       />
     </Card>
   );

@@ -160,3 +160,22 @@ export async function sendEmailChangedNoticeEmail(oldEmail: string, name: string
   `);
   await sendBrevoEmail(oldEmail, "Your SkillsTrack email was changed", html);
 }
+
+export async function sendCertificateRemovedNoticeEmail(
+  email: string,
+  name: string,
+  certName: string,
+  reason?: string | null,
+): Promise<void> {
+  if (!process.env.BREVO_API_KEY || !process.env.EMAIL_FROM) {
+    console.log(`[EMAIL-MOCK] Certificate-removed notice sent to ${email} (certificate: ${certName})`);
+    return;
+  }
+
+  const html = renderEmailShell(`
+    <h2 style="color: #1f2937; margin-top: 0;">Hi ${name},</h2>
+    <p style="color: #4b5563; font-size: 16px;">Your uploaded certificate <strong>${certName}</strong> was removed from your SkillsTrack profile${reason ? ` — reason: <strong>${reason}</strong>` : "."} You can re-upload a corrected version any time from your profile.</p>
+    <p style="color: #4b5563; font-size: 16px;">If you have questions, contact your training center.</p>
+  `);
+  await sendBrevoEmail(email, "A certificate was removed from your SkillsTrack profile", html);
+}

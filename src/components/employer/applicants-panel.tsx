@@ -1,5 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import { Skeleton } from "~/components/patterns/skeleton";
 import { StatusBadge } from "~/components/patterns/status-badge";
+import { CertificatePreviewDialog } from "~/components/patterns/certificate-preview-dialog";
 import { ApplicantActions } from "~/components/employer/applicant-actions";
 import { date } from "~/lib/format";
 import type { Applicant } from "~/lib/job-board-contracts";
@@ -22,6 +26,7 @@ export function ApplicantsPanel({
   onAction: (applicant: Applicant, action: "shortlist" | "hire") => void;
   onReject: (applicant: Applicant) => void;
 }) {
+  const [preview, setPreview] = useState<{ id: string; name: string } | null>(null);
   return (
     <div className="space-y-2 border-t pt-3">
       <p className="text-caption text-muted-foreground font-medium tracking-wide uppercase">
@@ -84,14 +89,13 @@ export function ApplicantsPanel({
                         {c.hasFile && (
                           <>
                             {" · "}
-                            <a
-                              href={`/api/v1/employer/certificates/${c.id}/file`}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            <button
+                              type="button"
+                              onClick={() => setPreview({ id: c.id, name: c.name })}
                               className="text-primary-strong hover:underline"
                             >
                               View file
-                            </a>
+                            </button>
                           </>
                         )}
                       </p>
@@ -122,6 +126,12 @@ export function ApplicantsPanel({
           </div>
         ))
       )}
+      <CertificatePreviewDialog
+        open={preview !== null}
+        onOpenChange={(open) => !open && setPreview(null)}
+        name={preview?.name ?? ""}
+        fileSrc={preview ? `/api/v1/employer/certificates/${preview.id}/file` : ""}
+      />
     </div>
   );
 }

@@ -1,13 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/patterns/skeleton";
 import { ErrorState } from "~/components/patterns/error-state";
 import { EmptyState } from "~/components/patterns/empty-state";
+import { ConfirmDialog } from "~/components/patterns/confirm-dialog";
 import { date } from "~/lib/format";
 import { IssueCertificateDialog } from "./trainee-certificate-dialogs";
+import { CertificatePreviewDialog } from "~/components/patterns/certificate-preview-dialog";
 
 export interface CertificateRow {
   id: string;
@@ -25,13 +28,15 @@ export interface CertificateRow {
 /**
  * Certificates on the trainee detail page (T3, provenance-only per ADR-003):
  * institute (own center's trainees) and admin issue ad-hoc certificates
- * (born VERIFIED). There is no review workflow — self-reported certificates
- * are live immediately; this surface shows provenance and proof files.
+ * (born VERIFIED) and may REMOVE a trainee's self-reported certificate
+ * (issue #112 remediation path — audit-logged, trainee emailed). There is no
+ * review workflow; this surface shows provenance and proof files.
  */
 export function TraineeCertificates({ publicId, canManage }: { publicId: string; canManage: boolean }) {
   const [certs, setCerts] = useState<CertificateRow[] | null>(null);
   const [error, setError] = useState(false);
   const [issueOpen, setIssueOpen] = useState(false);
+  const [preview, setPreview] = useState<{ id: string; name: string } | null>(null);
 
   const load = useCallback(async () => {
     setError(false);
@@ -48,6 +53,21 @@ export function TraineeCertificates({ publicId, canManage }: { publicId: string;
   useEffect(() => {
     void load();
   }, [load]);
+
+  async function handleRemove(cert: CertificateRow) {
+    const res = await fetch(`/api/v1/trainees/${publicId}/certificates/${cert.id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const body = (await res.json().catch(() => ({}))) as { error?: { message?: string } };
+    if (!res.ok) {
+      toast.error(body.error?.message ?? "Could not remove the certificate.");
+      return;
+    }
+    toast.success("Certificate removed — the trainee has been notified.");
+    await load();
+  }
 
   return (
     <Card className="p-5 lg:col-span-2">
@@ -91,14 +111,22 @@ export function TraineeCertificates({ publicId, canManage }: { publicId: string;
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {cert.hasFile ? (
-                    <a
-                      href={`/api/v1/trainees/${publicId}/certificates/${cert.id}/file`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-body-sm text-primary-strong hover:underline"
-                    >
+                    <Button size="sm" variant="ghost" onClick={() => setPreview({ id: cert.id, name: cert.name })}>
                       View proof
-                    </a>
+                    </Button>
+                  ) : null}
+                  {canManage && cert.source === "SELF_REPORTED" ? (
+                    <ConfirmDialog
+                      trigger={
+                        <Button size="sm" variant="outline" className="text-destructive">
+                          Remove
+                        </Button>
+                      }
+                      title={`Remove "${cert.name}"?`}
+                      description="The certificate and its file are deleted and the trainee is emailed. This can't be undone."
+                      confirmLabel="Remove"
+                      onConfirm={() => void handleRemove(cert)}
+                    />
                   ) : null}
                 </div>
               </li>
@@ -112,6 +140,12 @@ export function TraineeCertificates({ publicId, canManage }: { publicId: string;
         open={issueOpen}
         onOpenChange={setIssueOpen}
         onIssued={load}
+      />
+      <CertificatePreviewDialog
+        open={preview !== null}
+        onOpenChange={(open) => !open && setPreview(null)}
+        name={preview?.name ?? ""}
+        fileSrc={preview ? `/api/v1/trainees/${publicId}/certificates/${preview.id}/file` : ""}
       />
     </Card>
   );
