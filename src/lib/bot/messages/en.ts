@@ -68,7 +68,7 @@ To link your responses to your training record, please confirm:
 *Batch:* {cohort}
 
 Is this correct?`,
-  notFound: "We couldn't find your training record. Let's continue anyway! 📝",
+  notFound: "We couldn't find a SkillsTrack registration for this number. Please complete your training center's registration first, then message us again.",
   wrongPerson: "No worries! We won't link this to any record. Let's continue with the survey. 📝",
   employment: `💼 *Current Employment Status*
 
