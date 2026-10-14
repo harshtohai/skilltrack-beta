@@ -9,10 +9,16 @@ import { Sheet, SheetContent } from "~/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 
 /**
- * Sidebar per design §3.1/§3.3/§4.6 (S1 app shell): fixed h-svh w-60 expanded /
- * w-16 collapsed, bg-sidebar, content scrolls but sidebar does not. Mobile:
- * off-canvas Sheet (side="left") via SidebarTrigger (§11).
+ * Sidebar per design §3.1/§3.3/§4.6 (S1 app shell) — standard shadcn/ui
+ * mechanism: the provider wrapper carries --sidebar-width (15rem / w-60
+ * expanded, 4rem / w-16 collapsed); the fixed aside AND an in-flow gap div
+ * both read the variable, so collapsing reflows the main content instead of
+ * leaving a dead gap. Content scrolls inside the sidebar; the sidebar itself
+ * does not. Mobile: off-canvas Sheet (side="left") via SidebarTrigger (§11).
  */
+
+const SIDEBAR_WIDTH = "15rem"; // w-60
+const SIDEBAR_WIDTH_ICON = "4rem"; // w-16
 
 type SidebarContextProps = {
   state: "expanded" | "collapsed";
@@ -88,7 +94,20 @@ function SidebarProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarContext.Provider value={contextValue}>
-      <TooltipProvider delayDuration={400}>{children}</TooltipProvider>
+      <TooltipProvider delayDuration={400}>
+        <div
+          data-slot="sidebar-wrapper"
+          style={
+            {
+              "--sidebar-width": SIDEBAR_WIDTH,
+              "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
+            } as React.CSSProperties
+          }
+          className="group/sidebar-wrapper flex min-h-svh w-full"
+        >
+          {children}
+        </div>
+      </TooltipProvider>
     </SidebarContext.Provider>
   );
 }
@@ -109,14 +128,28 @@ function Sidebar({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // Standard shadcn/ui structure: an in-flow gap div reserves the sidebar's
+  // width in the flex row and shrinks with it, while the fixed aside overlays
+  // that space. Collapsing animates both from --sidebar-width to
+  // --sidebar-width-icon, so the body grows to fill the freed space.
   return (
-    <aside
-      data-slot="sidebar"
+    <div
+      className="group/sidebar-root hidden text-sidebar-foreground lg:block"
       data-state={open ? "expanded" : "collapsed"}
-      className="group/sidebar-root fixed inset-y-0 left-0 z-20 hidden h-svh w-60 flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-200 lg:flex data-[state=collapsed]:w-16"
     >
-      {children}
-    </aside>
+      <div
+        aria-hidden
+        data-slot="sidebar-gap"
+        className="relative w-[var(--sidebar-width)] transition-[width] duration-200 ease-linear group-data-[state=collapsed]/sidebar-root:w-[var(--sidebar-width-icon)]"
+      />
+      <aside
+        data-slot="sidebar"
+        data-state={open ? "expanded" : "collapsed"}
+        className="fixed inset-y-0 left-0 z-20 flex h-svh w-[var(--sidebar-width)] flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-200 ease-linear group-data-[state=collapsed]/sidebar-root:w-[var(--sidebar-width-icon)]"
+      >
+        {children}
+      </aside>
+    </div>
   );
 }
 
@@ -144,11 +177,13 @@ function SidebarTrigger({ className, ...props }: React.ComponentProps<"button">)
 }
 
 function SidebarInset({ children, className }: { children: React.ReactNode; className?: string }) {
+  // No horizontal padding: the in-flow sidebar gap (see Sidebar) reserves the
+  // sidebar's space, and flex-1 lets the body fill everything else.
   return (
     <div
       data-slot="sidebar-inset"
       className={cn(
-        "flex min-h-svh flex-1 flex-col bg-background transition-[padding] duration-200 lg:pl-60",
+        "flex min-h-svh flex-1 flex-col bg-background",
         className,
       )}
     >
