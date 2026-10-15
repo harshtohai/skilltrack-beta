@@ -6,7 +6,6 @@ import { useTheme } from "next-themes";
 import { signOut } from "next-auth/react";
 import { LogOut, Moon, Sun, SunMoon } from "lucide-react";
 
-import { useSidebar } from "~/components/ui/sidebar";
 import {
   CommandDialog,
   CommandEmpty,

@@ -58,7 +58,7 @@ export function SkillsSection() {
     void load();
   }, [load]);
 
-  const dirty = data !== null && data.skills.some((s) => levels[s.skill] !== s.level);
+  const dirty = data?.skills.some((s) => levels[s.skill] !== s.level) ?? false;
   const answeredCount = data ? data.skills.filter((s) => levels[s.skill] !== undefined).length : 0;
 
   async function handleSave() {
@@ -122,10 +122,10 @@ export function SkillsSection() {
                 </li>
                 <li>
                   <span className="font-medium text-foreground">What it decides:</span> which courses and jobs
-                  we suggest to you. That's all.
+                  we suggest to you. That&apos;s all.
                 </li>
                 <li>
-                  <span className="font-medium text-foreground">What it doesn't decide:</span> your
+                  <span className="font-medium text-foreground">What it doesn&apos;t decide:</span> your
                   certificates, your applications, your placement — none of it. Overstate a skill and the only
                   person you fool is yourself: the courses you actually need stop showing up.
                 </li>

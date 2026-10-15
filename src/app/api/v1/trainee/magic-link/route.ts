@@ -1,12 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "~/server/db";
 import { routeErrorResponse, createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
 import { EmailSendError, mintAndSendLoginToken } from "~/server/magic-link";
 
 export const dynamic = "force-dynamic";
-
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 const magicLinkSchema = z.object({
   email: z.string().email(),
