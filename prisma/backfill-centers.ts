@@ -95,9 +95,9 @@ async function main() {
       select: { traineeId: true, cohort: { select: { programme: { select: { name: true } } } } },
     });
     const certData = enrolments.flatMap((e) => {
-      const certs = [{ traineeId: e.traineeId, name: `${e.cohort.programme.name} Certificate`, issuer: "MSSDS", issueDate: new Date() }];
+      const certs = [{ traineeId: e.traineeId, name: `${e.cohort.programme.name} Certificate`, issuer: "MSSDS", issueDate: new Date(), source: "ISSUED" as const, status: "VERIFIED" as const }];
       if (Math.random() < 0.3) {
-        certs.push({ traineeId: e.traineeId, name: "Spoken English & Workplace Communication Certificate", issuer: "NSDC", issueDate: new Date() });
+        certs.push({ traineeId: e.traineeId, name: "Spoken English & Workplace Communication Certificate", issuer: "NSDC", issueDate: new Date(), source: "ISSUED" as const, status: "VERIFIED" as const });
       }
       return certs;
     });

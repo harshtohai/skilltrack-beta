@@ -16,6 +16,7 @@ import {
   WithdrawApplicationDialog,
 } from "~/components/trainee/my-applications-tab";
 import { JobSeekSignalDialog } from "~/components/trainee/job-seek-signal-dialog";
+import { ForYouTab } from "~/components/trainee/for-you-tab";
 import type {
   MyApplication,
   PublicJob,
@@ -189,6 +190,7 @@ export function TraineeJobsBoard() {
         <TabsList>
           <TabsTrigger value="jobs">Jobs</TabsTrigger>
           <TabsTrigger value="applications">My Applications</TabsTrigger>
+          <TabsTrigger value="for-you">For you</TabsTrigger>
         </TabsList>
 
         <TabsContent value="jobs">
@@ -265,6 +267,10 @@ export function TraineeJobsBoard() {
             applications={applications}
             onWithdraw={setWithdrawTarget}
           />
+        </TabsContent>
+
+        <TabsContent value="for-you">
+          <ForYouTab />
         </TabsContent>
       </Tabs>
 

@@ -75,9 +75,14 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         // (the contract allows an empty array).
         skills: [] as string[],
         certificates: application.trainee.certificates.map((c) => ({
+          id: c.id,
           name: c.name,
           issuer: c.issuer,
           issueDate: c.issueDate.toISOString(),
+          // Provenance-only (ADR-003): no review gate — employers see every
+          // certificate labelled by who stands behind it, plus the proof file.
+          source: c.source,
+          hasFile: c.fileKey !== null || c.fileUrl !== null,
         })),
         phoneMasked: maskPhone(application.trainee.phoneE164),
         ...(revealed

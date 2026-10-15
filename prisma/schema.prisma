@@ -129,6 +129,23 @@ enum EnrolmentStatus {
   COMPLETED
 }
 
+enum CertificateSource {
+  SELF_REPORTED
+  ISSUED
+}
+
+enum CertificateStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum LoginTokenPurpose {
+  LOGIN
+  EMAIL_CHANGE
+  PHONE_CHANGE
+}
+
 // Core Tables
 model TrainingCenter {
   id          String   @id @default(uuid())
@@ -154,6 +171,7 @@ model Course {
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  programmes  Programme[]
 
   @@map("courses")
 }
@@ -162,6 +180,8 @@ model Programme {
   id        String    @id @default(uuid())
   name      String
   code      String    @unique
+  courseId  String?
+  course    Course?   @relation(fields: [courseId], references: [id])
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   cohorts   Cohort[]
@@ -213,6 +233,7 @@ model Trainee {
   employmentClaims     EmploymentClaim[]
   outcomeEvents        OutcomeEvent[]
   certificates         Certificate[]
+  skillAssessments     SkillAssessment[]
   employmentHistory    EmploymentHistory[]
   loginTokens          TraineeLoginToken[]
   jobApplications      JobApplication[]
@@ -351,15 +372,21 @@ model AuditEvent {
 }
 
 model Certificate {
-  id          String   @id @default(uuid())
-  traineeId   String
-  name        String
-  issuer      String
-  issueDate   DateTime
-  expiryDate  DateTime?
-  fileUrl     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String            @id @default(uuid())
+  traineeId       String
+  name            String
+  issuer          String
+  issueDate       DateTime
+  expiryDate      DateTime?
+  fileUrl         String?
+  fileKey         String?
+  source          CertificateSource @default(SELF_REPORTED)
+  status          CertificateStatus @default(PENDING)
+  rejectionReason String?
+  reviewedAt      DateTime?
+  reviewedBy      String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
   trainee     Trainee  @relation(fields: [traineeId], references: [id], onDelete: Cascade)
 
@@ -385,14 +412,29 @@ model EmploymentHistory {
   @@map("employment_history")
 }
 
+model SkillAssessment {
+  id         String   @id @default(uuid())
+  traineeId  String
+  skill      String
+  level      Int // 1–5, self-assessed
+  assessedAt DateTime @default(now())
+
+  trainee Trainee @relation(fields: [traineeId], references: [id], onDelete: Cascade)
+
+  @@index([traineeId, skill, assessedAt])
+  @@map("skill_assessments")
+}
+
 model TraineeLoginToken {
-  id        String   @id @default(uuid())
-  traineeId String
-  tokenHash String   @unique
-  otpHash   String?
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime @default(now())
+  id           String           @id @default(uuid())
+  traineeId    String
+  tokenHash    String           @unique
+  otpHash      String?
+  purpose      LoginTokenPurpose @default(LOGIN)
+  pendingValue String?
+  expiresAt    DateTime
+  usedAt       DateTime?
+  createdAt    DateTime         @default(now())
 
   trainee   Trainee  @relation(fields: [traineeId], references: [id], onDelete: Cascade)
 

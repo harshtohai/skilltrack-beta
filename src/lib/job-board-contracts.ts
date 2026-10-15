@@ -181,9 +181,12 @@ export const applicantSchema = z.object({
   skills: z.array(z.string()),
   certificates: z.array(
     z.object({
+      id: uuidSchema,
       name: z.string(),
       issuer: z.string(),
       issueDate: isoDatetimeSchema,
+      source: z.enum(["SELF_REPORTED", "ISSUED"]),
+      hasFile: z.boolean(),
     }),
   ),
   phoneMasked: z.string(),

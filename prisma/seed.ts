@@ -291,8 +291,13 @@ async function main() {
   });
   console.log(`✅ ${COURSE_CATALOGUE.length} courses`);
 
-  const programmes = await Promise.all(PROGRAMMES.map((p) => prisma.programme.create({ data: p })));
-  console.log(`✅ ${programmes.length} programmes`);
+  const courseRows = await prisma.course.findMany({ select: { id: true }, orderBy: { name: "asc" } });
+  const programmes = await Promise.all(
+    PROGRAMMES.map((p, i) =>
+      prisma.programme.create({ data: { ...p, courseId: courseRows[i % courseRows.length]!.id } })
+    )
+  );
+  console.log(`✅ ${programmes.length} programmes (each linked to a course for skills)`);
 
   // ── cohorts: 12 × 48-day windows tiling the last ~19 months ─────────────
   // Every certification date therefore lands in exactly one cohort, and
@@ -552,7 +557,7 @@ async function main() {
   console.log(`✅ ${followups.length} follow-ups · ${claims.length} claims · ${outcomes.length} outcomes · ${verifications.length} verifications`);
 
   // ── certificates: ~2.2 per trainee (benchmark is 2) ─────────────────────
-  const certificates: Array<{ id: string; traineeId: string; name: string; issuer: string; issueDate: Date; expiryDate: Date | null; fileUrl: string | null }> = [];
+  const certificates: Array<{ id: string; traineeId: string; name: string; issuer: string; issueDate: Date; expiryDate: Date | null; fileUrl: string | null; source: "ISSUED"; status: "VERIFIED" }> = [];
   for (const plan of plans) {
     const n = chance(0.6) ? 2 : chance(0.71) ? 3 : 1;
     for (let c = 0; c < n; c++) {
@@ -564,6 +569,8 @@ async function main() {
         issueDate: addDays(plan.certDate, -int(0, 45)),
         expiryDate: chance(0.3) ? addDays(NOW, int(60, 900)) : null,
         fileUrl: chance(0.4) ? `https://storage.example.com/certs/${crypto.randomBytes(16).toString("hex")}.pdf` : null,
+        source: "ISSUED",
+        status: "VERIFIED",
       });
     }
   }
