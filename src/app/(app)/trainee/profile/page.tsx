@@ -8,10 +8,13 @@ import {
   ProfileSkeleton,
   ProfileSubNav,
   TraineeIdCard,
-  VerifiedInfoCard,
+  MyTrainingCard,
   type TraineeProfile,
 } from "./profile-sections";
-import { CertificatesCard, EmploymentHistoryCard, OutcomeCheckpointsCard } from "./profile-record-cards";
+import { VerifiedInfoCard } from "./profile-verified-info";
+import { SkillsSection } from "~/components/trainee/skills-section";
+import { EmploymentHistoryCard, OutcomeCheckpointsCard } from "./profile-record-cards";
+import { CertificatesSection } from "~/components/trainee/certificates-section";
 import { ProfileDetailsForm } from "./profile-details-form";
 
 /**
@@ -19,7 +22,8 @@ import { ProfileDetailsForm } from "./profile-details-form";
  * (app) layout, `lg:flex lg:gap-8` with a left sub-nav (items h-9, active
  * bg-accent) and a `max-w-3xl` content column. Trainee ID card with copy,
  * profile details form with dirty-state Save (toast on save, leave guard when
- * dirty), verified-information card with lock + consent, certificates/
+ * dirty), verified-information card with lock + consent, the certificates
+ * section (~/components/trainee/certificates-section, own fetch + mutations),
  * employment/checkpoint cards as §9.7 border-b rows. Statuses via StatusBadge
  * only (§4.10/CL-12). Form state and the save/dirty/leave-guard logic live
  * here; sections render from profile-sections.tsx, profile-record-cards.tsx
@@ -39,7 +43,6 @@ export default function TraineeProfilePage() {
   const [error, setError] = useState("");
 
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
   const [district, setDistrict] = useState("");
   const [language, setLanguage] = useState("");
   const [gender, setGender] = useState("PREFER_NOT_TO_SAY");
@@ -57,7 +60,6 @@ export default function TraineeProfilePage() {
       const json = (await res.json()) as MeResponse;
       setData(json);
       setFullName(json.trainee.fullName);
-      setEmail(json.trainee.email ?? "");
       setDistrict(json.trainee.district);
       setLanguage(json.trainee.language);
       setGender(json.trainee.gender ?? "PREFER_NOT_TO_SAY");
@@ -86,7 +88,6 @@ export default function TraineeProfilePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fullName,
-          email: email.trim() || null,
           district,
           language,
           gender,
@@ -108,7 +109,6 @@ export default function TraineeProfilePage() {
 
   const dirty = data
     ? fullName !== data.trainee.fullName ||
-      email !== (data.trainee.email ?? "") ||
       district !== data.trainee.district ||
       language !== data.trainee.language ||
       gender !== data.trainee.gender ||
@@ -158,8 +158,6 @@ export default function TraineeProfilePage() {
         <ProfileDetailsForm
           fullName={fullName}
           onFullNameChange={setFullName}
-          email={email}
-          onEmailChange={setEmail}
           district={district}
           onDistrictChange={setDistrict}
           language={language}
@@ -174,17 +172,28 @@ export default function TraineeProfilePage() {
           onSave={() => void handleSave()}
         />
 
-        {/* Locked fields (§9.7 rows pattern) */}
+        {/* Locked fields (§9.7 rows pattern) — email changes via the
+            OTP-verified ChangeEmailDialog (T5), everything else locked */}
         <VerifiedInfoCard
+          email={trainee.email}
           phoneE164={trainee.phoneE164}
           consentGiven={trainee.consentGiven}
           consentGivenAt={trainee.consentGivenAt}
           gender={trainee.gender}
           genderSelfDescribed={trainee.genderSelfDescribed}
+          onEmailChanged={() => void loadProfile()}
+          onPhoneChanged={() => void loadProfile()}
         />
 
-        {/* Certificates (§9.7 rows pattern) */}
-        <CertificatesCard certificates={trainee.certificates} />
+        {/* My Training (T8): read-only enrolment chain */}
+        <MyTrainingCard training={trainee.training ?? []} />
+
+        {/* Skills (bag #44): self-assessment with the straight-up disclosure contract */}
+        <SkillsSection />
+
+        {/* Certificates (T2: self-service upload/edit/delete section) */}
+        <CertificatesSection />
+
 
         {/* Employment history (§9.7 rows pattern) */}
         <EmploymentHistoryCard employmentHistory={trainee.employmentHistory} />

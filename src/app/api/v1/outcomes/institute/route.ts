@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "~/server/db";
 import { getMonthlyOutcomes, getGroupedRates, getPeerBenchmarks, EMPLOYED_STATUSES } from "~/server/analytics";

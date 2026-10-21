@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "~/lib/auth";
 import { db } from "~/server/db";
@@ -15,12 +15,14 @@ const DISTRICTS = [
 
 const patchSchema = z.object({
   fullName: z.string().min(2).max(100).optional(),
-  email: z.string().email().max(200).nullable().optional(),
   district: z.string().max(60).optional(),
   language: z.enum(["EN", "HI", "MR"]).optional(),
   gender: z.enum(["FEMALE", "MALE", "NON_BINARY", "SELF_DESCRIBED", "PREFER_NOT_TO_SAY"]).optional(),
   genderSelfDescribed: z.string().max(100).nullable().optional(),
 });
+// NOTE: email is deliberately NOT editable here (spec #102 / T5) — it is the
+// login identity and changes only through the OTP-verified email-change flow
+// (POST /api/v1/trainee/me/email-change + /verify). Phone is likewise locked.
 
 async function requireTrainee() {
   const session = await auth();
@@ -35,6 +37,11 @@ async function requireTrainee() {
         include: { employmentClaim: true },
       },
       followupEvents: { orderBy: { checkpointDays: "asc" } },
+      enrolments: {
+        include: {
+          cohort: { include: { programme: true, trainingCenter: true } },
+        },
+      },
     },
   });
   return trainee;
@@ -98,6 +105,16 @@ export async function GET() {
           sentAt: f.sentAt?.toISOString() ?? null,
           respondedAt: f.respondedAt?.toISOString() ?? null,
         })),
+        training: trainee.enrolments.map((e) => ({
+          id: e.id,
+          status: e.status,
+          certificationDate: e.certificationDate?.toISOString() ?? null,
+          cohort: { id: e.cohort.id, name: e.cohort.name },
+          programme: { id: e.cohort.programme.id, name: e.cohort.programme.name },
+          trainingCenter: e.cohort.trainingCenter
+            ? { id: e.cohort.trainingCenter.id, name: e.cohort.trainingCenter.name, district: e.cohort.trainingCenter.district }
+            : null,
+        })),
       },
       districts: DISTRICTS,
     });
@@ -117,18 +134,16 @@ export async function PATCH(request: NextRequest) {
     const body = (await request.json()) as unknown;
     const data = patchSchema.parse(body);
 
-    // Only name/email/district/language/gender are editable; phone, consent,
-    // publicId and outcome data are locked.
+    // Only name/district/language/gender are editable; email (login identity),
+    // phone, consent, publicId and outcome data are locked.
     const update: {
       fullName?: string;
-      email?: string | null;
       district?: string;
       language?: "EN" | "HI" | "MR";
       gender?: "FEMALE" | "MALE" | "NON_BINARY" | "SELF_DESCRIBED" | "PREFER_NOT_TO_SAY";
       genderSelfDescribed?: string | null;
     } = {};
     if (data.fullName !== undefined) update.fullName = data.fullName.trim();
-    if (data.email !== undefined) update.email = data.email?.toLowerCase().trim() ?? null;
     if (data.district !== undefined) update.district = data.district.trim();
     if (data.language !== undefined) update.language = data.language;
     if (data.gender !== undefined) {

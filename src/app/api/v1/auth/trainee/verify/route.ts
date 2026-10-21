@@ -4,6 +4,7 @@ import { z } from "zod";
 import { encode } from "next-auth/jwt";
 import { db } from "~/server/db";
 import { routeErrorResponse, createErrorResponse, handleZodError } from "~/app/api/v1/_utils";
+import { humanizeSkill, latestBySkill } from "~/server/skills";
 import { startConversation } from "~/lib/bot/conversation";
 import crypto from "crypto";
 
@@ -37,6 +38,12 @@ const traineeInclude = {
         include: { employmentClaim: true },
       },
       followupEvents: { orderBy: { checkpointDays: "asc" as const } },
+      enrolments: {
+        include: {
+          cohort: { include: { programme: { include: { course: true } }, trainingCenter: true } },
+        },
+      },
+      skillAssessments: { orderBy: { assessedAt: "asc" as const } },
     },
   },
 };
@@ -203,6 +210,26 @@ export async function POST(request: NextRequest) {
           issueDate: c.issueDate.toISOString(),
           expiryDate: c.expiryDate?.toISOString() ?? null,
           fileUrl: c.fileUrl,
+          source: c.source,
+          status: c.status,
+          rejectionReason: c.rejectionReason,
+          hasFile: Boolean(c.fileKey),
+        })),
+        training: trainee.enrolments.map((e) => ({
+          id: e.id,
+          status: e.status,
+          certificationDate: e.certificationDate?.toISOString() ?? null,
+          cohort: { id: e.cohort.id, name: e.cohort.name },
+          programme: { id: e.cohort.programme.id, name: e.cohort.programme.name },
+          trainingCenter: e.cohort.trainingCenter
+            ? { id: e.cohort.trainingCenter.id, name: e.cohort.trainingCenter.name, district: e.cohort.trainingCenter.district }
+            : null,
+        })),
+        skills: [...latestBySkill(trainee.skillAssessments).entries()].map(([skill, a]) => ({
+          skill,
+          label: humanizeSkill(skill),
+          level: a.level,
+          assessedAt: a.assessedAt.toISOString(),
         })),
         employmentHistory: trainee.employmentHistory.map((e) => ({
           id: e.id,

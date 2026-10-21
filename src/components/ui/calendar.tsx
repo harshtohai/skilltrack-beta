@@ -4,7 +4,7 @@ import * as React from "react";
 import { DayPicker, getDefaultClassNames } from "react-day-picker";
 
 import { cn } from "~/lib/utils";
-import { Button, buttonVariants } from "~/components/ui/button";
+import { type Button, buttonVariants } from "~/components/ui/button";
 
 /**
  * Calendar per design §4.2: day cells size-9 rounded-md; today bg-accent;
@@ -13,7 +13,7 @@ import { Button, buttonVariants } from "~/components/ui/button";
  */
 function Calendar({
   className,
-  classNames,
+  classNames: _classNames,
   showOutsideDays = true,
   buttonVariant = "ghost",
   ...props

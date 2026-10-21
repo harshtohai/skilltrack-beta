@@ -18,9 +18,11 @@ import type { TraineeProfile } from "./profile-types";
 /**
  * Verified-trainee profile portal (§9.10 "Profile (user)"): S1 shell from the
  * (app) layout, profile header card (avatar 64, name, caption, PRIMARY "Edit
- * profile"), line-style tabs Profile/Employment/Certificates/Skills/Outcomes,
- * personal info as a description list, employment timeline rows, certificate
- * grid, skills empty state, outcome checkpoints as left-accent cards.
+ * profile"), line-style tabs
+ * Profile/Employment/Certificates/Skills/Outcomes, personal info as a
+ * description list (with the read-only My Training chain), employment timeline
+ * rows, certificate grid with provenance labels, skill self-assessment levels,
+ * and outcome checkpoints as left-accent cards.
  */
 function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/).slice(0, 2);
@@ -110,6 +112,31 @@ export function TraineeProfileView({ profile }: { profile: TraineeProfile }) {
                   )}
                 </div>
               </div>
+              {profile.training.length > 0 && (
+                <>
+                  <Separator />
+                  <div>
+                    <dt className="text-caption text-muted-foreground">My Training</dt>
+                    <div className="mt-2 space-y-3">
+                      {profile.training.map((enrolment) => (
+                        <div key={enrolment.id} className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-body-sm font-medium">{enrolment.programme.name}</p>
+                            <p className="text-caption text-muted-foreground">
+                              Cohort {enrolment.cohort.name}
+                              {enrolment.trainingCenter ? ` · ${enrolment.trainingCenter.name}` : ""}
+                              {enrolment.certificationDate ? ` · Certified ${date(enrolment.certificationDate)}` : " · Certification pending"}
+                            </p>
+                          </div>
+                          <StatusBadge
+                            status={enrolment.status === "ACTIVE" ? "ACTIVE" : enrolment.status === "COMPLETED" ? "COMPLETED" : "DROPPED_OUT"}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -174,14 +201,17 @@ export function TraineeProfileView({ profile }: { profile: TraineeProfile }) {
                   {profile.certificates.map((cert) => (
                     <div key={cert.id} className="rounded-xl border bg-card p-4">
                       <p className="text-body-sm font-medium">{cert.name}</p>
-                      <p className="mt-0.5 text-caption text-muted-foreground">{cert.issuer}</p>
+                      <p className="mt-0.5 text-caption text-muted-foreground">
+                        {cert.issuer}
+                        {cert.source === "ISSUED" ? " · Institute-issued" : ""}
+                      </p>
                       <div className="mt-3 flex flex-wrap gap-x-4 text-caption text-muted-foreground">
                         <span>Issued {date(cert.issueDate)}</span>
                         {cert.expiryDate && <span>Expires {date(cert.expiryDate)}</span>}
                       </div>
-                      {cert.fileUrl && (
+                      {(cert.hasFile || cert.fileUrl) && (
                         <a
-                          href={cert.fileUrl}
+                          href={cert.hasFile ? `/api/v1/trainee/certificates/${cert.id}/file` : (cert.fileUrl ?? "#")}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="mt-2 inline-flex items-center gap-1 text-body-sm text-primary-strong hover:underline"
@@ -203,11 +233,30 @@ export function TraineeProfileView({ profile }: { profile: TraineeProfile }) {
               <CardTitle>Skill Self-Assessment</CardTitle>
             </CardHeader>
             <CardContent>
-              <EmptyState
-                icon={<Target />}
-                title="Skill assessment coming soon"
-                description="Rate your skills and map them to your training programme."
-              />
+              {profile.skills.length === 0 ? (
+                <EmptyState
+                  icon={<Target />}
+                  title="No skills rated yet"
+                  description="Rate your skills from your profile — employers never see this; it only tunes your course suggestions."
+                />
+              ) : (
+                <div className="space-y-4">
+                  {profile.skills.map((s) => (
+                    <div key={s.skill} className="flex items-center justify-between gap-3 border-b pb-3 last:border-b-0 last:pb-0">
+                      <div className="min-w-0">
+                        <p className="text-body-sm font-medium">{s.label}</p>
+                        <p className="text-caption text-muted-foreground">
+                          Rated {date(s.assessedAt)}
+                        </p>
+                      </div>
+                      <Badge variant="secondary">{s.level} / 5</Badge>
+                    </div>
+                  ))}
+                  <p className="text-caption text-muted-foreground">
+                    For you and your training center — employers never see this. Retake any time from your profile.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

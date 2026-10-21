@@ -36,11 +36,14 @@ export const protectedRoutes: {
   { path: "/api/v1/demo", roles: ["admin", "institute"] },
   { path: "/api/v1/employer/me", roles: ["employer", "admin"] },
   { path: "/api/v1/employer/jobs", roles: ["employer", "admin"] }, // F25 job CRUD + applicants
+  { path: "/api/v1/employer/certificates", roles: ["employer", "admin"] }, // applicant proof files (issue #111)
   { path: "/api/v1/trainee/me", roles: ["trainee"] },
+  { path: "/api/v1/trainee/skills", roles: ["trainee"] }, // skills self-assessment (bag #44)
   { path: "/api/v1/trainee/recommendations", roles: ["trainee"] },
   { path: "/api/v1/trainee/jobs", roles: ["trainee"] }, // F25 job board browse + apply
   { path: "/api/v1/trainee/applications", roles: ["trainee"] }, // F25 my applications + withdraw
   { path: "/api/v1/trainee/job-seek-signal", roles: ["trainee"] }, // F25 can't-find-a-job signal
+  { path: "/api/v1/trainee/certificates", roles: ["trainee"] }, // T2 certificate upload & management
   { path: "/api/v1/admin/employers", roles: ["admin"] }, // F25 verification queue + suspend
 ];
 

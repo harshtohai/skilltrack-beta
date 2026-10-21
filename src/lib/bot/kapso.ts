@@ -159,3 +159,30 @@ export async function sendKapsoTemplate(
     },
   });
 }
+
+/**
+ * Deliver a 6-digit OTP over WhatsApp (phone-change + phone-otp login).
+ *
+ * Mock mode (BOT_MODE unset/mock — dev default) logs the OTP and never sends.
+ * Real mode with WHATSAPP_OTP_TEMPLATE set sends the Meta-approved template —
+ * the ONLY delivery that works outside the 24-hour customer-service window
+ * (Meta forces OTP content into the AUTHENTICATION category, gated behind
+ * business verification). Without the template name it falls back to free
+ * text, which Meta only delivers inside the window.
+ */
+export async function sendKapsoOtp(toPhoneE164: string, otp: string, label = "otp"): Promise<KapsoSendResult> {
+  if ((process.env.BOT_MODE ?? "mock") !== "real") {
+    console.log(`[KAPSO-OTP] (${label}) OTP for ${toPhoneE164}: ${otp}`);
+    return { success: true };
+  }
+  if (process.env.WHATSAPP_OTP_TEMPLATE) {
+    return sendKapsoTemplate(process.env.WHATSAPP_OTP_TEMPLATE, toPhoneE164, "en_US", [
+      { type: "body", parameters: [{ type: "text", text: otp }] },
+    ]);
+  }
+  const send = await sendKapsoMessage({
+    toPhoneE164,
+    text: `Your SkillsTrack verification code is ${otp}. It expires in 30 minutes. Never share this code.`,
+  });
+  return send[0] ?? { success: false, error: "No send result" };
+}

@@ -3,11 +3,14 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { db } from "~/server/db";
 import { getSessionScope } from "~/server/scope";
+import { humanizeSkill, latestBySkill } from "~/server/skills";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { StatusBadge } from "~/components/patterns/status-badge";
 import { CurrentStatusCard, IdentityCard } from "./trainee-detail-cards";
 import { getTrainee, TimelineSkeleton, TraineeTimeline } from "./trainee-timeline";
 import { TraineeActions } from "./trainee-actions";
+import { TraineeCertificates } from "./trainee-certificates";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +51,7 @@ export default async function TraineeDetailPage({ params }: { params: Promise<{ 
   const scope = await getSessionScope();
   const activeEnrolments = trainee.enrolments.filter((e) => e.status === "ACTIVE");
   const inScope = !scope.centerId || trainee.enrolments.some((e) => e.cohort.trainingCenterId === scope.centerId);
-  const [followupCount, cohortRows] = await Promise.all([
+  const [followupCount, cohortRows, skillRows] = await Promise.all([
     db.followupEvent.count({ where: { traineeId: trainee.id } }),
     // Cohorts of the trainee's active programmes, excluding any cohort they
     // already have an enrolment record in (the unique constraint would 409).
@@ -61,7 +64,16 @@ export default async function TraineeDetailPage({ params }: { params: Promise<{ 
       select: { id: true, name: true, programme: { select: { name: true } } },
       orderBy: { startDate: "desc" },
     }),
+    // Skills self-assessment (bag #44): institute coaching view — level-1
+    // evidence, employers never see it.
+    db.skillAssessment.findMany({ where: { traineeId: trainee.id }, orderBy: { assessedAt: "asc" } }),
   ]);
+  const skillLatest = [...latestBySkill(skillRows).entries()].map(([skill, a]) => ({
+    skill,
+    label: humanizeSkill(skill),
+    level: a.level,
+    assessedAt: a.assessedAt.toISOString(),
+  }));
   const canMove = activeEnrolments.length > 0 && inScope && (scope.role === "admin" || followupCount === 0);
   const canDrop = activeEnrolments.length > 0 && inScope;
 
@@ -113,6 +125,9 @@ export default async function TraineeDetailPage({ params }: { params: Promise<{ 
           consentRevokedAt={trainee.consentRevokedAt}
         />
 
+        {/* Certificates (T3): institute/admin issue + review — ADR-002 */}
+        <TraineeCertificates publicId={trainee.publicId} canManage={scope.role === "admin" || inScope} />
+
         {/* aside (col-span-1): current status + timeline (§9.5 Details + Activity) */}
         <div className="space-y-4">
           <CurrentStatusCard
@@ -128,6 +143,30 @@ export default async function TraineeDetailPage({ params }: { params: Promise<{ 
                 : null
             }
           />
+
+          {/* Skills (bag #44): institute coaching view — level-1 self-assessment */}
+          {skillLatest.length > 0 ? (
+            <Card className="p-5">
+              <CardHeader className="p-0">
+                <CardTitle className="text-title">Skills (self-assessed)</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 pt-3">
+                <ul className="space-y-2">
+                  {skillLatest.map((s) => (
+                    <li key={s.skill} className="flex items-center justify-between gap-2 text-body-sm">
+                      <span className="min-w-0 truncate">{s.label}</span>
+                      <span className="shrink-0 font-mono text-caption tabular-nums text-muted-foreground">
+                        {s.level}/5 · {new Date(s.assessedAt).toLocaleDateString()}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-2 text-caption text-muted-foreground">
+                  Self-reported — employers never see this.
+                </p>
+              </CardContent>
+            </Card>
+          ) : null}
 
           <Suspense fallback={<TimelineSkeleton />}>
             <TraineeTimeline publicId={public_id} />

@@ -8,6 +8,7 @@ import {
   BriefcaseBusiness,
   CirclePlus,
   UserRound,
+  FileSpreadsheet,
   type LucideIcon,
 } from "lucide-react";
 import type { UserRole } from "~/lib/protected-routes";
@@ -58,6 +59,7 @@ export const navForRole: Record<UserRole, NavGroup[]> = {
         { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
         { label: "All trainees", href: "/trainees", icon: Users },
         { label: "Add trainee", href: "/trainees/add", icon: CirclePlus },
+        { label: "Import certificates", href: "/trainees/import-certificates", icon: FileSpreadsheet },
         { label: "Institute analytics", href: "/institute/analytics", icon: BarChart3 },
       ],
     },
