@@ -70,10 +70,10 @@ export function VerifiedInfoCard({
           </div>
         </div>
         <div className="flex items-center justify-between gap-4 border-b py-4">
-          <span className="text-body-sm text-muted-foreground">Phone (verified via WhatsApp)</span>
+          <span className="text-body-sm text-muted-foreground">Phone</span>
           <div className="flex items-center gap-1">
             <span className="font-mono text-body-sm font-medium tabular-nums">{maskPhoneE164(phoneE164)}</span>
-            <ChangePhoneDialog currentPhoneE164={phoneE164} onChanged={onPhoneChanged} />
+            <ChangePhoneDialog currentPhoneE164={phoneE164} email={email} onChanged={onPhoneChanged} />
           </div>
         </div>
         <div className="flex items-center justify-between gap-4 border-b py-4">

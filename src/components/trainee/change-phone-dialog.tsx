@@ -12,15 +12,17 @@ import {
   DialogTrigger,
 } from "~/components/ui/dialog";
 import { OtpSlots } from "~/components/auth/otp-slots";
-import { maskPhoneE164 } from "~/lib/utils";
+import { maskEmail } from "~/lib/utils";
 import { ChangePhonePhoneStep } from "~/app/(app)/trainee/profile/change-phone-phone-step";
 
 /**
  * "Change phone" (T6, spec #102) — self-contained dialog so VerifiedInfoCard
  * only renders a trigger (the email side evolves that card in parallel).
- * Step 1 (change-phone-phone-step.tsx) collects the new number, step 2
- * auto-submits the 6-digit WhatsApp OTP (§4.2); the 30s resend cooldown
- * follows the server's retryAfter.
+ * Step 1 (change-phone-phone-step.tsx) collects the new number; step 2
+ * auto-submits the 6-digit code the server emails to the account address
+ * (§4.2). Email, not the new number — losing the phone is the classic reason
+ * to change it, so the code lands on a channel the account already owns.
+ * The 30s resend cooldown follows the server's retryAfter.
  */
 
 const RESEND_COOLDOWN_S = 30;
@@ -44,9 +46,12 @@ async function postJson(url: string, body: object): Promise<{ ok: boolean; json:
 
 export function ChangePhoneDialog({
   currentPhoneE164,
+  email,
   onChanged,
 }: {
   currentPhoneE164: string;
+  /** Account email the code goes to; null disables the flow (no channel). */
+  email: string | null;
   onChanged?: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -132,15 +137,23 @@ export function ChangePhoneDialog({
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-7 px-2 text-caption">Change</Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-caption"
+          disabled={!email}
+          title={email ? undefined : "Set an email on your account first — codes are sent by email"}
+        >
+          Change
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Change phone number</DialogTitle>
           <DialogDescription>
             {step === "phone"
-              ? "We'll send a 6-digit code to your new number on WhatsApp to verify it."
-              : `Enter the code sent to ${maskPhoneE164(`+91${digits}`)}.`}
+              ? "We'll send a 6-digit code to your email to confirm the change."
+              : `Enter the code sent to ${maskEmail(email ?? "")}.`}
           </DialogDescription>
         </DialogHeader>
 
