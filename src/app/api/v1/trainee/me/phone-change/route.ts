@@ -10,7 +10,8 @@ import {
   routeErrorResponse,
 } from "~/app/api/v1/_utils";
 import { hashPhone } from "~/lib/phone-encrypt";
-import { sendKapsoOtp } from "~/lib/bot/kapso";
+import { sendPhoneChangeOtpEmail } from "~/lib/email";
+import { maskPhoneE164 } from "~/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -18,9 +19,13 @@ export const dynamic = "force-dynamic";
  * Phone change (T6, spec #102) — step 1 of 2. Normalizes the requested
  * number to E.164, refuses duplicates/same-number, then mints a
  * PHONE_CHANGE login token (pendingValue = new E.164, otpHash = 6-digit
- * code, +30 min) and delivers the code to the NEW number over WhatsApp.
- * BOT_MODE=mock (dev default) logs the OTP to the server console instead of
- * calling Kapso — same mock precedent as the bot paths. Step 2 (verify)
+ * code, +30 min) and delivers the code to the trainee's CURRENT email.
+ *
+ * Email, not the new number: losing the phone is the classic reason to
+ * change it, so the code must arrive on a channel the account already owns
+ * (no Meta template needed either). The email names the new number so the
+ * trainee sees what they are approving. With Brevo env unset the send is
+ * mock-logged — same precedent as the email-change flow. Step 2 (verify)
  * flips the trainee's phone fields atomically.
  */
 
@@ -52,11 +57,24 @@ export async function POST(request: NextRequest) {
 
     const trainee = await db.trainee.findUnique({
       where: { id: traineeId },
-      select: { phoneE164: true },
+      select: { fullName: true, email: true, phoneE164: true },
     });
     if (!trainee) {
       return createErrorResponse("NOT_FOUND", "Trainee not found", 404);
     }
+
+    // The code goes to the account email — without one there is no recovery
+    // channel to prove ownership on. Phone-only trainees need the training
+    // center to update the number.
+    const email = trainee.email;
+    if (!email) {
+      return createErrorResponse(
+        "NO_EMAIL",
+        "Your account has no email address. Ask your training center to update your number.",
+        409,
+      );
+    }
+
     if (newPhone === trainee.phoneE164) {
       return createErrorResponse("SAME_PHONE", "That is already your current number", 400);
     }
@@ -104,14 +122,15 @@ export async function POST(request: NextRequest) {
     // magic link, so the random token is hashed and immediately discarded.
     const tokenHash = crypto.createHash("sha256").update(crypto.randomBytes(32)).digest("hex");
 
-    // Deliver BEFORE persisting the token: a failed Kapso send leaves no
-    // token row, so the trainee can retry immediately instead of waiting out
-    // the 30s cooldown on an orphan.
-    const send = await sendKapsoOtp(newPhone, otp, "phone-change");
-    if (!send.success) {
-      console.error("[PHONE-CHANGE] WhatsApp send failed:", send.error);
+    // Deliver BEFORE persisting the token: a failed send leaves no token
+    // row, so the trainee can retry immediately instead of waiting out the
+    // 30s cooldown on an orphan.
+    try {
+      await sendPhoneChangeOtpEmail(email, trainee.fullName, maskPhoneE164(newPhone), otp);
+    } catch (emailError) {
+      console.error("[PHONE-CHANGE] Email send failed:", emailError);
       return createErrorResponse(
-        "WHATSAPP_SEND_FAILED",
+        "EMAIL_SEND_FAILED",
         "Couldn't send the code. Try again in a moment.",
         502,
       );

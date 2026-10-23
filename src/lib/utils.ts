@@ -51,6 +51,13 @@ export function maskPhoneE164(phone: string): string {
   return phone;
 }
 
+/** "harsh@example.com" → "h****@example.com" (used where a code was sent). */
+export function maskEmail(email: string): string {
+  const [local, domain] = email.split("@");
+  if (!local || !domain) return email;
+  return `${local[0]}${"*".repeat(Math.max(local.length - 1, 1))}@${domain}`;
+}
+
 export function generatePublicId(): string {
   const timestamp = Date.now().toString(36).toUpperCase();
   const random = Math.random().toString(36).substring(2, 6).toUpperCase();

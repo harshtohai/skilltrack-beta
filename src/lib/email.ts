@@ -147,6 +147,37 @@ export async function sendEmailChangeOtpEmail(email: string, name: string, otp: 
   await sendBrevoEmail(email, "Your SkillsTrack email-change code", html);
 }
 
+/**
+ * Phone-change code — sent to the trainee's CURRENT email (not the new
+ * number). Losing the phone is the classic reason to change it, so the
+ * code must arrive on a channel the account already owns; the body names
+ * the new number so the trainee knows what they are approving.
+ */
+export async function sendPhoneChangeOtpEmail(
+  email: string,
+  name: string,
+  newPhoneMasked: string,
+  otp: string,
+): Promise<void> {
+  if (!process.env.BREVO_API_KEY || !process.env.EMAIL_FROM) {
+    console.log(`[EMAIL-MOCK] Phone-change code sent to ${email}: ${otp}`);
+    return;
+  }
+
+  const html = renderEmailShell(`
+    <h2 style="color: #1f2937; margin-top: 0;">Hi ${name},</h2>
+    <p style="color: #4b5563; font-size: 16px;">Use this code to confirm your new SkillsTrack phone number (${newPhoneMasked}):</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <span style="display: inline-block; font-size: 28px; font-weight: 700; letter-spacing: 8px; color: #1f2937; background: #f3f4f6; padding: 14px 20px; border-radius: 8px;">${otp}</span>
+    </div>
+    <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+      This code expires in <strong>30 minutes</strong> and can only be used once.<br>
+      If you didn't request this, you can safely ignore this email — your current number stays unchanged.
+    </p>
+  `);
+  await sendBrevoEmail(email, "Your SkillsTrack phone-change code", html);
+}
+
 export async function sendEmailChangedNoticeEmail(oldEmail: string, name: string, newEmail: string): Promise<void> {
   if (!process.env.BREVO_API_KEY || !process.env.EMAIL_FROM) {
     console.log(`[EMAIL-MOCK] Email-changed notice sent to ${oldEmail} (new email: ${newEmail})`);

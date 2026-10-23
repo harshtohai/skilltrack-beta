@@ -135,10 +135,18 @@ describe("snapshotHistoryWindow", () => {
   });
 
   it("uses a 7-day window by default without an explicit cutoff", () => {
-    const rows = [row("2026-10-01"), row("2026-10-09")];
-    const window = snapshotHistoryWindow(rows);
+    // Dates are relative to real today: this test exercises the DEFAULT
+    // `today` (no explicit cutoff), so fixed fixtures would go stale as the
+    // calendar moves past them.
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    const recent = utcDay();
+    recent.setUTCDate(recent.getUTCDate() - 2);
+    const stale = utcDay();
+    stale.setUTCDate(stale.getUTCDate() - 10);
+
+    const window = snapshotHistoryWindow([row(iso(stale)), row(iso(recent))]);
     expect(window).toHaveLength(1);
-    expect(window[0]?.snapshotDate).toEqual(day("2026-10-09"));
+    expect(window[0]?.snapshotDate).toEqual(recent);
   });
 });
 
