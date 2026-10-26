@@ -7,6 +7,7 @@ import { getSessionScope } from "~/server/scope";
 import { auth } from "~/lib/auth";
 import { routeErrorResponse, createErrorResponse, handleZodError } from "../_utils";
 import { encryptPhone, hashPhone } from "~/lib/phone-encrypt";
+import { isPlausibleDateOfBirth } from "~/lib/utils";
 import { mintAndSendLoginToken } from "~/server/magic-link";
 
 export const dynamic = "force-dynamic";
@@ -27,8 +28,17 @@ const traineeCreateSchema = z.object({
 // center district server-side — and consent is NOT collected: institute-added
 // trainees verify via the enrollment email instead (consentGiven stays false
 // until then; the verify route flips it).
+//
+// INST-02 v2: the manual form asks for the full record. Email is REQUIRED
+// (it carries the enrollment email), and DOB/address/education are
+// application-required — the columns stay nullable so legacy rows and the
+// public signup path are untouched.
 const instituteTraineeCreateSchema = traineeCreateSchema.extend({
   cohortId: z.string().uuid(),
+  email: z.string().email("Enter a valid email"),
+  dateOfBirth: z.coerce.date().refine(isPlausibleDateOfBirth, "Enter a realistic date of birth"),
+  address: z.string().min(1, "Address is required").max(500),
+  educationLevel: z.enum(["BELOW_10TH", "TENTH", "TWELFTH", "ITI_DIPLOMA", "GRADUATE", "POST_GRADUATE", "OTHER"]),
   district: z.string().min(1).optional(),
   consent: z.literal(true).optional(),
 });
@@ -179,6 +189,11 @@ export async function POST(request: NextRequest) {
         data: {
           fullName: data.fullName,
           email: data.email ?? null,
+          // INST-02 v2 fields exist only on the institute branch — the public
+          // signup path keeps sending just the base record.
+          dateOfBirth: isEnrolmentAdd ? (data as z.infer<typeof instituteTraineeCreateSchema>).dateOfBirth : null,
+          address: isEnrolmentAdd ? (data as z.infer<typeof instituteTraineeCreateSchema>).address : null,
+          educationLevel: isEnrolmentAdd ? (data as z.infer<typeof instituteTraineeCreateSchema>).educationLevel : null,
           phoneE164: normalizedPhone,
           phoneEncrypted,
           phoneHash,

@@ -123,6 +123,17 @@ enum Gender {
   PREFER_NOT_TO_SAY
 }
 
+/** Highest qualification — constrained select at add-trainee time (data hygiene). */
+enum EducationLevel {
+  BELOW_10TH
+  TENTH
+  TWELFTH
+  ITI_DIPLOMA
+  GRADUATE
+  POST_GRADUATE
+  OTHER
+}
+
 enum EnrolmentStatus {
   ACTIVE
   DROPPED_OUT
@@ -215,6 +226,9 @@ model Trainee {
   phoneEncrypted  String    @unique
   phoneHash       String    @unique
   email           String?   @unique
+  dateOfBirth     DateTime?
+  address         String?
+  educationLevel  EducationLevel?
   district        String
   language        String    @default("EN")
   gender          Gender    @default(PREFER_NOT_TO_SAY)

@@ -117,6 +117,10 @@ export default async function TraineeDetailPage({ params }: { params: Promise<{ 
         <IdentityCard
           publicId={trainee.publicId}
           phoneE164={trainee.phoneE164}
+          email={trainee.email}
+          dateOfBirth={trainee.dateOfBirth}
+          address={trainee.address}
+          educationLevel={trainee.educationLevel}
           district={trainee.district}
           language={trainee.language}
           consentGiven={trainee.consentGiven}
