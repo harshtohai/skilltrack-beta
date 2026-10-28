@@ -117,6 +117,31 @@ async function main() {
   });
   check("link without confirmed → 400", noConfirm.status === 400, `got ${noConfirm.status}`);
 
+  // Filling an email that belongs to a DIFFERENT trainee row must name that
+  // row's SkillID (duplicate-human trap) — never a bare P2002 dead end.
+  const otherEmailTrainee = await prisma.trainee.findFirst({
+    where: { email: { not: null }, NOT: { id: target.id } },
+    select: { id: true, email: true, publicId: true },
+  });
+  if (otherEmailTrainee?.email) {
+    const clash = await fetch(`${BASE}/api/v1/trainees/link-enrol`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: cookie },
+      body: JSON.stringify({
+        traineeId: target.id,
+        cohortId: cohort.id,
+        confirmed: true,
+        updates: { email: otherEmailTrainee.email },
+      }),
+    });
+    const clashBody = (await clash.json()) as { error?: { code?: string }; otherTraineePublicId?: string };
+    check(
+      "email owned by another row → 409 EMAIL_ON_OTHER_SKILLID + that SkillID",
+      clash.status === 409 && clashBody.error?.code === "EMAIL_ON_OTHER_SKILLID" && clashBody.otherTraineePublicId === otherEmailTrainee.publicId,
+      `got ${clash.status} ${JSON.stringify(clashBody)}`,
+    );
+  }
+
   const linkRes = await fetch(`${BASE}/api/v1/trainees/link-enrol`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Cookie: cookie },

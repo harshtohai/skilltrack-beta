@@ -105,6 +105,29 @@ export async function POST(request: NextRequest) {
     }
 
     const u = data.updates ?? {};
+
+    // Filling an email that already belongs to a DIFFERENT trainee row means
+    // two rows for one human — surface the other SkillID (link that record
+    // instead) rather than a bare P2002 "email exists" dead end.
+    if (u.email) {
+      const emailOwner = await db.trainee.findFirst({
+        where: { email: { equals: u.email, mode: "insensitive" }, NOT: { id: trainee.id } },
+        select: { publicId: true },
+      });
+      if (emailOwner) {
+        return NextResponse.json(
+          {
+            error: {
+              code: "EMAIL_ON_OTHER_SKILLID",
+              message: `This email is already linked to SkillID ${emailOwner.publicId}. If it's the same person, enrol that record instead.`,
+            },
+            otherTraineePublicId: emailOwner.publicId,
+          },
+          { status: 409 },
+        );
+      }
+    }
+
     const updates: {
       email?: string;
       dateOfBirth?: Date;

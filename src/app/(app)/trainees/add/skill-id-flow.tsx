@@ -80,9 +80,10 @@ export function SkillIdFlow({
   const [cohortId, setCohortId] = useState("");
   const [enrolError, setEnrolError] = useState("");
   const [alreadyLink, setAlreadyLink] = useState<string | null>(null);
+  const [otherSkillId, setOtherSkillId] = useState<string | null>(null);
 
-  async function runLookup() {
-    const q = query.trim();
+  async function runLookup(qOverride?: string) {
+    const q = (qOverride ?? query).trim();
     if (q.length < 4) return setError("Enter the SkillID or the trainee's phone number");
     setError("");
     setNotFound(false);
@@ -101,6 +102,8 @@ export function SkillIdFlow({
         return;
       }
       setResult({ profile: json.profile, enrolments: json.enrolments ?? [], missing: json.missing ?? [] });
+      // Fresh profile — stale fill values from a previous lookup must not leak in.
+      setUpdates({ email: "", dateOfBirth: "", address: "", educationLevel: "" });
       setStep("confirm");
     } catch {
       setError(SEND_FAIL);
@@ -116,6 +119,7 @@ export function SkillIdFlow({
   async function submitLink() {
     if (!result || !cohortId) return;
     setEnrolError("");
+    setOtherSkillId(null);
     setLoading(true);
     try {
       const res = await fetch("/api/v1/trainees/link-enrol", {
@@ -131,6 +135,7 @@ export function SkillIdFlow({
       const json = (await res.json().catch(() => ({}))) as {
         error?: { code?: string; message?: string };
         traineePublicId?: string;
+        otherTraineePublicId?: string;
       };
       if (res.ok) {
         router.push(`/trainees/${json.traineePublicId ?? result.profile.publicId}`);
@@ -138,6 +143,10 @@ export function SkillIdFlow({
       }
       if (json.error?.code === "ALREADY_ENROLLED") {
         setAlreadyLink(json.traineePublicId ?? result.profile.publicId);
+      } else if (json.error?.code === "EMAIL_ON_OTHER_SKILLID") {
+        // The filled email belongs to a different trainee row (duplicate
+        // human) — offer to pull that record up instead.
+        setOtherSkillId(json.otherTraineePublicId ?? null);
       }
       setEnrolError(json.error?.message ?? "Couldn't enrol the trainee. Try again.");
     } catch {
@@ -373,14 +382,31 @@ export function SkillIdFlow({
               disabled={loading}
             />
             {enrolError ? (
-              <p role="alert" className="text-caption text-danger-text">
-                {enrolError}{" "}
-                {alreadyLink ? (
-                  <Link href={`/trainees/${alreadyLink}`} className="underline">
-                    View their record
-                  </Link>
+              <div className="space-y-2">
+                <p role="alert" className="text-caption text-danger-text">
+                  {enrolError}{" "}
+                  {alreadyLink ? (
+                    <Link href={`/trainees/${alreadyLink}`} className="underline">
+                      View their record
+                    </Link>
+                  ) : null}
+                </p>
+                {otherSkillId ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setEnrolError("");
+                      setOtherSkillId(null);
+                      setStep("lookup");
+                      void runLookup(otherSkillId);
+                    }}
+                  >
+                    Search {otherSkillId} instead
+                  </Button>
                 ) : null}
-              </p>
+              </div>
             ) : null}
             <div className="flex justify-between gap-3">
               <Button variant="outline" size="sm" onClick={() => setStep("confirm")} disabled={loading}>
