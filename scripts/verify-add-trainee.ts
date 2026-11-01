@@ -102,8 +102,17 @@ async function main() {
   check("center cohort available", Boolean(cohort));
   if (!cohort) process.exit(1);
 
+  // A second cohort (if the center has one) for the email-clash path.
+  const cohort2 = await prisma.cohort.findFirst({
+    where: { trainingCenterId: center.id, NOT: { id: cohort.id } },
+    select: { id: true },
+  });
+
   const target = await prisma.trainee.findFirst({
-    where: { enrolments: { none: { cohortId: cohort.id } }, email: { not: null } },
+    where: {
+      enrolments: { none: { cohortId: { in: cohort2 ? [cohort.id, cohort2.id] : [cohort.id] } } },
+      email: { not: null },
+    },
     select: { id: true, publicId: true, email: true, dateOfBirth: true, address: true, educationLevel: true },
   });
   check("link target trainee found (not in cohort)", Boolean(target));
@@ -116,31 +125,6 @@ async function main() {
     body: JSON.stringify({ traineeId: target.id, cohortId: cohort.id }),
   });
   check("link without confirmed → 400", noConfirm.status === 400, `got ${noConfirm.status}`);
-
-  // Filling an email that belongs to a DIFFERENT trainee row must name that
-  // row's SkillID (duplicate-human trap) — never a bare P2002 dead end.
-  const otherEmailTrainee = await prisma.trainee.findFirst({
-    where: { email: { not: null }, NOT: { id: target.id } },
-    select: { id: true, email: true, publicId: true },
-  });
-  if (otherEmailTrainee?.email) {
-    const clash = await fetch(`${BASE}/api/v1/trainees/link-enrol`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Cookie: cookie },
-      body: JSON.stringify({
-        traineeId: target.id,
-        cohortId: cohort.id,
-        confirmed: true,
-        updates: { email: otherEmailTrainee.email },
-      }),
-    });
-    const clashBody = (await clash.json()) as { error?: { code?: string }; otherTraineePublicId?: string };
-    check(
-      "email owned by another row → 409 EMAIL_ON_OTHER_SKILLID + that SkillID",
-      clash.status === 409 && clashBody.error?.code === "EMAIL_ON_OTHER_SKILLID" && clashBody.otherTraineePublicId === otherEmailTrainee.publicId,
-      `got ${clash.status} ${JSON.stringify(clashBody)}`,
-    );
-  }
 
   const linkRes = await fetch(`${BASE}/api/v1/trainees/link-enrol`, {
     method: "POST",
@@ -182,6 +166,45 @@ async function main() {
   });
   const repeatBody = (await repeat.json()) as { error?: { code?: string } };
   check("re-link same cohort → 409 ALREADY_ENROLLED", repeat.status === 409 && repeatBody.error?.code === "ALREADY_ENROLLED", `got ${repeat.status}`);
+
+  // Email that belongs to a DIFFERENT trainee row, filled on an EMAIL-LESS
+  // row (the owner's exact scenario): the enrolment still goes through —
+  // only the email fill is skipped, with a warning naming the other SkillID
+  // (duplicate-human trap; never a dead-end 409).
+  const otherEmailTrainee = await prisma.trainee.findFirst({
+    where: { email: { not: null } },
+    select: { id: true, email: true, publicId: true },
+  });
+  const clashTarget = await prisma.trainee.findFirst({
+    where: { email: null, enrolments: { none: { cohortId: cohort2 ? cohort2.id : "00000000-0000-0000-0000-000000000000" } } },
+    select: { id: true, publicId: true },
+  });
+  if (otherEmailTrainee?.email && clashTarget && cohort2) {
+    const clash = await fetch(`${BASE}/api/v1/trainees/link-enrol`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: cookie },
+      body: JSON.stringify({
+        traineeId: clashTarget.id,
+        cohortId: cohort2.id,
+        confirmed: true,
+        updates: { email: otherEmailTrainee.email },
+      }),
+    });
+    const clashBody = (await clash.json()) as {
+      success?: boolean;
+      warning?: { code?: string; otherTraineePublicId?: string };
+      error?: { code?: string };
+    };
+    check(
+      "email owned by another row → 201 + warning names that SkillID",
+      clash.status === 201 && clashBody.success === true && clashBody.warning?.code === "EMAIL_ON_OTHER_SKILLID" && clashBody.warning.otherTraineePublicId === otherEmailTrainee.publicId,
+      `got ${clash.status} ${JSON.stringify(clashBody)}`,
+    );
+    const emailAfterClash = await prisma.trainee.findUnique({ where: { id: clashTarget.id }, select: { email: true } });
+    check("clash path: enrolment real, email still null", emailAfterClash?.email === null);
+    await prisma.enrolment.deleteMany({ where: { traineeId: clashTarget.id, cohortId: cohort2.id } });
+    await prisma.auditEvent.deleteMany({ where: { entityId: clashTarget.id, action: "TRAINEE_ENROLLED", createdAt: { gte: startedAt } } });
+  }
 
   // ── Manual add: new required fields ─────────────────────────────────────
   const missingDob = await fetch(`${BASE}/api/v1/trainees`, {

@@ -107,24 +107,25 @@ export async function POST(request: NextRequest) {
     const u = data.updates ?? {};
 
     // Filling an email that already belongs to a DIFFERENT trainee row means
-    // two rows for one human — surface the other SkillID (link that record
-    // instead) rather than a bare P2002 "email exists" dead end.
-    if (u.email) {
+    // two rows for one human. The ENROLMENT is the commit action and must go
+    // through — only the email fill is skipped, with a warning naming the
+    // other SkillID (a hard 409 here made submit feel broken; owner feedback).
+    let emailWarning: {
+      code: "EMAIL_ON_OTHER_SKILLID";
+      message: string;
+      otherTraineePublicId: string;
+    } | null = null;
+    if (u.email && !trainee.email) {
       const emailOwner = await db.trainee.findFirst({
         where: { email: { equals: u.email, mode: "insensitive" }, NOT: { id: trainee.id } },
         select: { publicId: true },
       });
       if (emailOwner) {
-        return NextResponse.json(
-          {
-            error: {
-              code: "EMAIL_ON_OTHER_SKILLID",
-              message: `This email is already linked to SkillID ${emailOwner.publicId}. If it's the same person, enrol that record instead.`,
-            },
-            otherTraineePublicId: emailOwner.publicId,
-          },
-          { status: 409 },
-        );
+        emailWarning = {
+          code: "EMAIL_ON_OTHER_SKILLID",
+          message: `Enrolled — but the email wasn't added: it is already linked to SkillID ${emailOwner.publicId}. If that's the same person, enrol that record instead.`,
+          otherTraineePublicId: emailOwner.publicId,
+        };
       }
     }
 
@@ -134,7 +135,7 @@ export async function POST(request: NextRequest) {
       address?: string;
       educationLevel?: (typeof u)["educationLevel"];
     } = {};
-    if (u.email && !trainee.email) updates.email = u.email;
+    if (u.email && !trainee.email && !emailWarning) updates.email = u.email;
     if (u.dateOfBirth && !trainee.dateOfBirth) updates.dateOfBirth = u.dateOfBirth;
     if (u.address && !trainee.address) updates.address = u.address;
     if (u.educationLevel && !trainee.educationLevel) updates.educationLevel = u.educationLevel;
@@ -159,7 +160,7 @@ export async function POST(request: NextRequest) {
           // ActorType has no INSTITUTE yet (tracked debt) — actorId keeps the human.
           actorType: "SYSTEM",
           actorId: session.user.id,
-          metadata: { via: "skill-id", cohortId: cohort.id, filled: Object.keys(updates) },
+          metadata: { via: "skill-id", cohortId: cohort.id, filled: Object.keys(updates), emailBlocked: Boolean(emailWarning) },
         },
       });
       return created;
@@ -182,7 +183,12 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { success: true, enrolmentId: enrolment.id, traineePublicId: trainee.publicId },
+      {
+        success: true,
+        enrolmentId: enrolment.id,
+        traineePublicId: trainee.publicId,
+        ...(emailWarning ? { warning: emailWarning } : {}),
+      },
       { status: 201 },
     );
   } catch (error) {

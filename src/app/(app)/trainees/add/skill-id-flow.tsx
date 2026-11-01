@@ -81,6 +81,7 @@ export function SkillIdFlow({
   const [enrolError, setEnrolError] = useState("");
   const [alreadyLink, setAlreadyLink] = useState<string | null>(null);
   const [otherSkillId, setOtherSkillId] = useState<string | null>(null);
+  const [linked, setLinked] = useState<{ publicId: string; warning: { message: string; otherTraineePublicId: string } } | null>(null);
 
   async function runLookup(qOverride?: string) {
     const q = (qOverride ?? query).trim();
@@ -136,8 +137,19 @@ export function SkillIdFlow({
         error?: { code?: string; message?: string };
         traineePublicId?: string;
         otherTraineePublicId?: string;
+        warning?: { code?: string; message?: string; otherTraineePublicId?: string };
       };
       if (res.ok) {
+        // A clashing email doesn't block: the enrolment landed with a warning
+        // — surface it here instead of redirecting away.
+        if (json.warning) {
+          setLinked({
+            publicId: json.traineePublicId ?? result.profile.publicId,
+            warning: { message: json.warning.message ?? "", otherTraineePublicId: json.warning.otherTraineePublicId ?? "" },
+          });
+          setLoading(false);
+          return;
+        }
         router.push(`/trainees/${json.traineePublicId ?? result.profile.publicId}`);
         return;
       }
@@ -203,6 +215,39 @@ export function SkillIdFlow({
           ) : null}
         </CardContent>
       </Card>
+    );
+  }
+
+  const other = linked?.warning.otherTraineePublicId ?? "";
+
+  if (linked) {
+    return (
+      <div className="space-y-3">
+        <Alert variant="success">
+          <AlertTitle>Trainee enrolled</AlertTitle>
+          <AlertDescription>
+            A new enrolment was created on {linked.publicId}. {linked.warning.message}
+          </AlertDescription>
+        </Alert>
+        <div className="flex gap-2">
+          <Button asChild size="sm">
+            <Link href={`/trainees/${linked.publicId}`}>View record</Link>
+          </Button>
+          {other ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setLinked(null);
+                setStep("lookup");
+                void runLookup(other);
+              }}
+            >
+              Search {other} instead
+            </Button>
+          ) : null}
+        </div>
+      </div>
     );
   }
 
