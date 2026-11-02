@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { CopyButton } from "~/components/copy-button";
 import { EmptyState } from "~/components/patterns/empty-state";
 import { StatusBadge, type StatusKey } from "~/components/patterns/status-badge";
-import { datetime } from "~/lib/format";
-import { maskPhoneE164 } from "~/lib/utils";
+import { date, datetime } from "~/lib/format";
+import { educationLabel, maskPhoneE164 } from "~/lib/utils";
 import { SALARY_BAND_LABELS } from "./trainee-timeline";
 
 /**
@@ -26,6 +26,10 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 export function IdentityCard({
   publicId,
   phoneE164,
+  email,
+  dateOfBirth,
+  address,
+  educationLevel,
   district,
   language,
   consentGiven,
@@ -35,6 +39,10 @@ export function IdentityCard({
 }: {
   publicId: string;
   phoneE164: string;
+  email: string | null;
+  dateOfBirth: Date | null;
+  address: string | null;
+  educationLevel: string | null;
   district: string;
   language: string;
   consentGiven: boolean;
@@ -58,8 +66,14 @@ export function IdentityCard({
           <DetailRow label="Phone">
             <span className="font-mono">{maskPhoneE164(phoneE164)}</span>
           </DetailRow>
+          <DetailRow label="Email">{email ?? "—"}</DetailRow>
+          <DetailRow label="Date of birth">{dateOfBirth ? date(dateOfBirth) : "—"}</DetailRow>
+          <DetailRow label="Education">{educationLabel(educationLevel)}</DetailRow>
           <DetailRow label="District">{district}</DetailRow>
           <DetailRow label="Language">{language === "EN" ? "English" : "Hindi"}</DetailRow>
+          <div className="col-span-2">
+            <DetailRow label="Address">{address ?? "—"}</DetailRow>
+          </div>
           <DetailRow label="Consent">
             <span className="inline-flex flex-wrap items-center gap-1.5">
               <StatusBadge status={consentGiven ? "GIVEN" : "PENDING_CONSENT"} />

@@ -2,7 +2,7 @@ import { db } from "~/server/db";
 import { getSessionScope } from "~/server/scope";
 import { EmptyState } from "~/components/patterns/empty-state";
 import { PageHeader } from "~/components/patterns/page-header";
-import { AddTraineeForm } from "./add-trainee-form";
+import { AddTraineeTabs } from "./add-trainee-tabs";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,7 @@ export default async function AddTraineePage() {
     <div>
       <PageHeader
         title="Add trainee"
-        caption="Create the record and pick a cohort — the enrollment email with their sign-in link goes out."
+        caption="Enrol an existing trainee by their SkillID, or create a new record — the enrollment email with their sign-in link goes out either way."
       />
 
       {cohorts.length === 0 ? (
@@ -38,8 +38,12 @@ export default async function AddTraineePage() {
           description="A trainee needs a cohort to enrol in. Ask an admin to create a cohort for your training center."
         />
       ) : (
-        <AddTraineeForm
-          programmes={programmes.map((p) => ({ id: p.id, name: p.name }))}
+        <AddTraineeTabs
+          // Only offer programmes that actually have a cohort here — a
+          // programme with no cohorts leads to an empty cohort picker.
+          programmes={programmes
+            .filter((p) => cohorts.some((c) => c.programmeId === p.id))
+            .map((p) => ({ id: p.id, name: p.name }))}
           cohorts={cohorts.map((c) => ({
             id: c.id,
             name: c.name,

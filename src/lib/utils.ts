@@ -58,6 +58,30 @@ export function maskEmail(email: string): string {
   return `${local[0]}${"*".repeat(Math.max(local.length - 1, 1))}@${domain}`;
 }
 
+/** Education select options — shared by add-trainee, SkillID confirm and detail. */
+export const EDUCATION_LEVELS = [
+  { value: "BELOW_10TH", label: "Below 10th" },
+  { value: "TENTH", label: "10th pass" },
+  { value: "TWELFTH", label: "12th pass" },
+  { value: "ITI_DIPLOMA", label: "ITI / Diploma" },
+  { value: "GRADUATE", label: "Graduate" },
+  { value: "POST_GRADUATE", label: "Post-graduate" },
+  { value: "OTHER", label: "Other" },
+] as const;
+
+export type EducationLevelValue = (typeof EDUCATION_LEVELS)[number]["value"];
+
+export function educationLabel(value: string | null | undefined): string {
+  return EDUCATION_LEVELS.find((e) => e.value === value)?.label ?? "—";
+}
+
+/** Real date, 10–100 years before today — the DOB sanity bound at add/link. */
+export function isPlausibleDateOfBirth(value: Date): boolean {
+  if (Number.isNaN(value.getTime())) return false;
+  const ageYears = (Date.now() - value.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+  return ageYears >= 10 && ageYears <= 100;
+}
+
 export function generatePublicId(): string {
   const timestamp = Date.now().toString(36).toUpperCase();
   const random = Math.random().toString(36).substring(2, 6).toUpperCase();
