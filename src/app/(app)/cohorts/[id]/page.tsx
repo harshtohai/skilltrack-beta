@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import Link from "next/link";
+import { notFound } from "next/navigation";
 import { db } from "~/server/db";
-import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/patterns/skeleton";
 import { maskPhoneE164 } from "~/lib/utils";
+import { canAccessCohort, getSessionScope } from "~/server/scope";
 import { CohortDetailView, type CohortTraineeRow } from "./cohort-detail-view";
 
 export const dynamic = "force-dynamic";
@@ -26,33 +26,34 @@ async function getCohort(id: string) {
  * Cohort detail per design §9.5 — Shell S1. Server component: the Prisma query
  * stays server-side; actions + table render through cohort-detail-view.tsx
  * (client) so event handlers and column renderers can cross the boundary.
+ *
+ * The scope check runs BEFORE the Suspense boundary so an out-of-scope cohort
+ * returns a real 404 status (inside a streamed boundary the shell has already
+ * been sent with 200).
  */
-export default function CohortDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CohortDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const cohort = await getCohort(id);
+
+  // INST-01: a cohort outside the institute's center is indistinguishable
+  // from a missing one — 404 either way (no cross-center data, no probing).
+  const scope = await getSessionScope();
+  if (!cohort || !canAccessCohort(scope, cohort)) {
+    notFound();
+  }
+
   return (
     <Suspense fallback={<TraineeTableSkeleton />}>
-      <CohortDetailContent params={params} />
+      <CohortDetailContent cohort={cohort} />
     </Suspense>
   );
 }
 
-async function CohortDetailContent({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const cohort = await getCohort(id);
-
-  if (!cohort) {
-    return (
-      <div className="py-16 text-center">
-        <h1 className="text-h2 font-semibold">Cohort not found</h1>
-        <p className="mt-1 text-body-sm text-muted-foreground">
-          That cohort ID does not match any record.
-        </p>
-        <Button asChild className="mt-4">
-          <Link href="/dashboard">Back to dashboard</Link>
-        </Button>
-      </div>
-    );
-  }
-
+async function CohortDetailContent({
+  cohort,
+}: {
+  cohort: NonNullable<Awaited<ReturnType<typeof getCohort>>>;
+}) {
   const traineeIds = cohort.enrolments.map((e) => e.traineeId);
   const followups = await db.followupEvent.findMany({
     where: { traineeId: { in: traineeIds }, checkpointDays: 30 },

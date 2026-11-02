@@ -12,3 +12,9 @@ export async function getSessionScope(): Promise<{ role: UserRole; centerId: str
   const centerId = role === "institute" ? (session?.user?.instituteCenterId ?? null) : null;
   return { role, centerId };
 }
+
+/**
+ * Cohort-level half of INST-01 (implemented in ~/lib/cohort-scope so it stays
+ * pure and unit-testable): an institute may only touch cohorts of its center.
+ */
+export { canAccessCohort } from "~/lib/cohort-scope";

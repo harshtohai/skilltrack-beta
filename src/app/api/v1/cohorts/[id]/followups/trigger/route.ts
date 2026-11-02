@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "~/server/db";
 import { routeErrorResponse, createErrorResponse, handleZodError } from "../../../../_utils";
+import { canAccessCohort, getSessionScope } from "~/server/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,12 @@ export async function POST(
     });
 
     if (!cohort) {
+      return createErrorResponse("NOT_FOUND", "Cohort not found", 404);
+    }
+
+    // INST-01: never trigger follow-ups for another center's cohort.
+    const scope = await getSessionScope();
+    if (!canAccessCohort(scope, cohort)) {
       return createErrorResponse("NOT_FOUND", "Cohort not found", 404);
     }
 
