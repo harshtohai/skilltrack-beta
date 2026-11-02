@@ -2,7 +2,8 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "~/server/db";
-import { routeErrorResponse, handleZodError } from "../_utils";
+import { routeErrorResponse, handleZodError, createErrorResponse } from "../_utils";
+import { getSessionScope } from "~/server/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -14,8 +15,19 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const query = cohortQuerySchema.parse(Object.fromEntries(searchParams));
+    const scope = await getSessionScope();
 
-    const where = query.programmeId ? { programmeId: query.programmeId } : {};
+    // INST-01: institutes list ONLY their center's cohorts (an institute with
+    // no center configured must not fall through to "all centers").
+    const centerId = scope.role === "institute" ? scope.centerId : null;
+    if (scope.role === "institute" && !centerId) {
+      return createErrorResponse("FORBIDDEN", "Institute center is not configured", 403);
+    }
+
+    const where = {
+      ...(query.programmeId ? { programmeId: query.programmeId } : {}),
+      ...(centerId ? { trainingCenterId: centerId } : {}),
+    };
 
     const cohorts = await db.cohort.findMany({
       where,

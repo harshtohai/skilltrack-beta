@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "~/server/db";
 import { routeErrorResponse, createErrorResponse, handleZodError } from "../../_utils";
+import { canAccessCohort, getSessionScope } from "~/server/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -26,12 +27,32 @@ export async function GET(
       include: {
         programme: true,
         enrolments: {
-          include: { trainee: true },
+          include: {
+            // Explicit select: never ship the phone ciphertext/hash (or any
+            // future secret column) to the client.
+            trainee: {
+              select: {
+                id: true,
+                publicId: true,
+                fullName: true,
+                phoneE164: true,
+                email: true,
+                district: true,
+                gender: true,
+                dateOfBirth: true,
+                address: true,
+                educationLevel: true,
+                consentGiven: true,
+              },
+            },
+          },
         },
       },
     });
 
-    if (!cohort) {
+    // INST-01: 404 (not 403) for another center's cohort — don't confirm it exists.
+    const scope = await getSessionScope();
+    if (!cohort || !canAccessCohort(scope, cohort)) {
       return createErrorResponse("NOT_FOUND", "Cohort not found", 404);
     }
 
