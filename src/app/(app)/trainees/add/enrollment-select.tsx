@@ -1,6 +1,6 @@
 "use client";
 
-import { FormLabel } from "~/components/ui/form";
+import { Label } from "~/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 
 /**
@@ -8,6 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
  * and the SkillID link flow). Controlled + presentational so each parent owns
  * its state; cohort options follow the chosen programme (§4.2 dependent
  * Selects) and a programme switch invalidates the chosen cohort.
+ *
+ * Labels are the plain `Label`, NOT `FormLabel`: the SkillID link flow renders
+ * this outside any react-hook-form provider, and `FormLabel` calls
+ * `useFormContext()` (crash: "Cannot destructure 'getFieldState' of null").
  */
 export function EnrollmentSelect({
   programmes,
@@ -33,9 +37,9 @@ export function EnrollmentSelect({
   return (
     <div className="space-y-4">
       <div className="grid gap-1.5">
-        <FormLabel>
+        <Label>
           Programme <span className="text-danger-text">*</span>
-        </FormLabel>
+        </Label>
         <Select
           onValueChange={(v) => {
             onProgrammeChange(v);
@@ -63,9 +67,9 @@ export function EnrollmentSelect({
       </div>
 
       <div className="grid gap-1.5">
-        <FormLabel>
+        <Label>
           Cohort <span className="text-danger-text">*</span>
-        </FormLabel>
+        </Label>
         <Select onValueChange={onCohortChange} value={cohortId} disabled={Boolean(disabled) || !programmeId}>
           <SelectTrigger className="w-full" aria-invalid={errors?.cohortId ? true : undefined}>
             <SelectValue placeholder={programmeId ? "Select cohort" : "Pick a programme first"} />

@@ -39,7 +39,11 @@ export default async function AddTraineePage() {
         />
       ) : (
         <AddTraineeTabs
-          programmes={programmes.map((p) => ({ id: p.id, name: p.name }))}
+          // Only offer programmes that actually have a cohort here — a
+          // programme with no cohorts leads to an empty cohort picker.
+          programmes={programmes
+            .filter((p) => cohorts.some((c) => c.programmeId === p.id))
+            .map((p) => ({ id: p.id, name: p.name }))}
           cohorts={cohorts.map((c) => ({
             id: c.id,
             name: c.name,
